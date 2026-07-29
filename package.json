@@ -7,9 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/spa-fallback.mjs",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:supabase": "node scripts/seed-supabase.mjs",
+    "db:migrate": "node scripts/apply-migration.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1"
@@ -20,6 +23,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "pg": "^8.22.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   }

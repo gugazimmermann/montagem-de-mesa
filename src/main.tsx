@@ -3,11 +3,14 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import { Rotas } from './aplicacao/Rotas.tsx'
+import { AuthProvider } from './funcionalidades/autenticacao'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <Rotas />
+      <AuthProvider>
+        <Rotas />
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 )

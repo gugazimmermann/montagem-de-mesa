@@ -1,40 +1,57 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { DadosCliente } from '../../compartilhado/tipos'
+import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import {
+  atualizarPerfil,
   carregarDadosCliente,
-  limparSessao,
-  obterClientePorId,
-  obterSessao,
-  salvarDadosCliente,
+  excluirCategoriaDb,
 } from '../../dados/repositorioClientes'
+import { useAuth } from '../autenticacao'
 import './PainelAdmin.css'
 import './LoginAdmin.css'
 import './EditarCategoria.css'
 
 export function PainelAdmin() {
   const navegar = useNavigate()
-  const clienteId = obterSessao()!
-  const clienteSeed = obterClientePorId(clienteId)
+  const { cliente, sair } = useAuth()
+  const clienteId = cliente!.id
 
-  const [dados, setDados] = useState<DadosCliente>(() => carregarDadosCliente(clienteId)!)
-  const [nome, setNome] = useState(dados.nome)
-  const [logo, setLogo] = useState(dados.logo)
+  const [dados, setDados] = useState<DadosCliente | null>(null)
+  const [nome, setNome] = useState('')
+  const [logo, setLogo] = useState('')
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [carregando, setCarregando] = useState(true)
+
+  useEffect(() => {
+    let ativo = true
+    void carregarDadosCliente(clienteId)
+      .then((d) => {
+        if (!ativo || !d) return
+        setDados(d)
+        setNome(d.nome)
+        setLogo(d.logo)
+      })
+      .catch(() => {
+        if (ativo) setErro('Não foi possível carregar o painel.')
+      })
+      .finally(() => {
+        if (ativo) setCarregando(false)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [clienteId])
 
   const linkPublico = useMemo(
-    () => (clienteSeed ? `/c/${clienteSeed.slug}` : '/'),
-    [clienteSeed],
+    () => (cliente ? `/c/${cliente.slug}` : '/'),
+    [cliente],
   )
 
-  function persistir(proximo: DadosCliente) {
-    salvarDadosCliente(clienteId, proximo)
-    setDados(proximo)
-  }
-
-  function salvarPerfil(evento: FormEvent) {
+  async function salvarPerfil(evento: FormEvent) {
     evento.preventDefault()
+    if (!dados) return
     setErro(null)
     const nomeTrim = nome.trim()
     if (!nomeTrim) {
@@ -42,9 +59,14 @@ export function PainelAdmin() {
       return
     }
 
-    const proximo: DadosCliente = { ...dados, nome: nomeTrim, logo: logo.trim() || dados.logo }
-    persistir(proximo)
-    setMensagem('Perfil salvo.')
+    const logoFinal = logo.trim() || dados.logo
+    try {
+      await atualizarPerfil(clienteId, { nome: nomeTrim, logo: logoFinal })
+      setDados({ ...dados, nome: nomeTrim, logo: logoFinal })
+      setMensagem('Perfil salvo.')
+    } catch {
+      setErro('Não foi possível salvar o perfil.')
+    }
   }
 
   function aoEscolherLogo(evento: ChangeEvent<HTMLInputElement>) {
@@ -60,19 +82,42 @@ export function PainelAdmin() {
     leitor.readAsDataURL(arquivo)
   }
 
-  function excluirCategoria(id: string) {
-    const ok = window.confirm('Excluir esta categoria? Os itens vinculados também serão removidos.')
+  async function excluirCategoria(id: string) {
+    if (!dados) return
+    const ok = window.confirm(
+      'Excluir esta categoria? Os itens vinculados também serão removidos.',
+    )
     if (!ok) return
 
-    const categorias = dados.categorias.filter((c) => c.id !== id)
-    const itens = dados.itens.filter((item) => item.categoria !== id)
-    persistir({ ...dados, categorias, itens })
-    setMensagem('Categoria excluída.')
+    try {
+      await excluirCategoriaDb(clienteId, id)
+      setDados({
+        ...dados,
+        categorias: dados.categorias.filter((c) => c.id !== id),
+        itens: dados.itens.filter((item) => item.categoria !== id),
+      })
+      setMensagem('Categoria excluída.')
+    } catch {
+      setErro('Não foi possível excluir a categoria.')
+    }
   }
 
-  function sair() {
-    limparSessao()
+  async function aoSair() {
+    await sair()
     navegar('/admin', { replace: true })
+  }
+
+  if (carregando || !dados) {
+    return (
+      <div className="admin-painel">
+        <p className="admin-painel__alerta">Carregando painel…</p>
+        {erro && (
+          <p className="admin-painel__alerta admin-painel__alerta--erro" role="alert">
+            {erro}
+          </p>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -86,21 +131,26 @@ export function PainelAdmin() {
           <Link className="btn btn--ghost" to={linkPublico}>
             Ver montagem
           </Link>
-          <button type="button" className="btn btn--ghost" onClick={sair}>
+          <button type="button" className="btn btn--ghost" onClick={() => void aoSair()}>
             Sair
           </button>
         </div>
       </header>
 
       {(mensagem || erro) && (
-        <p className={erro ? 'admin-painel__alerta admin-painel__alerta--erro' : 'admin-painel__alerta'} role="status">
+        <p
+          className={
+            erro ? 'admin-painel__alerta admin-painel__alerta--erro' : 'admin-painel__alerta'
+          }
+          role="status"
+        >
           {erro ?? mensagem}
         </p>
       )}
 
       <section className="admin-painel__secao">
         <h2>Perfil</h2>
-        <form className="admin-painel__form" onSubmit={salvarPerfil}>
+        <form className="admin-painel__form" onSubmit={(e) => void salvarPerfil(e)}>
           <label className="admin-field">
             <span>Nome</span>
             <input
@@ -142,11 +192,13 @@ export function PainelAdmin() {
           )}
           {dados.categorias.map((categoria) => {
             const qtdItens = dados.itens.filter((i) => i.categoria === categoria.id).length
+            const fixa = ehCategoriaFixa(categoria.id)
             return (
               <li key={categoria.id} className="admin-categorias__item">
                 <div>
                   <strong>
                     {categoria.rotulo}{' '}
+                    {fixa && <span className="admin-categorias__badge">Fixa</span>}
                     <span className="admin-categorias__qtd">
                       ({qtdItens} {qtdItens === 1 ? 'item' : 'itens'})
                     </span>
@@ -154,19 +206,30 @@ export function PainelAdmin() {
                   {categoria.descricao && <p>{categoria.descricao}</p>}
                 </div>
                 <div className="admin-categorias__acoes">
-                  <Link
-                    className="btn btn--ghost"
-                    to={`/admin/painel/categorias/${categoria.id}`}
-                  >
-                    Editar
-                  </Link>
-                  <button
-                    type="button"
-                    className="btn btn--ghost"
-                    onClick={() => excluirCategoria(categoria.id)}
-                  >
-                    Excluir
-                  </button>
+                  {fixa ? (
+                    <Link
+                      className="btn btn--ghost"
+                      to={`/admin/painel/categorias/${categoria.id}`}
+                    >
+                      Visualizar
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        className="btn btn--ghost"
+                        to={`/admin/painel/categorias/${categoria.id}`}
+                      >
+                        Editar
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn btn--ghost"
+                        onClick={() => void excluirCategoria(categoria.id)}
+                      >
+                        Excluir
+                      </button>
+                    </>
+                  )}
                 </div>
               </li>
             )

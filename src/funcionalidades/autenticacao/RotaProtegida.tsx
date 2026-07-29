@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { obterSessao } from '../../dados/repositorioClientes'
 import type { ReactNode } from 'react'
+import { useAuth } from './useAuth'
 
 interface PropsRotaProtegida {
   children: ReactNode
@@ -8,9 +8,17 @@ interface PropsRotaProtegida {
 
 export function RotaProtegida({ children }: PropsRotaProtegida) {
   const localizacao = useLocation()
-  const sessao = obterSessao()
+  const { cliente, carregando } = useAuth()
 
-  if (!sessao) {
+  if (carregando) {
+    return (
+      <div className="admin-login">
+        <p className="admin-login__header">Carregando sessão…</p>
+      </div>
+    )
+  }
+
+  if (!cliente) {
     return <Navigate to="/admin" replace state={{ from: localizacao.pathname }} />
   }
 

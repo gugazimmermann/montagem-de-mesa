@@ -1,5 +1,7 @@
 export { LoginAdmin } from './LoginAdmin'
 export { PainelAdmin } from './PainelAdmin'
+export { CategoriaPainel } from './CategoriaPainel'
 export { EditarCategoria } from './EditarCategoria'
+export { VisualizarCategoria } from './VisualizarCategoria'
 export { FormularioCategoria } from './FormularioCategoria'
 export { FormularioItem } from './FormularioItem'

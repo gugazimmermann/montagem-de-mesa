@@ -1,34 +1,45 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import {
-  autenticar,
-  definirSessao,
-  obterSessao,
-} from '../../dados/repositorioClientes'
+import { useAuth } from '../autenticacao'
 import './LoginAdmin.css'
 
 export function LoginAdmin() {
   const navegar = useNavigate()
-  const [login, setLogin] = useState('')
+  const { cliente, carregando, entrar } = useAuth()
+  const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
 
-  if (obterSessao()) {
+  if (carregando) {
+    return (
+      <div className="admin-login">
+        <p className="admin-login__header">Carregando…</p>
+      </div>
+    )
+  }
+
+  if (cliente) {
     return <Navigate to="/admin/painel" replace />
   }
 
-  function aoEnviar(evento: FormEvent) {
+  async function aoEnviar(evento: FormEvent) {
     evento.preventDefault()
     setErro(null)
+    setEnviando(true)
 
-    const cliente = autenticar(login, senha)
-    if (!cliente) {
-      setErro('Login ou senha inválidos.')
-      return
+    try {
+      const resultado = await entrar(email, senha)
+      if (!resultado) {
+        setErro('E-mail ou senha inválidos.')
+        return
+      }
+      navegar('/admin/painel', { replace: true })
+    } catch {
+      setErro('Não foi possível entrar. Tente novamente.')
+    } finally {
+      setEnviando(false)
     }
-
-    definirSessao(cliente.id)
-    navegar('/admin/painel', { replace: true })
   }
 
   return (
@@ -36,18 +47,19 @@ export function LoginAdmin() {
       <form className="admin-login__card" onSubmit={aoEnviar}>
         <header className="admin-login__header">
           <h1>Admin</h1>
-          <p>Entre com o login e senha do seu cliente.</p>
+          <p>Entre com o e-mail e senha do seu cliente.</p>
         </header>
 
         <label className="admin-field">
-          <span>Login</span>
+          <span>E-mail</span>
           <input
-            type="text"
-            name="login"
-            autoComplete="username"
-            value={login}
-            onChange={(e) => setLogin(e.target.value)}
+            type="email"
+            name="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={enviando}
           />
         </label>
 
@@ -60,13 +72,18 @@ export function LoginAdmin() {
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required
+            disabled={enviando}
           />
         </label>
 
         {erro && <p className="admin-login__erro" role="alert">{erro}</p>}
 
-        <button type="submit" className="btn btn--primary admin-login__submit">
-          Entrar
+        <button
+          type="submit"
+          className="btn btn--primary admin-login__submit"
+          disabled={enviando}
+        >
+          {enviando ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
     </div>

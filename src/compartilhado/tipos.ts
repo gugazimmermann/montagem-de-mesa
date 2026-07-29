@@ -47,8 +47,7 @@ export interface Categoria {
 export interface Cliente {
   id: string
   slug: string
-  login: string
-  senha: string
+  email: string
   nome: string
   logo: string
 }
@@ -61,6 +60,6 @@ export interface DadosCliente {
 }
 
 export interface Credenciais {
-  login: string
+  email: string
   senha: string
 }

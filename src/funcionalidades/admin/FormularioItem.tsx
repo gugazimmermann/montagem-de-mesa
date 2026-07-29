@@ -1,12 +1,14 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import type { DadosCliente, ItemMesa, PadraoTecido } from '../../compartilhado/tipos'
+import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import {
+  atualizarItem,
   carregarDadosCliente,
-  obterSessao,
-  salvarDadosCliente,
+  criarItem,
   slugifyCategoria,
 } from '../../dados/repositorioClientes'
+import { useAuth } from '../autenticacao'
 import './PainelAdmin.css'
 import './LoginAdmin.css'
 import './EditarCategoria.css'
@@ -119,20 +121,53 @@ function montarItem(
 export function FormularioItem() {
   const { categoriaId, itemId } = useParams<{ categoriaId: string; itemId?: string }>()
   const navegar = useNavigate()
-  const clienteId = obterSessao()!
+  const { cliente } = useAuth()
+  const clienteId = cliente!.id
   const ehNovo = !itemId
   const ehToalha = categoriaId === 'toalha'
 
-  const [dados] = useState<DadosCliente>(() => carregarDadosCliente(clienteId)!)
-  const categoria = dados.categorias.find((c) => c.id === categoriaId)
-  const itemExistente = itemId ? dados.itens.find((i) => i.id === itemId) : undefined
-
-  const [formItem, setFormItem] = useState<FormItem>(() =>
-    itemExistente ? itemParaForm(itemExistente) : formItemVazio,
-  )
+  const [dados, setDados] = useState<DadosCliente | null>(null)
+  const [formItem, setFormItem] = useState<FormItem>(formItemVazio)
   const [erro, setErro] = useState<string | null>(null)
+  const [carregando, setCarregando] = useState(true)
+  const [enviando, setEnviando] = useState(false)
 
-  if (!categoriaId || !categoria) {
+  useEffect(() => {
+    let ativo = true
+    void carregarDadosCliente(clienteId)
+      .then((d) => {
+        if (!ativo || !d) return
+        setDados(d)
+        const existente = itemId ? d.itens.find((i) => i.id === itemId) : undefined
+        if (existente) setFormItem(itemParaForm(existente))
+      })
+      .catch(() => {
+        if (ativo) setErro('Não foi possível carregar o item.')
+      })
+      .finally(() => {
+        if (ativo) setCarregando(false)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [clienteId, itemId])
+
+  if (carregando) {
+    return (
+      <div className="admin-painel">
+        <p className="admin-painel__alerta">Carregando…</p>
+      </div>
+    )
+  }
+
+  const categoria = dados?.categorias.find((c) => c.id === categoriaId)
+  const itemExistente = itemId ? dados?.itens.find((i) => i.id === itemId) : undefined
+
+  if (!categoriaId || !categoria || !dados) {
+    return <Navigate to="/admin/painel" replace />
+  }
+
+  if (ehCategoriaFixa(categoriaId)) {
     return <Navigate to="/admin/painel" replace />
   }
 
@@ -142,15 +177,12 @@ export function FormularioItem() {
 
   const voltarPara = `/admin/painel/categorias/${categoriaId}`
 
-  function salvarItem(evento: FormEvent) {
+  async function salvarItem(evento: FormEvent) {
     evento.preventDefault()
     setErro(null)
 
-    const dadosAtuais = carregarDadosCliente(clienteId)!
-    const idsUsados = new Set(dadosAtuais.itens.map((i) => i.id))
-    const itemAnterior = itemId
-      ? dadosAtuais.itens.find((i) => i.id === itemId)
-      : undefined
+    const idsUsados = new Set(dados!.itens.map((i) => i.id))
+    const itemAnterior = itemId ? dados!.itens.find((i) => i.id === itemId) : undefined
 
     const resultado = montarItem(
       formItem,
@@ -164,12 +196,19 @@ export function FormularioItem() {
       return
     }
 
-    const itens = itemId
-      ? dadosAtuais.itens.map((i) => (i.id === itemId ? resultado : i))
-      : [...dadosAtuais.itens, resultado]
-
-    salvarDadosCliente(clienteId, { ...dadosAtuais, itens })
-    navegar(voltarPara)
+    setEnviando(true)
+    try {
+      if (itemId) {
+        await atualizarItem(clienteId, resultado)
+      } else {
+        await criarItem(clienteId, resultado)
+      }
+      navegar(voltarPara)
+    } catch {
+      setErro('Não foi possível salvar o item.')
+    } finally {
+      setEnviando(false)
+    }
   }
 
   function aoEscolherImagem(evento: ChangeEvent<HTMLInputElement>) {
@@ -209,7 +248,7 @@ export function FormularioItem() {
       )}
 
       <section className="admin-painel__secao">
-        <form className="admin-painel__form" onSubmit={salvarItem}>
+        <form className="admin-painel__form" onSubmit={(e) => void salvarItem(e)}>
           <label className="admin-field">
             <span>Nome</span>
             <input
@@ -217,6 +256,7 @@ export function FormularioItem() {
               value={formItem.nome}
               onChange={(e) => setFormItem((f) => ({ ...f, nome: e.target.value }))}
               required
+              disabled={enviando}
             />
           </label>
 
@@ -226,6 +266,7 @@ export function FormularioItem() {
               rows={2}
               value={formItem.descricao}
               onChange={(e) => setFormItem((f) => ({ ...f, descricao: e.target.value }))}
+              disabled={enviando}
             />
           </label>
 
@@ -236,6 +277,7 @@ export function FormularioItem() {
                 type="color"
                 value={formItem.corPrimaria}
                 onChange={(e) => setFormItem((f) => ({ ...f, corPrimaria: e.target.value }))}
+                disabled={enviando}
               />
             </label>
           )}
@@ -249,6 +291,7 @@ export function FormularioItem() {
                 step="0.1"
                 value={formItem.largura}
                 onChange={(e) => setFormItem((f) => ({ ...f, largura: e.target.value }))}
+                disabled={enviando}
               />
             </label>
             <label className="admin-field">
@@ -259,6 +302,7 @@ export function FormularioItem() {
                 step="0.1"
                 value={formItem.comprimento}
                 onChange={(e) => setFormItem((f) => ({ ...f, comprimento: e.target.value }))}
+                disabled={enviando}
               />
             </label>
           </div>
@@ -270,6 +314,7 @@ export function FormularioItem() {
                 <select
                   value={formItem.padrao}
                   onChange={(e) => setFormItem((f) => ({ ...f, padrao: e.target.value }))}
+                  disabled={enviando}
                 >
                   <option value="">Nenhum</option>
                   {PADROES.map((p) => (
@@ -291,6 +336,7 @@ export function FormularioItem() {
                       : '/imgs/...'
                   }
                   onChange={(e) => setFormItem((f) => ({ ...f, imagem: e.target.value }))}
+                  disabled={enviando}
                 />
               </label>
             </>
@@ -298,7 +344,12 @@ export function FormularioItem() {
 
           <label className="admin-field">
             <span>{ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}</span>
-            <input type="file" accept="image/*" onChange={aoEscolherImagem} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={aoEscolherImagem}
+              disabled={enviando}
+            />
           </label>
 
           {formItem.imagem && (
@@ -308,8 +359,8 @@ export function FormularioItem() {
           )}
 
           <div className="admin-painel__form-acoes">
-            <button type="submit" className="btn btn--primary">
-              {ehNovo ? 'Criar item' : 'Salvar item'}
+            <button type="submit" className="btn btn--primary" disabled={enviando}>
+              {enviando ? 'Salvando…' : ehNovo ? 'Criar item' : 'Salvar item'}
             </button>
             <Link className="btn btn--ghost" to={voltarPara}>
               Cancelar

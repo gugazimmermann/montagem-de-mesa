@@ -1,0 +1,333 @@
+{
+  "categoria": {
+    "id": "toalha",
+    "rotulo": "Toalhas",
+    "descricao": "Toalhas de mesa que cobrem a superfície (catálogo fixo para todos os clientes)"
+  },
+  "itens": [
+    {
+      "id": "toalha-branco-linho",
+      "nome": "Branco linho",
+      "categoria": "toalha",
+      "padrao": "linen",
+      "cores": {
+        "primaria": "#f7f3ec",
+        "secundaria": "#ebe4d8",
+        "destaque": "#d9d0c2"
+      },
+      "descricao": "Linho branco natural"
+    },
+    {
+      "id": "toalha-marfim-classico",
+      "nome": "Marfim clássico",
+      "categoria": "toalha",
+      "padrao": "solid",
+      "cores": {
+        "primaria": "#f3ead8",
+        "secundaria": "#e8dcc4",
+        "destaque": "#d4c4a8"
+      },
+      "descricao": "Tom creme elegante"
+    },
+    {
+      "id": "toalha-azul-marinho",
+      "nome": "Azul marinho",
+      "categoria": "toalha",
+      "padrao": "solid",
+      "cores": {
+        "primaria": "#1a3358",
+        "secundaria": "#274870",
+        "destaque": "#0f1f36"
+      },
+      "descricao": "Azul profundo formal"
+    },
+    {
+      "id": "toalha-verde-eucalipto",
+      "nome": "Verde eucalipto",
+      "categoria": "toalha",
+      "padrao": "linen",
+      "cores": {
+        "primaria": "#8fa88a",
+        "secundaria": "#a8c0a2",
+        "destaque": "#6e8a68"
+      },
+      "descricao": "Verde suave botânico"
+    },
+    {
+      "id": "toalha-bordo-formal",
+      "nome": "Bordô formal",
+      "categoria": "toalha",
+      "padrao": "damask",
+      "cores": {
+        "primaria": "#6b2d3a",
+        "secundaria": "#8a3d4a",
+        "destaque": "#4a1c28"
+      },
+      "descricao": "Bordô com motivação sutil"
+    },
+    {
+      "id": "toalha-listras-preto-branco",
+      "nome": "Listras preto e branco",
+      "categoria": "toalha",
+      "padrao": "stripes",
+      "cores": {
+        "primaria": "#f8f6f2",
+        "secundaria": "#2a2a2a",
+        "destaque": "#e8e4de"
+      },
+      "descricao": "Listras clássicas"
+    },
+    {
+      "id": "toalha-xadrez-vichy",
+      "nome": "Xadrez vichy vermelho",
+      "categoria": "toalha",
+      "padrao": "gingham",
+      "cores": {
+        "primaria": "#f8f4f0",
+        "secundaria": "#c43c3c",
+        "destaque": "#e8d8d0"
+      },
+      "descricao": "Xadrez campestre"
+    },
+    {
+      "id": "toalha-rosa-poa",
+      "nome": "Rosa com poás",
+      "categoria": "toalha",
+      "padrao": "dots",
+      "cores": {
+        "primaria": "#f8e8ec",
+        "secundaria": "#e8a0b0",
+        "destaque": "#f0d0d8"
+      },
+      "descricao": "Rosa claro com poás"
+    },
+    {
+      "id": "toalha-dourado-festa",
+      "nome": "Dourado festa",
+      "categoria": "toalha",
+      "padrao": "border",
+      "cores": {
+        "primaria": "#f5ecd4",
+        "secundaria": "#c9a227",
+        "destaque": "#e8d8a8"
+      },
+      "descricao": "Dourado com barra decorativa"
+    },
+    {
+      "id": "toalha-cinza-grafite",
+      "nome": "Cinza grafite",
+      "categoria": "toalha",
+      "padrao": "herringbone",
+      "cores": {
+        "primaria": "#5a5e64",
+        "secundaria": "#6e747c",
+        "destaque": "#3e4248"
+      },
+      "descricao": "Cinza com textura espinha"
+    },
+    {
+      "id": "toalha-bege-natural",
+      "nome": "Bege natural",
+      "categoria": "toalha",
+      "padrao": "linen",
+      "cores": {
+        "primaria": "#d8c8b0",
+        "secundaria": "#e8dcc8",
+        "destaque": "#b8a488"
+      },
+      "descricao": "Bege de algodão cru"
+    },
+    {
+      "id": "toalha-azul-celeste",
+      "nome": "Azul celeste",
+      "categoria": "toalha",
+      "padrao": "stripes",
+      "cores": {
+        "primaria": "#d8eaf4",
+        "secundaria": "#7ab0d0",
+        "destaque": "#c0dcec"
+      },
+      "descricao": "Listras em azul claro"
+    },
+    {
+      "id": "toalha-terracota",
+      "nome": "Terracota",
+      "categoria": "toalha",
+      "padrao": "solid",
+      "cores": {
+        "primaria": "#c4785a",
+        "secundaria": "#d89070",
+        "destaque": "#a86048"
+      },
+      "descricao": "Tom terracota acolhedor"
+    },
+    {
+      "id": "toalha-lavanda-suave",
+      "nome": "Lavanda suave",
+      "categoria": "toalha",
+      "padrao": "solid",
+      "cores": {
+        "primaria": "#d4c8e8",
+        "secundaria": "#e4dcf0",
+        "destaque": "#b8a8d0"
+      },
+      "descricao": "Lavanda delicada"
+    },
+    {
+      "id": "toalha-preto-elegante",
+      "nome": "Preto elegante",
+      "categoria": "toalha",
+      "padrao": "solid",
+      "cores": {
+        "primaria": "#1a1a1a",
+        "secundaria": "#2e2e2e",
+        "destaque": "#0d0d0d"
+      },
+      "descricao": "Preto sofisticado para eventos formais"
+    },
+    {
+      "id": "toalha-verde-oliva",
+      "nome": "Verde oliva",
+      "categoria": "toalha",
+      "padrao": "linen",
+      "cores": {
+        "primaria": "#7a8060",
+        "secundaria": "#949a78",
+        "destaque": "#606848"
+      },
+      "descricao": "Verde oliva em linho"
+    },
+    {
+      "id": "toalha-coral-suave",
+      "nome": "Coral suave",
+      "categoria": "toalha",
+      "padrao": "dots",
+      "cores": {
+        "primaria": "#f8d0c8",
+        "secundaria": "#e8a898",
+        "destaque": "#f0e0d8"
+      },
+      "descricao": "Coral claro com poás"
+    },
+    {
+      "id": "toalha-mostarda",
+      "nome": "Mostarda",
+      "categoria": "toalha",
+      "padrao": "solid",
+      "cores": {
+        "primaria": "#c9a030",
+        "secundaria": "#d8b848",
+        "destaque": "#a88020"
+      },
+      "descricao": "Mostarda vibrante"
+    },
+    {
+      "id": "toalha-prata-festa",
+      "nome": "Prata festa",
+      "categoria": "toalha",
+      "padrao": "border",
+      "cores": {
+        "primaria": "#e8e8ec",
+        "secundaria": "#b0b0b8",
+        "destaque": "#d0d0d8"
+      },
+      "descricao": "Prata com barra decorativa"
+    },
+    {
+      "id": "toalha-xadrez-azul",
+      "nome": "Xadrez azul",
+      "categoria": "toalha",
+      "padrao": "gingham",
+      "cores": {
+        "primaria": "#d0e0f0",
+        "secundaria": "#5080b0",
+        "destaque": "#c0d4e8"
+      },
+      "descricao": "Xadrez vichy em tons de azul"
+    },
+    {
+      "id": "toalha-listras-verde",
+      "nome": "Listras verde",
+      "categoria": "toalha",
+      "padrao": "stripes",
+      "cores": {
+        "primaria": "#e0ece0",
+        "secundaria": "#609060",
+        "destaque": "#c8dcc8"
+      },
+      "descricao": "Listras em verde suave"
+    },
+    {
+      "id": "toalha-champagne",
+      "nome": "Champagne",
+      "categoria": "toalha",
+      "padrao": "damask",
+      "cores": {
+        "primaria": "#f0e8d8",
+        "secundaria": "#d8c8a8",
+        "destaque": "#e8dcc0"
+      },
+      "descricao": "Champagne com damasco sutil"
+    },
+    {
+      "id": "toalha-caramelo",
+      "nome": "Caramelo",
+      "categoria": "toalha",
+      "padrao": "linen",
+      "cores": {
+        "primaria": "#c8a880",
+        "secundaria": "#d8bc98",
+        "destaque": "#a88860"
+      },
+      "descricao": "Caramelo em textura de linho"
+    },
+    {
+      "id": "toalha-azul-petroleo",
+      "nome": "Azul petróleo",
+      "categoria": "toalha",
+      "padrao": "herringbone",
+      "cores": {
+        "primaria": "#2a4858",
+        "secundaria": "#3a6070",
+        "destaque": "#1a3848"
+      },
+      "descricao": "Azul petróleo com espinha de peixe"
+    },
+    {
+      "id": "toalha-pessego",
+      "nome": "Pêssego",
+      "categoria": "toalha",
+      "padrao": "solid",
+      "cores": {
+        "primaria": "#f0d8c8",
+        "secundaria": "#f8e8d8",
+        "destaque": "#e0c0a8"
+      },
+      "descricao": "Pêssego claro e delicado"
+    },
+    {
+      "id": "toalha-vinho-escuro",
+      "nome": "Vinho escuro",
+      "categoria": "toalha",
+      "padrao": "damask",
+      "cores": {
+        "primaria": "#4a2030",
+        "secundaria": "#603040",
+        "destaque": "#381820"
+      },
+      "descricao": "Vinho profundo com damasco"
+    },
+    {
+      "id": "toalha-branco-neve",
+      "nome": "Branco neve",
+      "categoria": "toalha",
+      "padrao": "solid",
+      "cores": {
+        "primaria": "#ffffff",
+        "secundaria": "#f4f4f4",
+        "destaque": "#e8e8e8"
+      },
+      "descricao": "Branco puro impecável"
+    }
+  ]
+}

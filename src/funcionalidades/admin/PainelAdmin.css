@@ -144,6 +144,33 @@
   font-size: 0.9em;
 }
 
+.admin-categorias__badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: var(--surface-elevated, rgba(0, 0, 0, 0.06));
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.admin-categorias__descricao-fixa {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.admin-categorias__aviso-fixa {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .admin-categorias__item p {
   margin: 0.35rem 0 0;
   font-size: 0.875rem;

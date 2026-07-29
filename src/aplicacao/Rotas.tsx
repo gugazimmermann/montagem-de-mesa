@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import {
-  EditarCategoria,
+  CategoriaPainel,
   FormularioCategoria,
   FormularioItem,
   LoginAdmin,
@@ -36,7 +36,7 @@ export function Rotas() {
         path="/admin/painel/categorias/:categoriaId"
         element={
           <RotaProtegida>
-            <EditarCategoria />
+            <CategoriaPainel />
           </RotaProtegida>
         }
       />
