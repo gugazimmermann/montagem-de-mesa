@@ -146,8 +146,9 @@
   height: 360px;
   z-index: 2;
   margin-right: 50px;
-  --preview-reference-cm: 46;
-  --preview-scale: 1;
+  /* Empurra o lugar à mesa para baixo, liberando espaço superior para a taça */
+  align-self: flex-end;
+  margin-bottom: 6%;
 }
 
 .table-preview__empty {
@@ -178,7 +179,7 @@
 
 .layer--sized {
   left: 50%;
-  top: 50%;
+  top: 66%;
   width: calc(var(--item-largura) / var(--preview-reference-cm) * 100% * var(--preview-scale));
   height: calc(var(--item-comprimento) / var(--preview-reference-cm) * 100% * var(--preview-scale));
   transform: translate(-50%, -50%);
@@ -281,8 +282,8 @@
 
 /* —— Taça —— */
 .taca {
-  left: 81%;
-  top: -20%;
+  left: 75%;
+  top: -15%;
   z-index: 6;
   background: none;
   overflow: visible;

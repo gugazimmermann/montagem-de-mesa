@@ -32,8 +32,17 @@ function ehCategoriaMedida(categoria: string): categoria is CategoriaMedida {
   return categoria in PADROES_CATEGORIA
 }
 
-/** Referência visual: maior peça (comprimento) mapeada à área do lugar */
-export const REFERENCIA_PREVIEW_CM = 46
+/** Mesa 75×56,25 cm (4∶3); referência = lado do lugar (75 × 360/520) */
+export const REFERENCIA_PREVIEW_CM = (75 * 9) / 13
+
+/** Zoom visual uniforme das peças no lugar à mesa */
+export const PREVIEW_SCALE = 1.12
+
+/** Leve aumento só nos pratos (raso, fundo, sobremesa) */
+export const PREVIEW_SCALE_PRATO = PREVIEW_SCALE * 1.1
+
+/** Leve aumento só nas taças */
+export const PREVIEW_SCALE_TACA = PREVIEW_SCALE * 1.155
 
 export function inferirDimensoes(nome: string, categoria: string): DimensoesItem {
   const matchRet = nome.match(/(\d+)\s*x\s*(\d+)\s*cm/i)

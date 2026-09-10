@@ -4,6 +4,10 @@ import { obterItemPorId } from '../../../catalogo'
 import {
   estiloCamadaDimensionada,
   itemRedondo,
+  PREVIEW_SCALE,
+  PREVIEW_SCALE_PRATO,
+  PREVIEW_SCALE_TACA,
+  REFERENCIA_PREVIEW_CM,
   temDimensoes,
 } from '../../../../compartilhado/utils/dimensoes'
 import './PreVisualizacaoMesa.css'
@@ -76,7 +80,13 @@ function CamadaPrato({
   return (
     <div
       className={`layer layer--sized plate ${classeVariante} ${comImagem ? 'plate--image' : 'layer--round'}`}
-      style={{ ...estiloDimensionado(item), ...(!comImagem ? varsCores(item) : {}) }}
+      style={
+        {
+          ...estiloDimensionado(item),
+          '--preview-scale': PREVIEW_SCALE_PRATO,
+          ...(!comImagem ? varsCores(item) : {}),
+        } as CSSProperties
+      }
       aria-label={item.nome}
     >
       {comImagem ? (
@@ -108,7 +118,12 @@ function CamadaTaca({ item }: { item: ItemMesa }) {
   return (
     <div
       className="layer layer--sized taca"
-      style={estiloDimensionado(item)}
+      style={
+        {
+          ...estiloDimensionado(item),
+          '--preview-scale': PREVIEW_SCALE_TACA,
+        } as CSSProperties
+      }
       aria-label={item.nome}
     >
       {item.imagem && <img src={item.imagem} alt="" draggable={false} />}
@@ -148,7 +163,15 @@ export function PreVisualizacaoMesa({ configuracao, itens }: PropsPreVisualizaca
       <div className={`table-surface ${toalha ? 'table-surface--cloth' : ''}`}>
         {toalha && <CamadaToalha item={toalha} />}
         <div className="table-edge" />
-        <div className="place-setting">
+        <div
+          className="place-setting"
+          style={
+            {
+              '--preview-reference-cm': REFERENCIA_PREVIEW_CM,
+              '--preview-scale': PREVIEW_SCALE,
+            } as CSSProperties
+          }
+        >
           {sousplat && <CamadaSousplat item={sousplat} />}
           {pratoRaso && <CamadaPrato item={pratoRaso} variante="raso" />}
           {pratoFundo && <CamadaPrato item={pratoFundo} variante="fundo" />}
