@@ -9,6 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "seed:supabase": "node scripts/seed-supabase.mjs",
+    "upload:imagens": "node scripts/upload-imagens-storage.mjs",
+    "upload:logo": "node scripts/upload-logo-storage.mjs",
     "db:migrate": "node scripts/apply-migration.mjs"
   },
   "dependencies": {

@@ -23,7 +23,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .table-surface--cloth .table-edge {
@@ -145,8 +145,9 @@
   width: 360px;
   height: 360px;
   z-index: 2;
-  --preview-reference-cm: 48;
-  --preview-scale: 0.95;
+  margin-right: 50px;
+  --preview-reference-cm: 46;
+  --preview-scale: 1;
 }
 
 .table-preview__empty {
@@ -200,44 +201,17 @@
 
 .sousplat--image {
   background: none;
-  overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  overflow: visible;
+  box-shadow: none;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
 }
 
 .sousplat--image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-  transform: scale(1.08);
-}
-
-/* —— Lugar americano —— */
-.lugar-americano {
-  z-index: 1;
-  background: none;
-  overflow: hidden;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
-}
-
-.lugar-americano--rect {
-  border-radius: 20px;
-}
-
-.lugar-americano img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-  transform: scale(1.04);
-}
-
-.lugar-americano--rect img {
   object-fit: contain;
-  transform: scale(1.04);
-  background: transparent;
+  object-position: center;
+  display: block;
 }
 
 /* —— Pratos —— */
@@ -261,6 +235,10 @@
   z-index: 3;
 }
 
+.plate--sobremesa {
+  z-index: 4;
+}
+
 .plate__inner {
   width: 55%;
   height: 55%;
@@ -271,17 +249,54 @@
 
 .plate--image {
   background: none;
-  overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  overflow: visible;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.3));
 }
 
 .plate--image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   display: block;
-  transform: scale(1.06);
+}
+
+/* —— Porta-guardanapo —— */
+.porta-guardanapo {
+  z-index: 5;
+  background: none;
+  overflow: visible;
+  box-shadow: none;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+}
+
+.porta-guardanapo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+
+/* —— Taça —— */
+.taca {
+  left: 81%;
+  top: -20%;
+  z-index: 6;
+  background: none;
+  overflow: visible;
+  transform: none;
+  box-shadow: none;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+}
+
+.taca img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  display: block;
 }
 
 @keyframes layer-in {
@@ -302,6 +317,7 @@
   .place-setting {
     width: 280px;
     height: 280px;
+    margin-right: 40px;
   }
 }
 

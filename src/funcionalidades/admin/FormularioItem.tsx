@@ -333,7 +333,7 @@ export function FormularioItem() {
                   placeholder={
                     formItem.imagem.startsWith('data:')
                       ? 'Imagem carregada do computador'
-                      : '/imgs/...'
+                      : 'URL do Storage...'
                   }
                   onChange={(e) => setFormItem((f) => ({ ...f, imagem: e.target.value }))}
                   disabled={enviando}

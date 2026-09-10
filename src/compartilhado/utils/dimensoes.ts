@@ -1,20 +1,29 @@
 import type { CSSProperties } from 'react'
 import type { DimensoesItem, ItemMesa } from '../tipos'
 
-type CategoriaMedida = 'sousplat' | 'lugarAmericano' | 'pratoRaso' | 'pratoFundo'
+type CategoriaMedida =
+  | 'sousplat'
+  | 'pratoRaso'
+  | 'pratoFundo'
+  | 'pratoSobremesa'
+  | 'portaGuardanapo'
+  | 'taca'
 
 const PADROES_CATEGORIA: Record<CategoriaMedida, DimensoesItem> = {
-  sousplat: { largura: 33, comprimento: 33 },
-  lugarAmericano: { largura: 35, comprimento: 48 },
-  pratoRaso: { largura: 28, comprimento: 28 },
-  pratoFundo: { largura: 22, comprimento: 22 },
+  sousplat: { largura: 36, comprimento: 36 },
+  pratoRaso: { largura: 27, comprimento: 27 },
+  pratoFundo: { largura: 27, comprimento: 27 },
+  pratoSobremesa: { largura: 20, comprimento: 20 },
+  portaGuardanapo: { largura: 8, comprimento: 8 },
+  taca: { largura: 12, comprimento: 22 },
 }
 
 const PADROES_REDONDO: Partial<Record<CategoriaMedida, number>> = {
-  sousplat: 33,
-  lugarAmericano: 38,
-  pratoRaso: 28,
-  pratoFundo: 22,
+  sousplat: 36,
+  pratoRaso: 27,
+  pratoFundo: 27,
+  pratoSobremesa: 20,
+  portaGuardanapo: 8,
 }
 
 const FALLBACK_MEDIDA: DimensoesItem = { largura: 30, comprimento: 30 }
@@ -24,7 +33,7 @@ function ehCategoriaMedida(categoria: string): categoria is CategoriaMedida {
 }
 
 /** Referência visual: maior peça (comprimento) mapeada à área do lugar */
-export const REFERENCIA_PREVIEW_CM = 48
+export const REFERENCIA_PREVIEW_CM = 46
 
 export function inferirDimensoes(nome: string, categoria: string): DimensoesItem {
   const matchRet = nome.match(/(\d+)\s*x\s*(\d+)\s*cm/i)
@@ -52,16 +61,12 @@ export function inferirDimensoes(nome: string, categoria: string): DimensoesItem
     return { largura: diametro, comprimento: diametro }
   }
 
-  if (categoria === 'lugarAmericano' && /retangular/i.test(nome)) {
-    return { largura: 35, comprimento: 45 }
+  if (/base mdf|sousplat mdf/i.test(nome)) {
+    return { largura: 30, comprimento: 30 }
   }
 
-  if (/base mdf/i.test(nome)) {
-    return { largura: 35, comprimento: 35 }
-  }
-
-  if (/mini sousplat/i.test(nome)) {
-    return { largura: 25, comprimento: 25 }
+  if (/mini sousplat|petit/i.test(nome)) {
+    return { largura: 26, comprimento: 26 }
   }
 
   return { ...padraoCategoria }

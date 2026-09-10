@@ -103,7 +103,7 @@ async function upsertCliente(authUserId) {
       slug: 'raffiner',
       email,
       nome: 'Raffiner',
-      logo: '/logo/logo_h.webp',
+      logo: `${url.replace(/\/$/, '')}/storage/v1/object/public/logos/${CLIENTE_ID}.webp`,
     },
     { onConflict: 'id' },
   )

@@ -42,31 +42,16 @@ function CamadaToalha({ item }: { item: ItemMesa }) {
 function CamadaSousplat({ item }: { item: ItemMesa }) {
   if (!temDimensoes(item)) return null
 
-  const redondo = itemRedondo(item)
+  const comImagem = Boolean(item.imagem)
+  const redondo = !comImagem && itemRedondo(item)
 
   return (
     <div
-      className={`layer layer--sized sousplat ${redondo ? 'layer--round' : ''} ${item.imagem ? 'sousplat--image' : ''}`}
-      style={{ ...estiloDimensionado(item), ...(!item.imagem ? varsCores(item) : {}) }}
+      className={`layer layer--sized sousplat ${redondo ? 'layer--round' : ''} ${comImagem ? 'sousplat--image' : ''}`}
+      style={{ ...estiloDimensionado(item), ...(!comImagem ? varsCores(item) : {}) }}
       aria-label={item.nome}
     >
-      {item.imagem && <img src={item.imagem} alt="" draggable={false} />}
-    </div>
-  )
-}
-
-function CamadaLugarAmericano({ item }: { item: ItemMesa }) {
-  if (!temDimensoes(item)) return null
-
-  const redondo = itemRedondo(item)
-
-  return (
-    <div
-      className={`layer layer--sized lugar-americano ${redondo ? 'layer--round' : 'lugar-americano--rect'}`}
-      style={estiloDimensionado(item)}
-      aria-label={item.nome}
-    >
-      {item.imagem && <img src={item.imagem} alt="" draggable={false} />}
+      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
     </div>
   )
 }
@@ -76,19 +61,25 @@ function CamadaPrato({
   variante,
 }: {
   item: ItemMesa
-  variante: 'raso' | 'fundo'
+  variante: 'raso' | 'fundo' | 'sobremesa'
 }) {
   if (!temDimensoes(item)) return null
 
-  const classeVariante = variante === 'fundo' ? 'plate--fundo' : 'plate--raso'
+  const comImagem = Boolean(item.imagem)
+  const classeVariante =
+    variante === 'fundo'
+      ? 'plate--fundo'
+      : variante === 'sobremesa'
+        ? 'plate--sobremesa'
+        : 'plate--raso'
 
   return (
     <div
-      className={`layer layer--sized layer--round plate ${classeVariante} ${item.imagem ? 'plate--image' : ''}`}
-      style={{ ...estiloDimensionado(item), ...(!item.imagem ? varsCores(item) : {}) }}
+      className={`layer layer--sized plate ${classeVariante} ${comImagem ? 'plate--image' : 'layer--round'}`}
+      style={{ ...estiloDimensionado(item), ...(!comImagem ? varsCores(item) : {}) }}
       aria-label={item.nome}
     >
-      {item.imagem ? (
+      {comImagem ? (
         <img src={item.imagem} alt="" draggable={false} />
       ) : (
         <div className="plate__inner" />
@@ -97,21 +88,56 @@ function CamadaPrato({
   )
 }
 
+function CamadaPortaGuardanapo({ item }: { item: ItemMesa }) {
+  if (!temDimensoes(item)) return null
+
+  return (
+    <div
+      className="layer layer--sized porta-guardanapo"
+      style={estiloDimensionado(item)}
+      aria-label={item.nome}
+    >
+      {item.imagem && <img src={item.imagem} alt="" draggable={false} />}
+    </div>
+  )
+}
+
+function CamadaTaca({ item }: { item: ItemMesa }) {
+  if (!temDimensoes(item)) return null
+
+  return (
+    <div
+      className="layer layer--sized taca"
+      style={estiloDimensionado(item)}
+      aria-label={item.nome}
+    >
+      {item.imagem && <img src={item.imagem} alt="" draggable={false} />}
+    </div>
+  )
+}
+
 export function PreVisualizacaoMesa({ configuracao, itens }: PropsPreVisualizacaoMesa) {
   const toalha = obterItemPorId(itens, configuracao.toalha ?? null)
-  const lugarAmericano = obterItemPorId(itens, configuracao.lugarAmericano ?? null)
   const sousplat = obterItemPorId(itens, configuracao.sousplat ?? null)
   const pratoRaso = obterItemPorId(itens, configuracao.pratoRaso ?? null)
   const pratoFundo = obterItemPorId(itens, configuracao.pratoFundo ?? null)
+  const pratoSobremesa = obterItemPorId(itens, configuracao.pratoSobremesa ?? null)
+  const portaGuardanapo = obterItemPorId(itens, configuracao.portaGuardanapo ?? null)
+  const taca = obterItemPorId(itens, configuracao.taca ?? null)
 
-  const camadaBase = lugarAmericano ?? sousplat
-
-  const resumo = [toalha, lugarAmericano, sousplat, pratoRaso, pratoFundo]
+  const resumo = [toalha, sousplat, pratoRaso, pratoFundo, pratoSobremesa, portaGuardanapo, taca]
     .filter(Boolean)
     .map((item) => item!.nome)
     .join(', ')
 
-  const vazia = !toalha && !lugarAmericano && !sousplat && !pratoRaso && !pratoFundo
+  const vazia =
+    !toalha &&
+    !sousplat &&
+    !pratoRaso &&
+    !pratoFundo &&
+    !pratoSobremesa &&
+    !portaGuardanapo &&
+    !taca
 
   return (
     <div
@@ -123,10 +149,12 @@ export function PreVisualizacaoMesa({ configuracao, itens }: PropsPreVisualizaca
         {toalha && <CamadaToalha item={toalha} />}
         <div className="table-edge" />
         <div className="place-setting">
-          {camadaBase?.categoria === 'lugarAmericano' && <CamadaLugarAmericano item={camadaBase} />}
-          {camadaBase?.categoria === 'sousplat' && <CamadaSousplat item={camadaBase} />}
+          {sousplat && <CamadaSousplat item={sousplat} />}
           {pratoRaso && <CamadaPrato item={pratoRaso} variante="raso" />}
           {pratoFundo && <CamadaPrato item={pratoFundo} variante="fundo" />}
+          {pratoSobremesa && <CamadaPrato item={pratoSobremesa} variante="sobremesa" />}
+          {portaGuardanapo && <CamadaPortaGuardanapo item={portaGuardanapo} />}
+          {taca && <CamadaTaca item={taca} />}
         </div>
         {vazia && <p className="table-preview__empty">Selecione itens para montar a mesa</p>}
       </div>

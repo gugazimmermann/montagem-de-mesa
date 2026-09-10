@@ -31,21 +31,7 @@ export default function App({ dados }: PropsApp) {
   }
 
   function selecionar(categoria: IdCategoria, idItem: string | null) {
-    setConfiguracao((anterior) => {
-      const proxima: ConfiguracaoMesa = { ...anterior, [categoria]: idItem }
-
-      // Lugar americano e sousplat são mutuamente exclusivos (ids fixos)
-      if (idItem) {
-        if (categoria === 'lugarAmericano' && 'sousplat' in proxima) {
-          proxima.sousplat = null
-        }
-        if (categoria === 'sousplat' && 'lugarAmericano' in proxima) {
-          proxima.lugarAmericano = null
-        }
-      }
-
-      return proxima
-    })
+    setConfiguracao((anterior) => ({ ...anterior, [categoria]: idItem }))
   }
 
   function limparTudo() {
@@ -66,8 +52,8 @@ export default function App({ dados }: PropsApp) {
           {logo && <img className="app__logo" src={logo} alt={nome} />}
           <h1>Montagem de Mesa</h1>
           <p className="app__subtitle">
-            Monte seu lugar à mesa escolhendo sousplats, pratos, taças, talheres e
-            decorações. A mesa é atualizada conforme você seleciona cada peça.
+            Monte seu lugar à mesa escolhendo sousplats, pratos, porta-guardanapos e
+            taças. A mesa é atualizada conforme você seleciona cada peça.
           </p>
         </div>
         <div className="app__actions">

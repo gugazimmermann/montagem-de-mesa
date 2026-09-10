@@ -8,7 +8,7 @@
  */
 import pg from 'pg'
 import { existsSync, readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -47,10 +47,17 @@ if (!dbUrl || !dbUrl.startsWith('postgresql://')) {
   process.exit(1)
 }
 
-const sql = readFileSync(
-  join(root, 'supabase/migrations/20260729120000_auth_catalogo.sql'),
-  'utf8',
-)
+const migrationArg = process.argv[2]
+const migrationPath = migrationArg
+  ? join(root, migrationArg)
+  : join(root, 'supabase/migrations/20260729120000_auth_catalogo.sql')
+
+if (!existsSync(migrationPath)) {
+  console.error('Migration não encontrada:', migrationPath)
+  process.exit(1)
+}
+
+const sql = readFileSync(migrationPath, 'utf8')
 
 const client = new pg.Client({
   connectionString: dbUrl,
@@ -60,7 +67,7 @@ const client = new pg.Client({
 try {
   await client.connect()
   await client.query(sql)
-  console.log('Migration aplicada.')
+  console.log('Migration aplicada:', relative(root, migrationPath))
 } catch (err) {
   console.error('Migration falhou:', err.message)
   process.exit(1)

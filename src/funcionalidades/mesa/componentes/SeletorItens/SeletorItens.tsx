@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { Categoria, ConfiguracaoMesa, IdCategoria, ItemMesa } from '../../../../compartilhado/tipos'
 import { obterItensPorCategoria } from '../../../catalogo'
-import { formatarDimensoes, temDimensoes } from '../../../../compartilhado/utils/dimensoes'
 import './SeletorItens.css'
 
 interface PropsSeletorItens {
@@ -108,9 +107,6 @@ export function SeletorItens({
                     <AmostraItem item={item} />
                     <span className="item-card__body">
                       <span className="item-card__name">{item.nome}</span>
-                      {temDimensoes(item) && (
-                        <span className="item-card__size">{formatarDimensoes(item)}</span>
-                      )}
                       {item.descricao && (
                         <span className="item-card__desc">{item.descricao}</span>
                       )}
