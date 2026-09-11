@@ -5,6 +5,7 @@ import type {
   ItemMesa,
   PadraoTecido,
 } from '../compartilhado/tipos'
+import { v4 as uuidv4 } from 'uuid'
 import { mesclarToalhasFixas } from './categoriasFixas'
 import { supabase } from './supabase'
 
@@ -69,17 +70,22 @@ function mapItem(row: ItemRow): ItemMesa {
   return item
 }
 
-export function slugify(texto: string): string {
+const SLUGS_RESERVADOS = new Set(['admin', 'entrar', 'cadastro', 'assets', 'c'])
+
+/** Slug URL: apenas a-z, 0-9, hífen e underscore. */
+export function gerarSlug(texto: string): string {
   return texto
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9_-]/g, '')
+    .replace(/-{2,}/g, '-')
+    .replace(/_{2,}/g, '_')
 }
 
-export function slugifyCategoria(rotulo: string): string {
-  return slugify(rotulo) || `categoria-${Date.now()}`
+export function ehSlugReservado(slug: string): boolean {
+  return SLUGS_RESERVADOS.has(slug)
 }
 
 export async function obterClientePorId(id: string): Promise<Cliente | null> {
@@ -127,21 +133,37 @@ async function garantirClienteParaUsuario(
   user: AuthUser,
 ): Promise<Cliente | null> {
   const existente = await obterClientePorAuthUserId(user.id)
-  if (existente) return existente
+  if (existente) {
+    const emailAuth = (user.email ?? '').trim().toLowerCase()
+    if (emailAuth && emailAuth !== existente.email) {
+      const { data: row, error } = await supabase
+        .from('clientes')
+        .update({
+          email: emailAuth,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existente.id)
+        .select('id, slug, email, nome, logo')
+        .single()
+
+      if (!error && row) return mapCliente(row)
+    }
+    return existente
+  }
 
   const meta = user.user_metadata ?? {}
   const email = (user.email ?? '').trim().toLowerCase()
   const nomeMeta = typeof meta.nome === 'string' ? meta.nome.trim() : ''
   const nome = nomeMeta || (email ? email.split('@')[0]! : '')
   const slugMeta = typeof meta.slug === 'string' ? meta.slug.trim() : ''
-  const slug = slugify(slugMeta || nome)
+  const slug = gerarSlug(slugMeta || nome)
 
   if (!nome || !slug || !email) return null
 
   const { data: row, error } = await supabase
     .from('clientes')
     .insert({
-      id: slug,
+      id: uuidv4(),
       auth_user_id: user.id,
       slug,
       email,
@@ -197,11 +219,16 @@ export async function cadastrar(dados: {
 }): Promise<Cliente> {
   const nome = dados.nome.trim()
   const email = dados.email.trim().toLowerCase()
-  const slug = slugify(nome)
+  const slug = gerarSlug(nome)
 
   if (!nome) throw new CadastroErro('Informe o nome do cliente.')
-  if (!slug) throw new CadastroErro('Informe um nome válido para gerar o identificador.')
   if (!email) throw new CadastroErro('Informe o e-mail.')
+  if (!slug || !/[a-z0-9]/.test(slug)) {
+    throw new CadastroErro('Informe um nome válido para gerar o endereço da montagem.')
+  }
+  if (ehSlugReservado(slug)) {
+    throw new CadastroErro('Este nome gera um endereço reservado. Escolha outro.')
+  }
   if (dados.senha.length < 6) {
     throw new CadastroErro('A senha deve ter pelo menos 6 caracteres.')
   }
@@ -212,7 +239,7 @@ export async function cadastrar(dados: {
   ])
 
   if (porSlug) {
-    throw new CadastroErro('Já existe um cliente com este nome. Escolha outro.')
+    throw new CadastroErro('Este endereço da montagem já está em uso.')
   }
   if (porEmail) {
     throw new CadastroErro('Já existe um cliente com este e-mail.')
@@ -253,6 +280,57 @@ export async function cadastrar(dados: {
   }
 
   return cliente
+}
+
+export async function solicitarRedefinicaoSenha(email: string): Promise<void> {
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    email.trim().toLowerCase(),
+    {
+      redirectTo: `${window.location.origin}/admin/redefinir-senha`,
+    },
+  )
+
+  if (error) {
+    const msg = error.message.toLowerCase()
+    if (
+      error.code === 'over_email_send_rate_limit' ||
+      msg.includes('rate limit')
+    ) {
+      throw new CadastroErro(
+        'Limite de e-mails do Supabase atingido. Aguarde alguns minutos e tente de novo.',
+      )
+    }
+    if (msg.includes('redirect') || msg.includes('not allowed')) {
+      throw new CadastroErro(
+        'URL de redirecionamento não autorizada. Inclua /admin/redefinir-senha nas Redirect URLs do Supabase.',
+      )
+    }
+    throw new CadastroErro(
+      'Não foi possível enviar o e-mail de redefinição. Tente novamente.',
+    )
+  }
+}
+
+export async function atualizarSenha(novaSenha: string): Promise<void> {
+  if (novaSenha.length < 6) {
+    throw new CadastroErro('A senha deve ter pelo menos 6 caracteres.')
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: novaSenha })
+  if (error) {
+    throw new CadastroErro('Não foi possível atualizar a senha. Tente novamente.')
+  }
+}
+
+/** Sessão Auth presente (ex.: após link de recovery), sem mapear cliente. */
+export function ouvirSessaoAuth(callback: (temSessao: boolean) => void): () => void {
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_evento, session) => {
+    callback(!!session)
+  })
+
+  return () => subscription.unsubscribe()
 }
 
 export async function sair(): Promise<void> {
@@ -322,20 +400,126 @@ export async function carregarDadosCliente(
   return mesclarToalhasFixas(dados)
 }
 
+/** True se outro cliente já usa este endereço da montagem. */
+export async function enderecoMontagemEmUso(
+  endereco: string,
+  clienteIdAtual?: string,
+): Promise<boolean> {
+  const slug = gerarSlug(endereco)
+  if (!slug) return false
+
+  const { data, error } = await supabase
+    .from('clientes')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) return false
+  if (clienteIdAtual && data.id === clienteIdAtual) return false
+  return true
+}
+
+export async function atualizarCadastro(
+  clienteId: string,
+  dados: { nome: string; slug: string; logo: string },
+): Promise<Cliente> {
+  const nome = dados.nome.trim()
+  const slug = gerarSlug(dados.slug.trim())
+  const logo = dados.logo.trim()
+
+  if (!nome) throw new CadastroErro('Informe o nome do cliente.')
+  if (!dados.slug.trim()) throw new CadastroErro('Informe o endereço da montagem.')
+  if (!slug || !/[a-z0-9]/.test(slug)) {
+    throw new CadastroErro('Informe um endereço da montagem válido.')
+  }
+  if (ehSlugReservado(slug)) {
+    throw new CadastroErro('Este endereço é reservado. Escolha outro.')
+  }
+
+  if (await enderecoMontagemEmUso(slug, clienteId)) {
+    throw new CadastroErro('Este endereço da montagem já está em uso.')
+  }
+
+  const { data, error } = await supabase
+    .from('clientes')
+    .update({
+      nome,
+      slug,
+      logo,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', clienteId)
+    .select('id, slug, email, nome, logo')
+    .single()
+
+  if (error || !data) {
+    if (error?.code === '23505') {
+      throw new CadastroErro('Este endereço da montagem já está em uso.')
+    }
+    throw new CadastroErro('Não foi possível salvar o cadastro. Tente novamente.')
+  }
+
+  return mapCliente(data)
+}
+
+export async function solicitarTrocaEmail(
+  clienteId: string,
+  novoEmail: string,
+): Promise<void> {
+  const email = novoEmail.trim().toLowerCase()
+  if (!email) throw new CadastroErro('Informe o e-mail.')
+
+  const { data: porEmail, error: erroEmail } = await supabase
+    .from('clientes')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (erroEmail) throw erroEmail
+  if (porEmail && porEmail.id !== clienteId) {
+    throw new CadastroErro('Já existe um cliente com este e-mail.')
+  }
+
+  const { error } = await supabase.auth.updateUser(
+    { email },
+    { emailRedirectTo: `${window.location.origin}/admin/painel/cadastro` },
+  )
+
+  if (error) {
+    const msg = error.message.toLowerCase()
+    if (error.code === 'over_email_send_rate_limit' || msg.includes('rate limit')) {
+      throw new CadastroErro(
+        'Limite de e-mails do Supabase atingido. Aguarde alguns minutos e tente de novo.',
+      )
+    }
+    if (
+      msg.includes('sending email') ||
+      msg.includes('email change') ||
+      error.code === 'unexpected_failure' ||
+      error.code === 'email_address_not_authorized'
+    ) {
+      throw new CadastroErro(
+        'Não foi possível enviar o e-mail de confirmação. Verifique o SMTP no Supabase (Auth → SMTP) e se o destinatário é permitido; com o e-mail padrão do Supabase só membros da organização recebem.',
+      )
+    }
+    throw new CadastroErro(
+      'Não foi possível solicitar a troca de e-mail. Tente novamente.',
+    )
+  }
+}
+
 export async function atualizarPerfil(
   clienteId: string,
   perfil: { nome: string; logo: string },
 ): Promise<void> {
-  const { error } = await supabase
-    .from('clientes')
-    .update({
-      nome: perfil.nome,
-      logo: perfil.logo,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', clienteId)
-
-  if (error) throw error
+  const cliente = await obterClientePorId(clienteId)
+  if (!cliente) throw new CadastroErro('Cliente não encontrado.')
+  await atualizarCadastro(clienteId, {
+    nome: perfil.nome,
+    slug: cliente.slug,
+    logo: perfil.logo,
+  })
 }
 
 export async function criarCategoria(

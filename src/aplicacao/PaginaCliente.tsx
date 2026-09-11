@@ -72,7 +72,7 @@ export function PaginaCliente() {
       <div className="app app--mensagem">
         <h1>Erro ao carregar</h1>
         <p className="app__subtitle">Não foi possível carregar os dados do cliente.</p>
-        <Link className="btn btn--primary" to="/c/raffiner">
+        <Link className="btn btn--primary" to="/raffiner">
           Tentar Raffiner
         </Link>
       </div>
@@ -84,9 +84,9 @@ export function PaginaCliente() {
       <div className="app app--mensagem">
         <h1>Cliente não encontrado</h1>
         <p className="app__subtitle">
-          Não existe um cliente com o endereço <code>/c/{slug}</code>.
+          Não existe um cliente com o endereço <code>/{slug}</code>.
         </p>
-        <Link className="btn btn--primary" to="/c/raffiner">
+        <Link className="btn btn--primary" to="/raffiner">
           Ir para Raffiner
         </Link>
       </div>

@@ -4,7 +4,7 @@
  * Atualiza clientes.logo.
  *
  * Necessário no .env: VITE_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
- * Opcional: UPLOAD_CLIENTE_ID (default raffiner)
+ * Opcional: UPLOAD_CLIENTE_ID (UUID do cliente; se omitido, resolve slug=raffiner)
  *           UPLOAD_LOGO_SRC (default public/logo/logo_h.webp)
  */
 import { createClient } from '@supabase/supabase-js'
@@ -49,7 +49,7 @@ carregarEnv(join(root, '.env'))
 
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-const clienteId = process.env.UPLOAD_CLIENTE_ID || 'raffiner'
+const clienteIdEnv = process.env.UPLOAD_CLIENTE_ID
 const logoSrc =
   process.env.UPLOAD_LOGO_SRC || join(root, 'public/logo/logo_h.webp')
 
@@ -63,6 +63,22 @@ if (!url || !serviceKey) {
 const admin = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
+
+async function resolverClienteId() {
+  if (clienteIdEnv) return clienteIdEnv
+  const { data, error } = await admin
+    .from('clientes')
+    .select('id')
+    .eq('slug', 'raffiner')
+    .maybeSingle()
+  if (error) throw error
+  if (!data?.id) {
+    throw new Error(
+      'Cliente slug=raffiner não encontrado. Rode npm run seed:supabase ou defina UPLOAD_CLIENTE_ID.',
+    )
+  }
+  return data.id
+}
 
 async function garantirBucket() {
   const { data: buckets, error: listErr } = await admin.storage.listBuckets()
@@ -89,6 +105,7 @@ try {
     process.exit(1)
   }
 
+  const clienteId = await resolverClienteId()
   const ext = extname(logoSrc).toLowerCase() || '.webp'
   const objectKey = `${clienteId}${ext === '.jpeg' ? '.jpg' : ext}`
   const body = readFileSync(logoSrc)
@@ -112,6 +129,7 @@ try {
 
   console.log('Upload ok:', objectKey)
   console.log('Logo URL:', logoUrl)
+  console.log('Cliente ID:', clienteId)
 } catch (err) {
   console.error('Upload do logo falhou:', err)
   process.exit(1)

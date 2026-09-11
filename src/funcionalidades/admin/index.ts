@@ -1,5 +1,8 @@
 export { LoginAdmin } from './LoginAdmin'
 export { CadastroAdmin } from './CadastroAdmin'
+export { RecuperarSenhaAdmin } from './RecuperarSenhaAdmin'
+export { RedefinirSenhaAdmin } from './RedefinirSenhaAdmin'
+export { AtualizarCadastroAdmin } from './AtualizarCadastroAdmin'
 export { PainelAdmin } from './PainelAdmin'
 export { CategoriaPainel } from './CategoriaPainel'
 export { EditarCategoria } from './EditarCategoria'

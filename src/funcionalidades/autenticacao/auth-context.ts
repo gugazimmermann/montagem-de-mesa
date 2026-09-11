@@ -10,6 +10,7 @@ export interface AuthContextValor {
     email: string
     senha: string
   }) => Promise<Cliente>
+  definirCliente: (cliente: Cliente) => void
   sair: () => Promise<void>
 }
 

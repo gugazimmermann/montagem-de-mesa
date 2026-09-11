@@ -36,7 +36,7 @@ create policy logos_storage_insert_own
   on storage.objects for insert
   with check (
     bucket_id = 'logos'
-    and public.eh_dono_cliente(public.storage_cliente_id_do_logo(name))
+    and public.eh_dono_cliente(public.storage_cliente_id_do_logo(name)::uuid)
   );
 
 drop policy if exists logos_storage_update_own on storage.objects;
@@ -44,11 +44,11 @@ create policy logos_storage_update_own
   on storage.objects for update
   using (
     bucket_id = 'logos'
-    and public.eh_dono_cliente(public.storage_cliente_id_do_logo(name))
+    and public.eh_dono_cliente(public.storage_cliente_id_do_logo(name)::uuid)
   )
   with check (
     bucket_id = 'logos'
-    and public.eh_dono_cliente(public.storage_cliente_id_do_logo(name))
+    and public.eh_dono_cliente(public.storage_cliente_id_do_logo(name)::uuid)
   );
 
 drop policy if exists logos_storage_delete_own on storage.objects;
@@ -56,5 +56,5 @@ create policy logos_storage_delete_own
   on storage.objects for delete
   using (
     bucket_id = 'logos'
-    and public.eh_dono_cliente(public.storage_cliente_id_do_logo(name))
+    and public.eh_dono_cliente(public.storage_cliente_id_do_logo(name)::uuid)
   );

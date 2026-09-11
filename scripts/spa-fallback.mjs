@@ -6,7 +6,7 @@ const rotas = [
   'entrar',
   'admin/painel',
   'admin/painel/categorias/novo',
-  'c/raffiner',
+  'raffiner',
 ]
 
 for (const rota of rotas) {

@@ -1,11 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { v4 as uuidv4 } from 'uuid'
 import type { Categoria } from '../../compartilhado/tipos'
-import {
-  carregarDadosCliente,
-  criarCategoria,
-  slugifyCategoria,
-} from '../../dados/repositorioClientes'
+import { criarCategoria } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import './PainelAdmin.css'
 import './LoginAdmin.css'
@@ -32,17 +29,7 @@ export function FormularioCategoria() {
 
     setEnviando(true)
     try {
-      const dadosAtuais = await carregarDadosCliente(clienteId)
-      if (!dadosAtuais) {
-        setErro('Cliente não encontrado.')
-        return
-      }
-
-      let id = slugifyCategoria(rotuloTrim)
-      const idsExistentes = new Set(dadosAtuais.categorias.map((c) => c.id))
-      if (idsExistentes.has(id)) {
-        id = `${id}-${Date.now()}`
-      }
+      const id = uuidv4()
 
       const nova: Categoria = {
         id,

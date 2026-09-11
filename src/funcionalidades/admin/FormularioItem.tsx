@@ -1,12 +1,12 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { v4 as uuidv4 } from 'uuid'
 import type { DadosCliente, ItemMesa, PadraoTecido } from '../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import {
   atualizarItem,
   carregarDadosCliente,
   criarItem,
-  slugifyCategoria,
 } from '../../dados/repositorioClientes'
 import { enviarImagemItemStorage } from '../../dados/storage'
 import { useAuth } from '../autenticacao'
@@ -63,18 +63,13 @@ function montarItem(
   form: FormItem,
   categoriaId: string,
   idExistente: string | null,
-  idsUsados: Set<string>,
   itemAnterior?: ItemMesa,
 ): ItemMesa | { erro: string } {
   const nome = form.nome.trim()
   if (!nome) return { erro: 'Informe o nome do item.' }
 
   const ehToalha = categoriaId === 'toalha'
-  let id = idExistente
-  if (!id) {
-    id = slugifyCategoria(nome)
-    if (idsUsados.has(id)) id = `${id}-${Date.now()}`
-  }
+  const id = idExistente ?? uuidv4()
 
   const corPrimaria = ehToalha
     ? form.corPrimaria.trim() || COR_PADRAO
@@ -191,14 +186,12 @@ export function FormularioItem() {
     evento.preventDefault()
     setErro(null)
 
-    const idsUsados = new Set(dados!.itens.map((i) => i.id))
     const itemAnterior = itemId ? dados!.itens.find((i) => i.id === itemId) : undefined
 
     const resultado = montarItem(
       formItem,
       categoriaId!,
       itemId ?? null,
-      idsUsados,
       itemAnterior,
     )
     if ('erro' in resultado) {

@@ -8,9 +8,11 @@
  * Opcional: SEED_EMAIL / SEED_PASSWORD
  */
 import { createClient } from '@supabase/supabase-js'
+import { randomUUID } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import slugify from 'slugify'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -43,6 +45,7 @@ const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 const email = process.env.SEED_EMAIL || 'admin@raffiner.com'
 const password = process.env.SEED_PASSWORD || 'admin123'
+const SLUG = 'raffiner'
 
 if (!url || !serviceKey) {
   console.error(
@@ -69,8 +72,6 @@ const admin = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-const CLIENTE_ID = 'raffiner'
-
 async function garantirUsuario() {
   const { data: listado, error: listErr } = await admin.auth.admin.listUsers({
     perPage: 200,
@@ -96,28 +97,44 @@ async function garantirUsuario() {
 }
 
 async function upsertCliente(authUserId) {
+  const { data: existente, error: erroBusca } = await admin
+    .from('clientes')
+    .select('id')
+    .eq('slug', SLUG)
+    .maybeSingle()
+  if (erroBusca) throw erroBusca
+
+  const clienteId = existente?.id ?? randomUUID()
+  const logoUrl = `${url.replace(/\/$/, '')}/storage/v1/object/public/logos/${clienteId}.webp`
+
   const { error } = await admin.from('clientes').upsert(
     {
-      id: CLIENTE_ID,
+      id: clienteId,
       auth_user_id: authUserId,
-      slug: 'raffiner',
+      slug: slugify(SLUG, { lower: true, strict: true }),
       email,
       nome: 'Raffiner',
-      logo: `${url.replace(/\/$/, '')}/storage/v1/object/public/logos/${CLIENTE_ID}.webp`,
+      logo: logoUrl,
     },
     { onConflict: 'id' },
   )
   if (error) throw error
-  console.log('Cliente raffiner upserted')
+  console.log('Cliente raffiner upserted:', clienteId)
+  return clienteId
 }
 
-async function seedCatalogo() {
-  await admin.from('itens').delete().eq('cliente_id', CLIENTE_ID)
-  await admin.from('categorias').delete().eq('cliente_id', CLIENTE_ID)
+async function seedCatalogo(clienteId) {
+  await admin.from('itens').delete().eq('cliente_id', clienteId)
+  await admin.from('categorias').delete().eq('cliente_id', clienteId)
+
+  const mapaCategorias = new Map()
+  for (const c of catalogo.categorias) {
+    mapaCategorias.set(c.id, randomUUID())
+  }
 
   const categorias = catalogo.categorias.map((c, ordem) => ({
-    cliente_id: CLIENTE_ID,
-    id: c.id,
+    cliente_id: clienteId,
+    id: mapaCategorias.get(c.id),
     rotulo: c.rotulo,
     descricao: c.descricao ?? '',
     ordem,
@@ -126,19 +143,25 @@ async function seedCatalogo() {
   const { error: catErr } = await admin.from('categorias').insert(categorias)
   if (catErr) throw catErr
 
-  const itens = catalogo.itens.map((item, ordem) => ({
-    cliente_id: CLIENTE_ID,
-    id: item.id,
-    categoria_id: item.categoria,
-    nome: item.nome,
-    imagem: item.imagem ?? null,
-    cores: item.cores,
-    largura: item.largura ?? null,
-    comprimento: item.comprimento ?? null,
-    padrao: item.padrao ?? null,
-    descricao: item.descricao ?? null,
-    ordem,
-  }))
+  const itens = catalogo.itens.map((item, ordem) => {
+    const categoriaId = mapaCategorias.get(item.categoria)
+    if (!categoriaId) {
+      throw new Error(`Categoria desconhecida no catálogo: ${item.categoria}`)
+    }
+    return {
+      cliente_id: clienteId,
+      id: randomUUID(),
+      categoria_id: categoriaId,
+      nome: item.nome,
+      imagem: item.imagem ?? null,
+      cores: item.cores,
+      largura: item.largura ?? null,
+      comprimento: item.comprimento ?? null,
+      padrao: item.padrao ?? null,
+      descricao: item.descricao ?? null,
+      ordem,
+    }
+  })
 
   const lote = 50
   for (let i = 0; i < itens.length; i += lote) {
@@ -154,10 +177,12 @@ async function seedCatalogo() {
 
 try {
   const authUserId = await garantirUsuario()
-  await upsertCliente(authUserId)
-  await seedCatalogo()
+  const clienteId = await upsertCliente(authUserId)
+  await seedCatalogo(clienteId)
   console.log('Seed concluído.')
   console.log(`Login: ${email} / ${password}`)
+  console.log(`Cliente ID (para uploads): ${clienteId}`)
+  console.log(`Montagem pública: /${SLUG}`)
 } catch (err) {
   console.error('Seed falhou:', err)
   process.exit(1)

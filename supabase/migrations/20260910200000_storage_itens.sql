@@ -26,7 +26,7 @@ create policy itens_storage_insert_own
   on storage.objects for insert
   with check (
     bucket_id = 'itens'
-    and public.eh_dono_cliente((storage.foldername(name))[1])
+    and public.eh_dono_cliente((storage.foldername(name))[1]::uuid)
   );
 
 drop policy if exists itens_storage_update_own on storage.objects;
@@ -34,11 +34,11 @@ create policy itens_storage_update_own
   on storage.objects for update
   using (
     bucket_id = 'itens'
-    and public.eh_dono_cliente((storage.foldername(name))[1])
+    and public.eh_dono_cliente((storage.foldername(name))[1]::uuid)
   )
   with check (
     bucket_id = 'itens'
-    and public.eh_dono_cliente((storage.foldername(name))[1])
+    and public.eh_dono_cliente((storage.foldername(name))[1]::uuid)
   );
 
 drop policy if exists itens_storage_delete_own on storage.objects;
@@ -46,5 +46,5 @@ create policy itens_storage_delete_own
   on storage.objects for delete
   using (
     bucket_id = 'itens'
-    and public.eh_dono_cliente((storage.foldername(name))[1])
+    and public.eh_dono_cliente((storage.foldername(name))[1]::uuid)
   );

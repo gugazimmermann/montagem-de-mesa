@@ -5,6 +5,7 @@ import {
   CadastroPendenteConfirmacao,
 } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
+import { CampoSenha } from './CampoSenha'
 import './LoginAdmin.css'
 
 export function CadastroAdmin() {
@@ -61,87 +62,88 @@ export function CadastroAdmin() {
 
   return (
     <div className="admin-login">
-      <form className="admin-login__card" onSubmit={aoEnviar}>
+      <div className="admin-login__card">
         <header className="admin-login__header">
           <h1>Cadastro</h1>
           <p>Crie a conta do cliente para acessar o painel.</p>
         </header>
 
-        <label className="admin-field">
-          <span>Nome</span>
-          <input
-            type="text"
-            name="nome"
-            autoComplete="organization"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            required
-            disabled={enviando || Boolean(avisoConfirmacao)}
-          />
-        </label>
+        {avisoConfirmacao ? (
+          <>
+            <div className="admin-login__aviso-email" role="status">
+              <p className="admin-login__aviso-email-titulo">Confirme seu e-mail</p>
+              <p className="admin-login__aviso-email-texto">{avisoConfirmacao}</p>
+            </div>
+            <p className="admin-login__rodape">
+              Já confirmou? <Link to="/admin">Entrar</Link>
+            </p>
+          </>
+        ) : (
+          <form className="admin-login__form" onSubmit={aoEnviar}>
+            <label className="admin-field">
+              <span>Nome</span>
+              <input
+                type="text"
+                name="nome"
+                autoComplete="organization"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                required
+                disabled={enviando}
+              />
+            </label>
 
-        <label className="admin-field">
-          <span>E-mail</span>
-          <input
-            type="email"
-            name="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={enviando || Boolean(avisoConfirmacao)}
-          />
-        </label>
+            <label className="admin-field">
+              <span>E-mail</span>
+              <input
+                type="email"
+                name="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={enviando}
+              />
+            </label>
 
-        <label className="admin-field">
-          <span>Senha</span>
-          <input
-            type="password"
-            name="senha"
-            autoComplete="new-password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
-            minLength={6}
-            disabled={enviando || Boolean(avisoConfirmacao)}
-          />
-        </label>
+            <CampoSenha
+              label="Senha"
+              name="senha"
+              autoComplete="new-password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              required
+              minLength={6}
+              disabled={enviando}
+            />
 
-        <label className="admin-field">
-          <span>Confirmar senha</span>
-          <input
-            type="password"
-            name="confirmarSenha"
-            autoComplete="new-password"
-            value={confirmarSenha}
-            onChange={(e) => setConfirmarSenha(e.target.value)}
-            required
-            minLength={6}
-            disabled={enviando || Boolean(avisoConfirmacao)}
-          />
-        </label>
+            <CampoSenha
+              label="Confirmar senha"
+              name="confirmarSenha"
+              autoComplete="new-password"
+              value={confirmarSenha}
+              onChange={(e) => setConfirmarSenha(e.target.value)}
+              required
+              minLength={6}
+              disabled={enviando}
+            />
 
-        {erro && <p className="admin-login__erro" role="alert">{erro}</p>}
-        {avisoConfirmacao && (
-          <p className="admin-login__ok" role="status">
-            {avisoConfirmacao}
-          </p>
+            {erro && <p className="admin-login__erro" role="alert">{erro}</p>}
+
+            <button
+              type="submit"
+              className="btn btn--primary admin-login__submit"
+              disabled={enviando}
+            >
+              {enviando ? 'Cadastrando…' : 'Cadastrar'}
+            </button>
+
+            <p className="admin-login__rodape">
+              Já tem conta? <Link to="/admin">Entrar</Link>
+            </p>
+          </form>
         )}
-
-        {!avisoConfirmacao && (
-          <button
-            type="submit"
-            className="btn btn--primary admin-login__submit"
-            disabled={enviando}
-          >
-            {enviando ? 'Cadastrando…' : 'Cadastrar'}
-          </button>
-        )}
-
-        <p className="admin-login__rodape">
-          Já tem conta? <Link to="/admin">Entrar</Link>
-        </p>
-      </form>
+      </div>
     </div>
   )
 }

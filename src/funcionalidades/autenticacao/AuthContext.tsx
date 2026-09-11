@@ -61,8 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCliente(null)
   }
 
+  function definirCliente(proximo: Cliente): void {
+    setCliente(proximo)
+  }
+
   return (
-    <AuthContext.Provider value={{ cliente, carregando, entrar, cadastrar, sair }}>
+    <AuthContext.Provider
+      value={{ cliente, carregando, entrar, cadastrar, definirCliente, sair }}
+    >
       {children}
     </AuthContext.Provider>
   )

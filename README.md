@@ -1,121 +1,147 @@
 # Montagem de Mesa
 
-Aplicação web (React + Vite + TypeScript) para **montar uma composição de mesa** escolhendo peças por categoria e vendo a **pré-visualização** conforme você seleciona.
+Aplicação web para **montar uma composição de mesa**: o visitante escolhe peças por categoria e vê a **pré-visualização** em tempo real.
 
-Suporta **vários clientes**: cada um tem login no admin (Supabase Auth), nome/logo próprios e categorias editáveis. Autenticação e catálogo ficam no **Supabase** (PostgreSQL + RLS). Toalhas fixas continuam em JSON local.
+Multi-cliente: cada conta tem login no admin, nome, logo, endereço público e catálogo editável. Auth, dados e imagens no **Supabase** (Auth + PostgreSQL + Storage + RLS). Toalhas fixas vêm de JSON local (não editáveis no painel).
+
+**Stack:** React 19 · Vite · TypeScript · React Router · `@supabase/supabase-js`
+
+## Quick start
+
+```bash
+npm install
+cp .env.example .env          # preencha as chaves (veja Configuração)
+# aplique as migrations na ordem da seção Schema
+npm run seed:supabase
+npm run dev
+```
+
+Abra a URL do Vite (em geral `http://localhost:5173`). Detalhes de Auth, SMTP e SQL estão abaixo.
 
 ## Pré-requisitos
 
 - Node.js + npm
 - Projeto no [Supabase](https://supabase.com)
+- SMTP próprio recomendado (ex.: [Resend](https://resend.com)) — o e-mail padrão do Supabase é só para testes e tem limite baixo
 
-## Configuração do Supabase
+## Configuração
 
-1. Crie um projeto no Supabase.
-2. Copie [`.env.example`](.env.example) para `.env` e preencha:
-   - `VITE_SUPABASE_URL` — Project URL (Settings → API), no formato `https://....supabase.co`
-   - `VITE_SUPABASE_ANON_KEY` — chave `anon` `public`
-   - `SUPABASE_SERVICE_ROLE_KEY` — service role (só local / seed; nunca no frontend)
-   - `DATABASE_URL` — connection string URI (Settings → Database), opcional se preferir rodar o SQL no Editor
-3. Aplique o schema + RLS de uma destas formas:
-   - `npm run db:migrate` (usa `DATABASE_URL`), ou
-   - cole o SQL de [`supabase/migrations/20260729120000_auth_catalogo.sql`](supabase/migrations/20260729120000_auth_catalogo.sql) no SQL Editor
-4. Rode o seed (uma vez):
+### Variáveis de ambiente
+
+| Variável | Uso |
+|----------|-----|
+| `VITE_SUPABASE_URL` | Project URL (`https://….supabase.co`) |
+| `VITE_SUPABASE_ANON_KEY` | Chave `anon` `public` (frontend) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role — **só** scripts locais (seed/upload); nunca no Vite/Render |
+| `DATABASE_URL` | URI do Postgres — opcional; necessário para `npm run db:migrate` |
+| `SEED_EMAIL` / `SEED_PASSWORD` | Opcional; padrão do seed: `admin@raffiner.com` / `admin123` |
+
+### Auth (URL Configuration)
+
+Em **Authentication → URL Configuration**:
+
+- **Site URL:** `http://localhost:5173` (em produção, o domínio do site)
+- **Redirect URLs:**
+  - `http://localhost:5173/admin`
+  - `http://localhost:5173/admin/redefinir-senha`
+  - `http://localhost:5173/admin/painel/cadastro`
+
+(confirmação de cadastro → `/admin`; reset de senha → `/admin/redefinir-senha`; troca de e-mail → `/admin/painel/cadastro`)
+
+Com **Secure email change** ativo (**Auth → Providers → Email**), a troca de e-mail exige confirmar **dois** links (atual e novo). Para um único link no endereço novo, desative essa opção.
+
+### Schema e RLS
+
+Ordem (instalação nova), via SQL Editor ou `npm run db:migrate -- <arquivo>`:
+
+1. [`supabase/migrations/20260729120000_auth_catalogo.sql`](supabase/migrations/20260729120000_auth_catalogo.sql) — tabelas com IDs **UUID**, RLS
+2. [`supabase/migrations/20260910200000_storage_itens.sql`](supabase/migrations/20260910200000_storage_itens.sql)
+3. [`supabase/migrations/20260910210000_storage_logos.sql`](supabase/migrations/20260910210000_storage_logos.sql)
+4. [`supabase/migrations/20260910220000_clientes_insert.sql`](supabase/migrations/20260910220000_clientes_insert.sql)
+
+Projeto antigo com IDs em `text`: aplique também [`20260911150000_ids_uuid.sql`](supabase/migrations/20260911150000_ids_uuid.sql) (**destrutiva** — apaga clientes/categorias/itens) e rode o seed de novo.
+
+### Seed e imagens
 
 ```bash
 npm run seed:supabase
 ```
 
-O script lê o `.env` automaticamente. Cria o usuário Auth, o cliente `raffiner` e importa [`src/dados/catalogo.json`](src/dados/catalogo.json).
+Cria o usuário Auth (se ainda não existir), o cliente com endereço público `raffiner` (UUID gerado) e importa [`src/dados/catalogo.json`](src/dados/catalogo.json).
 
-Credenciais seed padrão: e-mail `admin@raffiner.com` / senha `admin123` (altere via `SEED_EMAIL` / `SEED_PASSWORD` no `.env`).
-
-## Como rodar
+Uploads opcionais (cliente pelo endereço `raffiner`, ou `UPLOAD_CLIENTE_ID` = UUID):
 
 ```bash
-npm install
-cp .env.example .env   # preencha as chaves
-npm run db:migrate     # ou rode o SQL no Editor
-npm run seed:supabase
-npm run dev
+npm run upload:logo
+npm run upload:imagens
 ```
-
-Abra a URL exibida no terminal (geralmente `http://localhost:5173`).
 
 ## Rotas
 
 | Rota | Descrição |
 |------|-----------|
-| `/` | Redireciona para `/c/raffiner` |
-| `/c/:slug` | Montagem pública do cliente |
-| `/admin` ou `/entrar` | Login (Supabase Auth) |
-| `/admin/painel` | Painel (nome, logo, CRUD de categorias) |
+| `/` | Redireciona para `/raffiner` |
+| `/:slug` | Montagem pública (endereço do cliente) |
+| `/admin`, `/entrar` | Login |
+| `/cadastro` | Criar conta |
+| `/admin/recuperar-senha` | Pedir reset de senha |
+| `/admin/redefinir-senha` | Nova senha (após o link do e-mail) |
+| `/admin/painel` | Painel (categorias e itens) |
+| `/admin/painel/cadastro` | Atualizar nome, endereço, e-mail e logo |
 
-## Auth e proteção
-
-- Senhas só no Supabase Auth (hash bcrypt); nunca no bundle.
-- Sessão JWT gerenciada por `@supabase/supabase-js` (refresh automático).
-- Rate limit de login nativo do Auth.
-- **RLS** no Postgres: leitura pública da montagem; writes só com `auth.uid()` dono do cliente.
-- `RotaProtegida` exige sessão válida + registro em `clientes`.
-
-## Dados e persistência
+## Dados
 
 | Recurso | Onde |
 |---------|------|
 | Usuários / senhas | Supabase Auth |
-| Perfil do cliente (`clientes`) | PostgreSQL |
-| Categorias e itens editáveis | PostgreSQL |
-| Toalhas fixas | [`src/dados/toalhas.json`](src/dados/toalhas.json) (merge no cliente; não editáveis no painel) |
-| Seed do catálogo Raffiner | [`src/dados/catalogo.json`](src/dados/catalogo.json) → importado pelo seed |
+| Cliente (`clientes`) | Postgres — `id` UUID; endereço público único (`slug`); `auth_user_id` |
+| Categorias e itens | Postgres — IDs UUID; RLS: leitura pública, escrita do dono |
+| Logos / fotos | Storage (`logos`, `itens`) |
+| Toalhas fixas | [`src/dados/toalhas.json`](src/dados/toalhas.json) (merge no cliente) |
 
-Para outro cliente: crie o usuário no Auth (Dashboard ou Admin API), insira uma row em `clientes` com `auth_user_id`, e use o painel para montar o catálogo. As toalhas já entram automaticamente.
+Novo cliente: cadastro em `/cadastro` (ou Auth + linha em `clientes` com `auth_user_id`) e catálogo no painel. Toalhas entram automaticamente.
 
-## Deploy no Render (Static Site)
+## Scripts
 
-| Campo | Valor |
-|-------|-------|
-| **Build Command** | `npm install && npm run build` |
-| **Publish Directory** | `dist` |
-
-Variáveis de ambiente no serviço (necessárias no **build**):
-
-| Key | Valor |
-|-----|--------|
-| `VITE_SUPABASE_URL` | URL do projeto |
-| `VITE_SUPABASE_ANON_KEY` | chave `anon` |
-
-Não coloque a service role nem `DATABASE_URL` no Render.
-
-Como é uma SPA com rotas (`/admin`, `/c/*`), é **obrigatório** um rewrite para `index.html`:
-
-| Source | Destination | Action |
-|--------|-------------|--------|
-| `/*` | `/index.html` | **Rewrite** |
-
-O arquivo [`render.yaml`](render.yaml) já declara rewrite e placeholders de env para Blueprint.
-
-## Scripts úteis
-
-- `npm run dev` — desenvolvimento com hot reload
-- `npm run build` — build de produção (`dist/`)
-- `npm run preview` — pré-visualiza o build localmente
-- `npm run lint` — roda o oxlint
-- `npm run db:migrate` — aplica a migration SQL via `DATABASE_URL`
-- `npm run seed:supabase` — seed Auth + cliente + catálogo (service role)
+| Comando | Função |
+|---------|--------|
+| `npm run dev` | Desenvolvimento |
+| `npm run build` | Build de produção (`dist/`) |
+| `npm run preview` | Preview do build |
+| `npm run lint` | oxlint |
+| `npm run db:migrate` | Aplica SQL via `DATABASE_URL` (arquivo opcional na CLI) |
+| `npm run seed:supabase` | Seed Auth + cliente + catálogo |
+| `npm run upload:logo` | Envia logo para Storage |
+| `npm run upload:imagens` | Envia `public/imgs` e atualiza URLs |
 
 ## Estrutura
 
-- `src/aplicacao/` — rotas e tela pública da montagem
-- `src/dados/` — cliente Supabase, repositório e JSON de toalhas/seed
-- `src/funcionalidades/admin/` — login e painel
-- `src/funcionalidades/autenticacao/` — AuthProvider + rota protegida
-- `src/funcionalidades/catalogo/` — helpers do catálogo
-- `src/funcionalidades/mesa/` — seletor e pré-visualização
-- `supabase/migrations/` — schema e RLS
-- `scripts/apply-migration.mjs` — aplica a migration via Postgres
-- `scripts/seed-supabase.mjs` — seed one-shot
+```
+src/aplicacao/              # rotas e página pública
+src/dados/                  # cliente Supabase, repositório, JSON
+src/compartilhado/          # tipos e utils
+src/funcionalidades/
+  admin/                    # login, painel, cadastro, formulários
+  autenticacao/             # AuthProvider, rota protegida
+  catalogo/                 # helpers do catálogo
+  mesa/                     # seletor e pré-visualização
+supabase/migrations/        # schema, storage, RLS
+scripts/                    # migrate, seed, uploads
+```
+
+## Deploy (Render — Static Site)
+
+| Campo | Valor |
+|-------|--------|
+| Build Command | `npm install && npm run build` |
+| Publish Directory | `dist` |
+
+Env no **build:** apenas `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Não use service role nem `DATABASE_URL` no Render.
+
+SPA: rewrite `/*` → `/index.html` (já em [`render.yaml`](render.yaml)).
+
+No Auth do Supabase, atualize **Site URL** e **Redirect URLs** para o domínio de produção (mesmo padrão das URLs de localhost).
 
 ## Regras do app
 
-- Lugar americano e sousplat são **mutuamente exclusivos** quando ambas as categorias existem (ids `lugarAmericano` e `sousplat`).
+- Lugar americano e sousplat são **mutuamente exclusivos** quando as duas categorias existem (ids `lugarAmericano` e `sousplat`).

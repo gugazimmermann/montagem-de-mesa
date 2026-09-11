@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../autenticacao'
+import { CampoSenha } from './CampoSenha'
 import './LoginAdmin.css'
 
 export function LoginAdmin() {
@@ -63,18 +64,15 @@ export function LoginAdmin() {
           />
         </label>
 
-        <label className="admin-field">
-          <span>Senha</span>
-          <input
-            type="password"
-            name="senha"
-            autoComplete="current-password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
-            disabled={enviando}
-          />
-        </label>
+        <CampoSenha
+          label="Senha"
+          name="senha"
+          autoComplete="current-password"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          required
+          disabled={enviando}
+        />
 
         {erro && <p className="admin-login__erro" role="alert">{erro}</p>}
 
@@ -86,6 +84,9 @@ export function LoginAdmin() {
           {enviando ? 'Entrando…' : 'Entrar'}
         </button>
 
+        <p className="admin-login__rodape">
+          <Link to="/admin/recuperar-senha">Esqueci a senha</Link>
+        </p>
         <p className="admin-login__rodape">
           Não tem conta? <Link to="/cadastro">Cadastrar</Link>
         </p>

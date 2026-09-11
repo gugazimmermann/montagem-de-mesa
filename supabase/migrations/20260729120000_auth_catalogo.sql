@@ -1,7 +1,9 @@
 -- Schema + RLS for montagem-de-mesa (Supabase)
 
+create extension if not exists "pgcrypto";
+
 create table public.clientes (
-  id text primary key,
+  id uuid primary key default gen_random_uuid(),
   auth_user_id uuid unique references auth.users (id) on delete cascade,
   slug text not null unique,
   email text not null,
@@ -12,8 +14,8 @@ create table public.clientes (
 );
 
 create table public.categorias (
-  cliente_id text not null references public.clientes (id) on delete cascade,
-  id text not null,
+  cliente_id uuid not null references public.clientes (id) on delete cascade,
+  id uuid not null default gen_random_uuid(),
   rotulo text not null,
   descricao text not null default '',
   ordem integer not null default 0,
@@ -21,9 +23,9 @@ create table public.categorias (
 );
 
 create table public.itens (
-  cliente_id text not null references public.clientes (id) on delete cascade,
-  id text not null,
-  categoria_id text not null,
+  cliente_id uuid not null references public.clientes (id) on delete cascade,
+  id uuid not null default gen_random_uuid(),
+  categoria_id uuid not null,
   nome text not null,
   imagem text,
   cores jsonb not null default '{"primaria":"#c4a574"}'::jsonb,
@@ -41,7 +43,7 @@ create table public.itens (
 create index itens_cliente_categoria_idx
   on public.itens (cliente_id, categoria_id);
 
-create or replace function public.eh_dono_cliente(p_cliente_id text)
+create or replace function public.eh_dono_cliente(p_cliente_id uuid)
 returns boolean
 language sql
 stable
@@ -56,8 +58,8 @@ as $$
   );
 $$;
 
-revoke all on function public.eh_dono_cliente(text) from public;
-grant execute on function public.eh_dono_cliente(text) to authenticated, anon;
+revoke all on function public.eh_dono_cliente(uuid) from public;
+grant execute on function public.eh_dono_cliente(uuid) to authenticated, anon;
 
 alter table public.clientes enable row level security;
 alter table public.categorias enable row level security;

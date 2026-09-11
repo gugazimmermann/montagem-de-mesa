@@ -4,7 +4,7 @@
  * Atualiza catalogo.json e a tabela itens com as URLs públicas.
  *
  * Necessário no .env: VITE_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
- * Opcional: UPLOAD_CLIENTE_ID (default raffiner)
+ * Opcional: UPLOAD_CLIENTE_ID (UUID do cliente; se omitido, resolve slug=raffiner)
  */
 import { createClient } from '@supabase/supabase-js'
 import {
@@ -55,7 +55,7 @@ carregarEnv(join(root, '.env'))
 
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-const clienteId = process.env.UPLOAD_CLIENTE_ID || 'raffiner'
+const clienteIdEnv = process.env.UPLOAD_CLIENTE_ID
 
 if (!url || !serviceKey) {
   console.error(
@@ -67,6 +67,25 @@ if (!url || !serviceKey) {
 const admin = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
+
+/** Preenchido em main após resolver o UUID do cliente. */
+let clienteId = ''
+
+async function resolverClienteId() {
+  if (clienteIdEnv) return clienteIdEnv
+  const { data, error } = await admin
+    .from('clientes')
+    .select('id')
+    .eq('slug', 'raffiner')
+    .maybeSingle()
+  if (error) throw error
+  if (!data?.id) {
+    throw new Error(
+      'Cliente slug=raffiner não encontrado. Rode npm run seed:supabase ou defina UPLOAD_CLIENTE_ID.',
+    )
+  }
+  return data.id
+}
 
 function listarImagens(dir) {
   const out = []
@@ -193,7 +212,7 @@ async function atualizarItensNoBanco(catalogo) {
       .from('itens')
       .update({ imagem: item.imagem })
       .eq('cliente_id', clienteId)
-      .eq('id', item.id)
+      .eq('nome', item.nome)
     if (error) {
       console.error('Falha update item:', item.id, error.message)
       falhas += 1
@@ -213,6 +232,7 @@ try {
     process.exit(1)
   }
 
+  clienteId = await resolverClienteId()
   const arquivos = listarImagens(imgsDir).sort()
   console.log(`Cliente: ${clienteId}`)
   console.log(`Imagens locais: ${arquivos.length}`)
