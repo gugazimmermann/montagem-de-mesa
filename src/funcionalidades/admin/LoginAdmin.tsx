@@ -1,27 +1,31 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { EntrarErro } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
+import { AdminAuthCard, AdminAuthCarregando } from './AdminAuthCard'
+import { destinoPosLogin } from './adminUtils'
 import { CampoSenha } from './CampoSenha'
-import './LoginAdmin.css'
 
 export function LoginAdmin() {
   const navegar = useNavigate()
-  const { cliente, carregando, entrar } = useAuth()
+  const localizacao = useLocation()
+  const { cliente, carregando, entrar, precisaRedefinirSenha } = useAuth()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   if (carregando) {
-    return (
-      <div className="admin-login">
-        <p className="admin-login__header">Carregando…</p>
-      </div>
-    )
+    return <AdminAuthCarregando mensagem="Carregando sessão…" />
+  }
+
+  if (precisaRedefinirSenha) {
+    return <Navigate to="/admin/redefinir-senha" replace />
   }
 
   if (cliente) {
-    return <Navigate to="/admin/painel" replace />
+    const from = (localizacao.state as { from?: string } | null)?.from
+    return <Navigate to={destinoPosLogin(from)} replace />
   }
 
   async function aoEnviar(evento: FormEvent) {
@@ -35,62 +39,68 @@ export function LoginAdmin() {
         setErro('E-mail ou senha inválidos.')
         return
       }
-      navegar('/admin/painel', { replace: true })
-    } catch {
-      setErro('Não foi possível entrar. Tente novamente.')
+      const from = (localizacao.state as { from?: string } | null)?.from
+      navegar(destinoPosLogin(from), { replace: true })
+    } catch (e) {
+      if (e instanceof EntrarErro) {
+        setErro(e.message)
+      } else {
+        setErro('Não foi possível entrar. Tente novamente.')
+      }
     } finally {
       setEnviando(false)
     }
   }
 
   return (
-    <div className="admin-login">
-      <form className="admin-login__card" onSubmit={aoEnviar}>
-        <header className="admin-login__header">
-          <h1>Admin</h1>
-          <p>Entre com o e-mail e senha do seu cliente.</p>
-        </header>
-
-        <label className="admin-field">
-          <span>E-mail</span>
-          <input
-            type="email"
-            name="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={enviando}
-          />
-        </label>
-
-        <CampoSenha
-          label="Senha"
-          name="senha"
-          autoComplete="current-password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
+    <AdminAuthCard
+      titulo="Admin"
+      subtitulo="Entre com o e-mail e senha do seu cliente."
+      asForm
+      onSubmit={aoEnviar}
+      rodape={
+        <>
+          <p className="admin-login__rodape">
+            <Link to="/admin/recuperar-senha">Esqueci a senha</Link>
+          </p>
+          <p className="admin-login__rodape">
+            Não tem conta? <Link to="/cadastro">Cadastrar</Link>
+          </p>
+        </>
+      }
+    >
+      <label className="admin-field">
+        <span>E-mail</span>
+        <input
+          type="email"
+          name="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
           disabled={enviando}
         />
+      </label>
 
-        {erro && <p className="admin-login__erro" role="alert">{erro}</p>}
+      <CampoSenha
+        label="Senha"
+        name="senha"
+        autoComplete="current-password"
+        value={senha}
+        onChange={(e) => setSenha(e.target.value)}
+        required
+        disabled={enviando}
+      />
 
-        <button
-          type="submit"
-          className="btn btn--primary admin-login__submit"
-          disabled={enviando}
-        >
-          {enviando ? 'Entrando…' : 'Entrar'}
-        </button>
+      {erro && <p className="admin-login__erro" role="alert">{erro}</p>}
 
-        <p className="admin-login__rodape">
-          <Link to="/admin/recuperar-senha">Esqueci a senha</Link>
-        </p>
-        <p className="admin-login__rodape">
-          Não tem conta? <Link to="/cadastro">Cadastrar</Link>
-        </p>
-      </form>
-    </div>
+      <button
+        type="submit"
+        className="btn btn--primary admin-login__submit"
+        disabled={enviando}
+      >
+        {enviando ? 'Entrando…' : 'Entrar'}
+      </button>
+    </AdminAuthCard>
   )
 }

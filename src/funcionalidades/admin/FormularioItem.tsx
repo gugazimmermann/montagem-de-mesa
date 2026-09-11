@@ -1,28 +1,31 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
-import type { DadosCliente, ItemMesa, PadraoTecido } from '../../compartilhado/tipos'
+import type { ItemMesa, PadraoTecido } from '../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
-import {
-  atualizarItem,
-  carregarDadosCliente,
-  criarItem,
-} from '../../dados/repositorioClientes'
-import { enviarImagemItemStorage } from '../../dados/storage'
+import { atualizarItem, criarItem } from '../../dados/repositorioClientes'
+import { enviarImagemItemStorage, exigirUrlStorageOuVazio } from '../../dados/storage'
 import { useAuth } from '../autenticacao'
-import './PainelAdmin.css'
-import './LoginAdmin.css'
-import './EditarCategoria.css'
+import {
+  AdminAlertaErro,
+  AdminPaginaPainel,
+  AdminPainelCarregando,
+  AdminSessaoInvalida,
+} from './AdminPaginaPainel'
+import { AmpliarImagem } from './AmpliarImagem'
+import { mapearErroUpload } from './adminUtils'
+import { useDadosCliente } from './useDadosCliente'
+import { useObjectUrlPreview } from './useObjectUrlPreview'
 
-const PADROES: PadraoTecido[] = [
-  'solid',
-  'linen',
-  'stripes',
-  'gingham',
-  'damask',
-  'dots',
-  'herringbone',
-  'border',
+const PADROES: { valor: PadraoTecido; rotulo: string }[] = [
+  { valor: 'solid', rotulo: 'Liso' },
+  { valor: 'linen', rotulo: 'Linho' },
+  { valor: 'stripes', rotulo: 'Listras' },
+  { valor: 'gingham', rotulo: 'Xadrez' },
+  { valor: 'damask', rotulo: 'Damasco' },
+  { valor: 'dots', rotulo: 'Poás' },
+  { valor: 'herringbone', rotulo: 'Espinha de peixe' },
+  { valor: 'border', rotulo: 'Borda' },
 ]
 
 const COR_PADRAO = '#c4a574'
@@ -94,7 +97,18 @@ function montarItem(
   if (descricao) item.descricao = descricao
 
   const imagem = form.imagem.trim()
-  if (imagem) item.imagem = imagem
+  if (imagem) {
+    try {
+      item.imagem = exigirUrlStorageOuVazio(imagem, 'URL da imagem')
+    } catch (e) {
+      return {
+        erro:
+          e instanceof Error
+            ? e.message
+            : 'URL da imagem inválida. Use upload ou URL do Storage deste projeto.',
+      }
+    }
+  }
 
   const largura = form.largura.trim() ? Number(form.largura) : undefined
   const comprimento = form.comprimento.trim() ? Number(form.comprimento) : undefined
@@ -107,7 +121,7 @@ function montarItem(
   if (largura != null) item.largura = largura
   if (comprimento != null) item.comprimento = comprimento
 
-  if (ehToalha && form.padrao && PADROES.includes(form.padrao as PadraoTecido)) {
+  if (ehToalha && form.padrao && PADROES.some((p) => p.valor === form.padrao)) {
     item.padrao = form.padrao as PadraoTecido
   }
 
@@ -118,82 +132,63 @@ export function FormularioItem() {
   const { categoriaId, itemId } = useParams<{ categoriaId: string; itemId?: string }>()
   const navegar = useNavigate()
   const { cliente } = useAuth()
-  const clienteId = cliente!.id
   const ehNovo = !itemId
   const ehToalha = categoriaId === 'toalha'
 
-  const [dados, setDados] = useState<DadosCliente | null>(null)
+  const { dados, carregando, erro: erroCarga } = useDadosCliente(cliente?.id)
+  const {
+    arquivo: arquivoImagem,
+    preview: previewImagem,
+    escolher,
+    limpar: limparPreview,
+    accept,
+  } = useObjectUrlPreview()
+
   const [formItem, setFormItem] = useState<FormItem>(formItemVazio)
-  const [arquivoImagem, setArquivoImagem] = useState<File | null>(null)
-  const [previewImagem, setPreviewImagem] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
-  const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
-    let ativo = true
-    void carregarDadosCliente(clienteId)
-      .then((d) => {
-        if (!ativo || !d) return
-        setDados(d)
-        const existente = itemId ? d.itens.find((i) => i.id === itemId) : undefined
-        if (existente) setFormItem(itemParaForm(existente))
-      })
-      .catch(() => {
-        if (ativo) setErro('Não foi possível carregar o item.')
-      })
-      .finally(() => {
-        if (ativo) setCarregando(false)
-      })
-    return () => {
-      ativo = false
-    }
-  }, [clienteId, itemId])
+    if (!dados || !itemId) return
+    const existente = dados.itens.find((i) => i.id === itemId)
+    if (existente) setFormItem(itemParaForm(existente))
+  }, [dados, itemId])
 
   useEffect(() => {
-    return () => {
-      if (previewImagem) URL.revokeObjectURL(previewImagem)
-    }
-  }, [previewImagem])
+    if (erroCarga) setErro(erroCarga)
+  }, [erroCarga])
 
-  if (carregando) {
-    return (
-      <div className="admin-painel">
-        <p className="admin-painel__alerta">Carregando…</p>
-      </div>
-    )
-  }
+  if (!cliente) return <AdminSessaoInvalida />
+  if (carregando) return <AdminPainelCarregando />
 
+  const idCliente = cliente.id
   const categoria = dados?.categorias.find((c) => c.id === categoriaId)
   const itemExistente = itemId ? dados?.itens.find((i) => i.id === itemId) : undefined
 
   if (!categoriaId || !categoria || !dados) {
     return <Navigate to="/admin/painel" replace />
   }
-
   if (ehCategoriaFixa(categoriaId)) {
     return <Navigate to="/admin/painel" replace />
   }
-
   if (!ehNovo && (!itemExistente || itemExistente.categoria !== categoriaId)) {
     return <Navigate to={`/admin/painel/categorias/${categoriaId}`} replace />
   }
 
-  const voltarPara = `/admin/painel/categorias/${categoriaId}`
+  const dadosAtuais = dados
+  const idCategoria = categoriaId
+  const voltarPara = `/admin/painel/categorias/${idCategoria}`
   const imagemExibida = previewImagem || formItem.imagem
 
   async function salvarItem(evento: FormEvent) {
     evento.preventDefault()
     setErro(null)
 
-    const itemAnterior = itemId ? dados!.itens.find((i) => i.id === itemId) : undefined
+    const itemAnterior = itemId
+      ? dadosAtuais.itens.find((i) => i.id === itemId)
+      : undefined
 
-    const resultado = montarItem(
-      formItem,
-      categoriaId!,
-      itemId ?? null,
-      itemAnterior,
-    )
+    const resultado = montarItem(formItem, idCategoria, itemId ?? null, itemAnterior)
     if ('erro' in resultado) {
       setErro(resultado.erro)
       return
@@ -203,62 +198,38 @@ export function FormularioItem() {
     try {
       if (arquivoImagem) {
         resultado.imagem = await enviarImagemItemStorage(
-          clienteId,
-          categoriaId!,
+          idCliente,
+          idCategoria,
           resultado.id,
           arquivoImagem,
         )
       }
       if (itemId) {
-        await atualizarItem(clienteId, resultado)
+        await atualizarItem(idCliente, resultado)
       } else {
-        await criarItem(clienteId, resultado)
+        await criarItem(idCliente, resultado)
       }
-      navegar(voltarPara)
+      navegar(voltarPara, {
+        state: { flash: itemId ? 'Item atualizado.' : 'Item criado.' },
+      })
     } catch (err) {
-      const msg =
-        err instanceof Error && err.message
-          ? err.message
-          : 'Não foi possível salvar o item.'
-      setErro(msg)
+      setErro(mapearErroUpload(err, 'Não foi possível salvar o item.'))
     } finally {
       setEnviando(false)
     }
   }
 
-  function aoEscolherImagem(evento: ChangeEvent<HTMLInputElement>) {
-    const arquivo = evento.target.files?.[0]
-    if (!arquivo) return
-
-    if (previewImagem) URL.revokeObjectURL(previewImagem)
-    setArquivoImagem(arquivo)
-    setPreviewImagem(URL.createObjectURL(arquivo))
-    setErro(null)
-  }
-
   return (
-    <div className="admin-painel">
-      <header className="admin-painel__header">
-        <div>
-          <p className="admin-painel__eyebrow">{categoria.rotulo}</p>
-          <h1>{ehNovo ? 'Novo item' : 'Editar item'}</h1>
-          {!ehNovo && itemExistente && (
-            <span className="admin-categorias__id">{itemExistente.id}</span>
-          )}
-        </div>
-        <div className="admin-painel__acoes">
-          <Link className="btn btn--ghost" to={voltarPara}>
-            Voltar
-          </Link>
-        </div>
-      </header>
-
-      {erro && (
-        <p className="admin-painel__alerta admin-painel__alerta--erro" role="alert">
-          {erro}
-        </p>
-      )}
-
+    <AdminPaginaPainel
+      titulo={ehNovo ? 'Novo item' : 'Editar item'}
+      breadcrumb={[
+        { rotulo: 'Painel', para: '/admin/painel' },
+        { rotulo: categoria.rotulo, para: voltarPara },
+        { rotulo: ehNovo ? 'Novo item' : 'Editar item' },
+      ]}
+      voltarPara={voltarPara}
+      alerta={erro ? <AdminAlertaErro>{erro}</AdminAlertaErro> : null}
+    >
       <section className="admin-painel__secao">
         <form className="admin-painel__form" onSubmit={(e) => void salvarItem(e)}>
           <label className="admin-field">
@@ -288,7 +259,9 @@ export function FormularioItem() {
               <input
                 type="color"
                 value={formItem.corPrimaria}
-                onChange={(e) => setFormItem((f) => ({ ...f, corPrimaria: e.target.value }))}
+                onChange={(e) =>
+                  setFormItem((f) => ({ ...f, corPrimaria: e.target.value }))
+                }
                 disabled={enviando}
               />
             </label>
@@ -313,7 +286,9 @@ export function FormularioItem() {
                 min="0"
                 step="0.1"
                 value={formItem.comprimento}
-                onChange={(e) => setFormItem((f) => ({ ...f, comprimento: e.target.value }))}
+                onChange={(e) =>
+                  setFormItem((f) => ({ ...f, comprimento: e.target.value }))
+                }
                 disabled={enviando}
               />
             </label>
@@ -330,8 +305,8 @@ export function FormularioItem() {
                 >
                   <option value="">Nenhum</option>
                   {PADROES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
+                    <option key={p.valor} value={p.valor}>
+                      {p.rotulo}
                     </option>
                   ))}
                 </select>
@@ -343,14 +318,12 @@ export function FormularioItem() {
                   type="text"
                   value={formItem.imagem}
                   placeholder={
-                    arquivoImagem ? 'Novo arquivo será enviado ao salvar' : 'URL do Storage...'
+                    arquivoImagem
+                      ? 'Novo arquivo será enviado ao salvar'
+                      : 'URL do Storage...'
                   }
                   onChange={(e) => {
-                    setArquivoImagem(null)
-                    if (previewImagem) {
-                      URL.revokeObjectURL(previewImagem)
-                      setPreviewImagem(null)
-                    }
+                    limparPreview()
                     setFormItem((f) => ({ ...f, imagem: e.target.value }))
                   }}
                   disabled={enviando}
@@ -363,15 +336,21 @@ export function FormularioItem() {
             <span>{ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}</span>
             <input
               type="file"
-              accept="image/*"
-              onChange={aoEscolherImagem}
+              accept={accept}
+              onChange={(e) => {
+                escolher(e)
+                setErro(null)
+              }}
               disabled={enviando}
             />
           </label>
 
           {imagemExibida && (
             <div className="admin-painel__logo-preview">
-              <img src={imagemExibida} alt="" />
+              <AmpliarImagem
+                src={imagemExibida}
+                alt={formItem.nome.trim() || 'Pré-visualização do item'}
+              />
             </div>
           )}
 
@@ -385,6 +364,6 @@ export function FormularioItem() {
           </div>
         </form>
       </section>
-    </div>
+    </AdminPaginaPainel>
   )
 }

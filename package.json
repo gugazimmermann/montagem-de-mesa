@@ -9,8 +9,6 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "seed:supabase": "node scripts/seed-supabase.mjs",
-    "upload:imagens": "node scripts/upload-imagens-storage.mjs",
-    "upload:logo": "node scripts/upload-logo-storage.mjs",
     "db:migrate": "node scripts/apply-migration.mjs"
   },
   "dependencies": {
@@ -18,7 +16,6 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
-    "slugify": "^1.6.9",
     "uuid": "^14.0.2"
   },
   "devDependencies": {
@@ -29,6 +26,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
     "pg": "^8.22.0",
+    "slugify": "^1.6.9",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   }

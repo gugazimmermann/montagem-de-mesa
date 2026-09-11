@@ -1,0 +1,147 @@
+/* Primitives compartilhados do admin (forms, listas, alertas legados). */
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-field span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.admin-field__dica {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.admin-field input,
+.admin-field textarea,
+.admin-field select {
+  font: inherit;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-solid);
+  color: var(--text);
+}
+
+.admin-field input:focus,
+.admin-field textarea:focus,
+.admin-field select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.admin-field__senha {
+  position: relative;
+}
+
+.admin-field__senha input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 2.5rem;
+}
+
+.admin-field__senha-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0.35rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.admin-field__senha-toggle:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.admin-field__senha-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-field__erro {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+
+/* Listas CRUD (categorias + itens) */
+.admin-list,
+.admin-categorias,
+.admin-itens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-list__item,
+.admin-categorias__item,
+.admin-itens__item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-solid);
+}
+
+.admin-list__item p,
+.admin-categorias__item p,
+.admin-itens__info p {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.admin-list__acoes,
+.admin-categorias__acoes {
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
+.admin-list__acoes a,
+.admin-categorias__acoes a {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Alerta legado → tokens (preferir AdminAlerta no TSX) */
+.admin-painel__alerta {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  color: var(--accent-hover);
+  font-size: 0.9rem;
+}
+
+.admin-painel__alerta--erro {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}

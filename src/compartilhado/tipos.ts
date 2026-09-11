@@ -40,6 +40,8 @@ export type ConfiguracaoMesa = Record<string, string | null>
 
 export interface Categoria {
   id: IdCategoria
+  /** Chave semântica estável para camadas do preview (ex.: sousplat). */
+  codigo?: string | null
   rotulo: string
   descricao: string
 }

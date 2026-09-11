@@ -1,8 +1,9 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, KeyboardEvent } from 'react'
 import type { Categoria, ConfiguracaoMesa, IdCategoria, ItemMesa } from '../../../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../../../dados/categoriasFixas'
 import { obterItensPorCategoria } from '../../../catalogo'
 import './SeletorItens.css'
+import '../../padroes-tecido.css'
 
 interface PropsSeletorItens {
   categorias: Categoria[]
@@ -17,7 +18,7 @@ function AmostraItem({ item }: { item: ItemMesa }) {
   if (item.imagem) {
     return (
       <span className="item-card__swatch item-card__swatch--image" aria-hidden="true">
-        <img src={item.imagem} alt="" />
+        <img src={item.imagem} alt="" loading="lazy" />
       </span>
     )
   }
@@ -27,7 +28,7 @@ function AmostraItem({ item }: { item: ItemMesa }) {
 
   return (
     <span
-      className={`item-card__swatch item-card__swatch--fabric item-card__swatch--${padrao}`}
+      className={`item-card__swatch item-card__swatch--fabric padrao--${padrao}`}
       style={
         {
           '--c-primary': primaria,
@@ -51,10 +52,38 @@ export function SeletorItens({
   const itensCategoria = obterItensPorCategoria(itens, categoriaAtiva)
   const metaAtiva = categorias.find((c) => c.id === categoriaAtiva)
   const idSelecionado = configuracao[categoriaAtiva]
+  const painelId = 'item-picker-panel'
+
+  function aoTeclaTab(evento: KeyboardEvent<HTMLDivElement>) {
+    const atual = categorias.findIndex((c) => c.id === categoriaAtiva)
+    if (atual < 0) return
+
+    let proximo = atual
+    if (evento.key === 'ArrowRight' || evento.key === 'ArrowDown') {
+      proximo = (atual + 1) % categorias.length
+    } else if (evento.key === 'ArrowLeft' || evento.key === 'ArrowUp') {
+      proximo = (atual - 1 + categorias.length) % categorias.length
+    } else if (evento.key === 'Home') {
+      proximo = 0
+    } else if (evento.key === 'End') {
+      proximo = categorias.length - 1
+    } else {
+      return
+    }
+
+    evento.preventDefault()
+    const id = categorias[proximo]?.id
+    if (id) aoMudarCategoria(id)
+  }
 
   return (
     <div className="item-picker">
-      <nav className="item-picker__tabs" aria-label="Categorias de louça">
+      <div
+        className="item-picker__tabs"
+        role="tablist"
+        aria-label="Categorias"
+        onKeyDown={aoTeclaTab}
+      >
         {categorias.map((categoria) => {
           const ativa = categoria.id === categoriaAtiva
           const temSelecao = Boolean(configuracao[categoria.id])
@@ -64,19 +93,28 @@ export function SeletorItens({
             <button
               key={categoria.id}
               type="button"
+              role="tab"
+              id={`tab-${categoria.id}`}
               className={`item-picker__tab ${ativa ? 'is-active' : ''} ${temSelecao ? 'has-selection' : ''} ${ilustrativa ? 'is-illustrative' : ''}`}
               onClick={() => aoMudarCategoria(categoria.id)}
-              aria-pressed={ativa}
-              title={ilustrativa ? 'Somente ilustrativo' : undefined}
+              aria-selected={ativa}
+              aria-controls={painelId}
+              tabIndex={ativa ? 0 : -1}
+              title={ilustrativa ? 'Somente ilustrativo — ambientação' : undefined}
             >
               {categoria.rotulo}
-              {ilustrativa && <span className="item-picker__tab-hint">ilustrativo</span>}
+              {ilustrativa && <span className="item-picker__tab-hint">ambientação</span>}
             </button>
           )
         })}
-      </nav>
+      </div>
 
-      <div className="item-picker__panel">
+      <div
+        className="item-picker__panel"
+        role="tabpanel"
+        id={painelId}
+        aria-labelledby={metaAtiva ? `tab-${metaAtiva.id}` : undefined}
+      >
         <header className="item-picker__header">
           <div>
             <h2>{metaAtiva?.rotulo}</h2>
@@ -115,7 +153,11 @@ export function SeletorItens({
                         <span className="item-card__desc">{item.descricao}</span>
                       )}
                     </span>
-                    {selecionado && <span className="item-card__check" aria-hidden="true">✓</span>}
+                    {selecionado && (
+                      <span className="item-card__check" aria-hidden="true">
+                        ✓
+                      </span>
+                    )}
                   </button>
                 </li>
               )

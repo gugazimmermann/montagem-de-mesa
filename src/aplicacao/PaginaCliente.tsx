@@ -62,7 +62,9 @@ export function PaginaCliente() {
   if (estado === 'carregando') {
     return (
       <div className="app app--mensagem">
-        <p className="app__subtitle">Carregando montagem…</p>
+        <p className="app__subtitle" role="status" aria-live="polite">
+          Carregando montagem…
+        </p>
       </div>
     )
   }
@@ -71,9 +73,9 @@ export function PaginaCliente() {
     return (
       <div className="app app--mensagem">
         <h1>Erro ao carregar</h1>
-        <p className="app__subtitle">Não foi possível carregar os dados do cliente.</p>
-        <Link className="btn btn--primary" to="/raffiner">
-          Tentar Raffiner
+        <p className="app__subtitle">Não foi possível carregar os dados deste endereço.</p>
+        <Link className="btn btn--primary" to="/">
+          Tentar novamente
         </Link>
       </div>
     )
@@ -82,12 +84,12 @@ export function PaginaCliente() {
   if (estado === 'nao-encontrado' || !dados || !clienteId) {
     return (
       <div className="app app--mensagem">
-        <h1>Cliente não encontrado</h1>
+        <h1>Endereço não encontrado</h1>
         <p className="app__subtitle">
-          Não existe um cliente com o endereço <code>/{slug}</code>.
+          Não existe uma montagem em <code>/{slug}</code>.
         </p>
-        <Link className="btn btn--primary" to="/raffiner">
-          Ir para Raffiner
+        <Link className="btn btn--primary" to="/">
+          Voltar ao início
         </Link>
       </div>
     )

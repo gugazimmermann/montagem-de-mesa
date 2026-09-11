@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
   atualizarCadastro,
@@ -8,12 +8,16 @@ import {
   obterSessaoCliente,
   solicitarTrocaEmail,
 } from '../../dados/repositorioClientes'
-import { enviarLogoStorage } from '../../dados/storage'
+import { enviarLogoStorage, exigirUrlStorageOuVazio } from '../../dados/storage'
 import { supabase } from '../../dados/supabase'
 import { useAuth } from '../autenticacao'
-import './PainelAdmin.css'
-import './LoginAdmin.css'
-import './EditarCategoria.css'
+import { AdminAlerta } from './AdminFeedback'
+import {
+  AdminPaginaPainel,
+  AdminSessaoInvalida,
+} from './AdminPaginaPainel'
+import { mapearErroCadastro, mapearErroUpload } from './adminUtils'
+import { useObjectUrlPreview } from './useObjectUrlPreview'
 
 function limparHashUrl() {
   window.history.replaceState(null, '', window.location.pathname + window.location.search)
@@ -21,18 +25,39 @@ function limparHashUrl() {
 
 export function AtualizarCadastroAdmin() {
   const { cliente, definirCliente } = useAuth()
-  const clienteAtual = cliente!
+
+  if (!cliente) {
+    return <AdminSessaoInvalida />
+  }
+
+  return <FormularioAtualizarCadastro clienteAtual={cliente} definirCliente={definirCliente} />
+}
+
+function FormularioAtualizarCadastro({
+  clienteAtual,
+  definirCliente,
+}: {
+  clienteAtual: NonNullable<ReturnType<typeof useAuth>['cliente']>
+  definirCliente: ReturnType<typeof useAuth>['definirCliente']
+}) {
 
   const [nome, setNome] = useState(clienteAtual.nome)
   const [slug, setSlug] = useState(clienteAtual.slug)
   const [email, setEmail] = useState(clienteAtual.email)
   const [logo, setLogo] = useState(clienteAtual.logo)
-  const [arquivoLogo, setArquivoLogo] = useState<File | null>(null)
-  const [previewLogo, setPreviewLogo] = useState<string | null>(null)
+  const {
+    arquivo: arquivoLogo,
+    preview: previewLogo,
+    escolher: aoEscolherLogo,
+    limpar: limparPreviewLogo,
+    accept: acceptLogo,
+  } = useObjectUrlPreview()
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [avisoEmail, setAvisoEmail] = useState<string | null>(null)
+  const [emailNovoPendente, setEmailNovoPendente] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
+  const salvandoRef = useRef(false)
 
   useEffect(() => {
     setNome(clienteAtual.nome)
@@ -48,12 +73,14 @@ export function AtualizarCadastroAdmin() {
     const params = new URLSearchParams(bruto)
     const message = (params.get('message') ?? '').toLowerCase()
 
+    // Mensagens intermediárias do fluxo antigo (dois links); com confirmação só no novo,
+    // o fluxo completo chega com access_token / type=email_change.
     if (
       message.includes('other email') ||
       message.includes('confirmation link accepted')
     ) {
       setAvisoEmail(
-        'Um dos links foi confirmado. Confirme também o segundo link (enviado ao outro e-mail) para a troca ser concluída. Com Gmail +alias, os dois links chegam na mesma caixa — abra os dois e-mails e clique nos dois links.',
+        'Abra o link enviado ao e-mail novo para concluir a troca.',
       )
       setMensagem(null)
       setErro(null)
@@ -86,6 +113,7 @@ export function AtualizarCadastroAdmin() {
           setSlug(sessao.slug)
           setLogo(sessao.logo)
           setAvisoEmail(null)
+          setEmailNovoPendente('')
           setErro(null)
           setMensagem('Cadastro atualizado.')
           limparHashUrl()
@@ -103,24 +131,7 @@ export function AtualizarCadastroAdmin() {
     }
   }, [definirCliente])
 
-  useEffect(() => {
-    return () => {
-      if (previewLogo) URL.revokeObjectURL(previewLogo)
-    }
-  }, [previewLogo])
-
   const logoExibida = previewLogo || logo
-
-  function aoEscolherLogo(evento: ChangeEvent<HTMLInputElement>) {
-    const arquivo = evento.target.files?.[0]
-    if (!arquivo) return
-
-    if (previewLogo) URL.revokeObjectURL(previewLogo)
-    setArquivoLogo(arquivo)
-    setPreviewLogo(URL.createObjectURL(arquivo))
-    setMensagem(null)
-    setErro(null)
-  }
 
   async function aoVerificarEndereco() {
     const normalizado = gerarSlug(slug)
@@ -150,9 +161,12 @@ export function AtualizarCadastroAdmin() {
 
   async function aoSalvar(evento: FormEvent) {
     evento.preventDefault()
+    if (salvandoRef.current) return
+    salvandoRef.current = true
     setErro(null)
     setMensagem(null)
-    setAvisoEmail(null)
+    // Não limpa avisoEmail se a troca ainda está pendente — evita “sumir” o banner no re-save.
+    if (!emailNovoPendente) setAvisoEmail(null)
 
     const nomeTrim = nome.trim()
     const slugNormalizado = gerarSlug(slug)
@@ -160,14 +174,17 @@ export function AtualizarCadastroAdmin() {
 
     if (!nomeTrim) {
       setErro('Informe o nome do cliente.')
+      salvandoRef.current = false
       return
     }
     if (!slugNormalizado) {
       setErro('Informe o endereço da montagem.')
+      salvandoRef.current = false
       return
     }
     if (!emailTrim) {
       setErro('Informe o e-mail.')
+      salvandoRef.current = false
       return
     }
 
@@ -178,6 +195,8 @@ export function AtualizarCadastroAdmin() {
       let logoFinal = logo.trim() || clienteAtual.logo
       if (arquivoLogo) {
         logoFinal = await enviarLogoStorage(clienteAtual.id, arquivoLogo)
+      } else if (logoFinal) {
+        logoFinal = exigirUrlStorageOuVazio(logoFinal, 'Logo')
       }
 
       const atualizado = await atualizarCadastro(clienteAtual.id, {
@@ -190,16 +209,30 @@ export function AtualizarCadastroAdmin() {
       setLogo(logoFinal)
       setSlug(atualizado.slug)
       if (previewLogo) {
-        URL.revokeObjectURL(previewLogo)
-        setPreviewLogo(null)
+        limparPreviewLogo()
       }
-      setArquivoLogo(null)
 
       if (emailTrim !== clienteAtual.email) {
-        await solicitarTrocaEmail(clienteAtual.id, emailTrim)
-        setAvisoEmail(
-          'Enviamos um link para o e-mail atual e outro para o novo. É obrigatório confirmar os dois links (na mesma caixa do Gmail +alias aparecem dois e-mails distintos). Só depois o endereço muda.',
-        )
+        const jaPendente = emailNovoPendente === emailTrim
+        try {
+          if (!jaPendente) {
+            await solicitarTrocaEmail(clienteAtual.id, emailTrim)
+          }
+          setMensagem('Cadastro salvo.')
+          setEmailNovoPendente(emailTrim)
+          setAvisoEmail(
+            jaPendente
+              ? `A troca para ${emailTrim} já está pendente. Use “Reenviar e-mail” se precisar do link de novo.`
+              : `Enviamos um link para ${emailTrim}. Confirme esse e-mail para concluir a troca.`,
+          )
+        } catch (eEmail) {
+          setMensagem('Cadastro salvo.')
+          setErro(
+            eEmail instanceof CadastroErro
+              ? `Não foi possível iniciar a troca de e-mail: ${eEmail.message}`
+              : 'Cadastro salvo, mas não foi possível iniciar a troca de e-mail.',
+          )
+        }
         return
       }
 
@@ -207,53 +240,84 @@ export function AtualizarCadastroAdmin() {
     } catch (e) {
       setAvisoEmail(null)
       setMensagem(null)
-      setErro(
-        e instanceof CadastroErro
-          ? e.message
-          : e instanceof Error && e.message
-            ? e.message
-            : 'Não foi possível salvar o cadastro.',
-      )
+      setErro(mapearErroUpload(e, 'Não foi possível salvar o cadastro.'))
     } finally {
+      salvandoRef.current = false
       setSalvando(false)
     }
   }
 
   return (
-    <div className="admin-painel">
-      <header className="admin-painel__header">
-        <div>
-          <p className="admin-painel__eyebrow">Cadastro</p>
-          <h1>Atualizar cadastro</h1>
-        </div>
-        <div className="admin-painel__acoes">
-          <Link className="btn btn--ghost" to="/admin/painel">
-            Voltar ao painel
-          </Link>
-        </div>
-      </header>
+    <AdminPaginaPainel
+      titulo="Atualizar cadastro"
+      breadcrumb={[
+        { rotulo: 'Painel', para: '/admin/painel' },
+        { rotulo: 'Cadastro' },
+      ]}
+      voltarPara="/admin/painel"
+      voltarRotulo="Voltar ao painel"
+      alerta={
+        <>
+          {avisoEmail && (
+            <AdminAlerta tipo="warning" titulo="Troca de e-mail em andamento">
+              <ol className="admin-email-passos">
+                <li className="is-ativo">
+                  1. Link enviado
+                  {emailNovoPendente ? ` para ${emailNovoPendente}` : ''}
+                </li>
+                <li>2. Confirmar o link no e-mail novo</li>
+              </ol>
+              <p>{avisoEmail}</p>
+              {emailNovoPendente && (
+                <p>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    disabled={salvando}
+                    onClick={() => {
+                      void (async () => {
+                        setSalvando(true)
+                        setErro(null)
+                        try {
+                          await solicitarTrocaEmail(clienteAtual.id, emailNovoPendente, {
+                            forcarReenvio: true,
+                          })
+                          setAvisoEmail(
+                            `Reenviamos o link de confirmação para ${emailNovoPendente}.`,
+                          )
+                        } catch (e) {
+                          setErro(
+                            mapearErroCadastro(e, 'Não foi possível reenviar o e-mail.'),
+                          )
+                        } finally {
+                          setSalvando(false)
+                        }
+                      })()
+                    }}
+                  >
+                    Reenviar e-mail
+                  </button>
+                </p>
+              )}
+            </AdminAlerta>
+          )}
 
-      {avisoEmail && (
-        <div className="admin-login__aviso-email" role="status">
-          <p className="admin-login__aviso-email-titulo">Confirme o novo e-mail</p>
-          <p className="admin-login__aviso-email-texto">{avisoEmail}</p>
-        </div>
-      )}
+          {mensagem && (
+            <AdminAlerta tipo="success" titulo="Cadastro atualizado">
+              {erro
+                ? 'Nome, endereço e logo foram salvos.'
+                : 'As alterações foram salvas.'}
+            </AdminAlerta>
+          )}
 
-      {mensagem && !erro && !avisoEmail && (
-        <div className="admin-login__aviso-email" role="status">
-          <p className="admin-login__aviso-email-titulo">Cadastro atualizado</p>
-          <p className="admin-login__aviso-email-texto">As alterações foram salvas.</p>
-        </div>
-      )}
-
-      {erro && (
-        <div className="admin-login__aviso-email admin-login__aviso-email--erro" role="alert">
-          <p className="admin-login__aviso-email-titulo">Atenção</p>
-          <p className="admin-login__aviso-email-texto">{erro}</p>
-        </div>
-      )}
-
+          {erro && (
+            <AdminAlerta tipo="error" titulo="Atenção">
+              {erro}
+            </AdminAlerta>
+          )}
+        </>
+      }
+    >
       <section className="admin-painel__secao">
         <form className="admin-painel__form" onSubmit={(e) => void aoSalvar(e)}>
           <label className="admin-field">
@@ -304,7 +368,7 @@ export function AtualizarCadastroAdmin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={salvando}
+              disabled={salvando || Boolean(avisoEmail)}
             />
           </label>
 
@@ -312,8 +376,12 @@ export function AtualizarCadastroAdmin() {
             <span>Logo</span>
             <input
               type="file"
-              accept="image/*"
-              onChange={aoEscolherLogo}
+              accept={acceptLogo}
+              onChange={(e) => {
+                aoEscolherLogo(e)
+                setMensagem(null)
+                setErro(null)
+              }}
               disabled={salvando}
             />
           </label>
@@ -334,6 +402,6 @@ export function AtualizarCadastroAdmin() {
           </div>
         </form>
       </section>
-    </div>
+    </AdminPaginaPainel>
   )
 }

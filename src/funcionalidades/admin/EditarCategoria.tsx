@@ -1,73 +1,70 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import type { DadosCliente } from '../../compartilhado/tipos'
-import {
-  atualizarCategoria,
-  carregarDadosCliente,
-  excluirItemDb,
-} from '../../dados/repositorioClientes'
+import { atualizarCategoria, excluirItemDb } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import { AmpliarImagem } from './AmpliarImagem'
-import './PainelAdmin.css'
-import './LoginAdmin.css'
-import './EditarCategoria.css'
+import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
+import { AdminConfirmacao } from './AdminConfirmacao'
+import {
+  AdminPaginaPainel,
+  AdminPainelCarregando,
+  AdminSessaoInvalida,
+} from './AdminPaginaPainel'
+import { useDadosCliente } from './useDadosCliente'
+import { useFlashLocation } from './useFlashLocation'
 
 export function EditarCategoria() {
   const { categoriaId } = useParams<{ categoriaId: string }>()
   const { cliente } = useAuth()
-  const clienteId = cliente!.id
+  const clienteId = cliente?.id
 
-  const [dados, setDados] = useState<DadosCliente | null>(null)
+  const { dados, setDados, carregando, erro: erroCarga } = useDadosCliente(clienteId)
+  const { flash } = useFlashLocation()
+
   const [rotulo, setRotulo] = useState('')
   const [descricao, setDescricao] = useState('')
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
-  const [carregando, setCarregando] = useState(true)
+  const [excluirItemId, setExcluirItemId] = useState<string | null>(null)
 
   useEffect(() => {
-    let ativo = true
-    void carregarDadosCliente(clienteId)
-      .then((d) => {
-        if (!ativo || !d) return
-        setDados(d)
-        const cat = d.categorias.find((c) => c.id === categoriaId)
-        if (cat) {
-          setRotulo(cat.rotulo)
-          setDescricao(cat.descricao)
-        }
-      })
-      .catch(() => {
-        if (ativo) setErro('Não foi possível carregar a categoria.')
-      })
-      .finally(() => {
-        if (ativo) setCarregando(false)
-      })
-    return () => {
-      ativo = false
-    }
-  }, [clienteId, categoriaId])
+    if (flash) setMensagem(flash)
+  }, [flash])
 
-  const categoria = dados?.categorias.find((c) => c.id === categoriaId)
+  useEffect(() => {
+    if (erroCarga) setErro(erroCarga)
+  }, [erroCarga])
+
+  useEffect(() => {
+    if (!dados || !categoriaId) return
+    const cat = dados.categorias.find((c) => c.id === categoriaId)
+    if (cat) {
+      setRotulo(cat.rotulo)
+      setDescricao(cat.descricao)
+    }
+  }, [dados, categoriaId])
 
   const itensCategoria = useMemo(
     () => (dados?.itens ?? []).filter((item) => item.categoria === categoriaId),
     [dados?.itens, categoriaId],
   )
 
-  if (carregando) {
-    return (
-      <div className="admin-painel">
-        <p className="admin-painel__alerta">Carregando…</p>
-      </div>
-    )
-  }
+  if (!cliente) return <AdminSessaoInvalida />
+  if (carregando) return <AdminPainelCarregando />
+
+  const idCliente = cliente.id
+  const categoria = dados?.categorias.find((c) => c.id === categoriaId)
 
   if (!categoriaId || !categoria || !dados) {
     return <Navigate to="/admin/painel" replace />
   }
 
+  const dadosAtuais = dados
+  const idCategoria = categoriaId
+
   async function salvarCategoria(evento: FormEvent) {
     evento.preventDefault()
+    setMensagem(null)
     setErro(null)
     const rotuloTrim = rotulo.trim()
     if (!rotuloTrim) {
@@ -76,15 +73,15 @@ export function EditarCategoria() {
     }
 
     try {
-      await atualizarCategoria(clienteId, {
-        id: categoriaId!,
+      await atualizarCategoria(idCliente, {
+        id: idCategoria,
         rotulo: rotuloTrim,
         descricao: descricao.trim(),
       })
       setDados({
-        ...dados!,
-        categorias: dados!.categorias.map((c) =>
-          c.id === categoriaId
+        ...dadosAtuais,
+        categorias: dadosAtuais.categorias.map((c) =>
+          c.id === idCategoria
             ? { ...c, rotulo: rotuloTrim, descricao: descricao.trim() }
             : c,
         ),
@@ -95,15 +92,17 @@ export function EditarCategoria() {
     }
   }
 
-  async function excluirItem(id: string) {
-    const ok = window.confirm('Excluir este item?')
-    if (!ok) return
-
+  async function confirmarExcluirItem() {
+    if (!excluirItemId) return
+    const id = excluirItemId
+    setExcluirItemId(null)
+    setMensagem(null)
+    setErro(null)
     try {
-      await excluirItemDb(clienteId, id)
+      await excluirItemDb(idCliente, id)
       setDados({
-        ...dados!,
-        itens: dados!.itens.filter((i) => i.id !== id),
+        ...dadosAtuais,
+        itens: dadosAtuais.itens.filter((i) => i.id !== id),
       })
       setMensagem('Item excluído.')
     } catch {
@@ -112,35 +111,29 @@ export function EditarCategoria() {
   }
 
   return (
-    <div className="admin-painel">
-      <header className="admin-painel__header">
-        <div>
-          <p className="admin-painel__eyebrow">Editar categoria</p>
-          <h1>
-            {categoria.rotulo}{' '}
-            <span className="admin-categorias__qtd">
-              ({itensCategoria.length} {itensCategoria.length === 1 ? 'item' : 'itens'})
-            </span>
-          </h1>
-        </div>
-        <div className="admin-painel__acoes">
-          <Link className="btn btn--ghost" to="/admin/painel">
-            Voltar ao painel
-          </Link>
-        </div>
-      </header>
-
-      {(mensagem || erro) && (
-        <p
-          className={
-            erro ? 'admin-painel__alerta admin-painel__alerta--erro' : 'admin-painel__alerta'
-          }
-          role="status"
-        >
-          {erro ?? mensagem}
-        </p>
-      )}
-
+    <AdminPaginaPainel
+      titulo={`${categoria.rotulo} (${itensCategoria.length} ${itensCategoria.length === 1 ? 'item' : 'itens'})`}
+      breadcrumb={[
+        { rotulo: 'Painel', para: '/admin/painel' },
+        { rotulo: categoria.rotulo },
+      ]}
+      voltarPara="/admin/painel"
+      voltarRotulo="Voltar ao painel"
+      alerta={
+        <>
+          {erro && (
+            <AdminAlerta tipo="error" titulo="Atenção">
+              {erro}
+            </AdminAlerta>
+          )}
+          {mensagem && !erro && (
+            <AdminAlerta tipo="success" titulo="Pronto">
+              {mensagem}
+            </AdminAlerta>
+          )}
+        </>
+      }
+    >
       <section className="admin-painel__secao">
         <h2>Dados da categoria</h2>
         <form className="admin-painel__form" onSubmit={(e) => void salvarCategoria(e)}>
@@ -180,43 +173,64 @@ export function EditarCategoria() {
           </Link>
         </div>
 
-        <ul className="admin-itens">
-          {itensCategoria.length === 0 && (
-            <li className="admin-categorias__vazio">Nenhum item nesta categoria.</li>
-          )}
-          {itensCategoria.map((item) => (
-            <li key={item.id} className="admin-itens__item">
-              {item.imagem ? (
-                <AmpliarImagem src={item.imagem} alt={item.nome} />
-              ) : (
-                <div className="admin-itens__preview" aria-hidden="true">
-                  <span style={{ background: item.cores.primaria }} />
+        {itensCategoria.length === 0 ? (
+          <AdminEstadoVazio
+            titulo="Nenhum item nesta categoria"
+            descricao="Adicione o primeiro item do catálogo."
+            acao={
+              <Link
+                className="btn btn--primary"
+                to={`/admin/painel/categorias/${categoriaId}/itens/novo`}
+              >
+                Criar primeiro item
+              </Link>
+            }
+          />
+        ) : (
+          <ul className="admin-itens">
+            {itensCategoria.map((item) => (
+              <li key={item.id} className="admin-itens__item">
+                {item.imagem ? (
+                  <AmpliarImagem src={item.imagem} alt={item.nome} />
+                ) : (
+                  <div className="admin-itens__preview" aria-hidden="true">
+                    <span style={{ background: item.cores.primaria }} />
+                  </div>
+                )}
+                <div className="admin-itens__info">
+                  <strong>{item.nome}</strong>
+                  {item.descricao && <p>{item.descricao}</p>}
                 </div>
-              )}
-              <div className="admin-itens__info">
-                <strong>{item.nome}</strong>
-                <span className="admin-categorias__id">{item.id}</span>
-                {item.descricao && <p>{item.descricao}</p>}
-              </div>
-              <div className="admin-categorias__acoes">
-                <Link
-                  className="btn btn--ghost"
-                  to={`/admin/painel/categorias/${categoriaId}/itens/${item.id}`}
-                >
-                  Editar
-                </Link>
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={() => void excluirItem(item.id)}
-                >
-                  Excluir
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                <div className="admin-categorias__acoes">
+                  <Link
+                    className="btn btn--ghost"
+                    to={`/admin/painel/categorias/${categoriaId}/itens/${item.id}`}
+                  >
+                    Editar
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn--danger"
+                    onClick={() => setExcluirItemId(item.id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
-    </div>
+
+      <AdminConfirmacao
+        aberto={excluirItemId !== null}
+        titulo="Excluir item?"
+        descricao="Esta ação não pode ser desfeita."
+        confirmarRotulo="Excluir"
+        perigo
+        aoCancelar={() => setExcluirItemId(null)}
+        aoConfirmar={() => void confirmarExcluirItem()}
+      />
+    </AdminPaginaPainel>
   )
 }

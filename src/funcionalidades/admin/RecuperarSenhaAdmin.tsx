@@ -1,10 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  CadastroErro,
-  solicitarRedefinicaoSenha,
-} from '../../dados/repositorioClientes'
-import './LoginAdmin.css'
+import { solicitarRedefinicaoSenha } from '../../dados/repositorioClientes'
+import { AdminAuthCard } from './AdminAuthCard'
+import { mapearErroCadastro } from './adminUtils'
 
 export function RecuperarSenhaAdmin() {
   const [email, setEmail] = useState('')
@@ -22,73 +20,72 @@ export function RecuperarSenhaAdmin() {
       setEnviado(true)
     } catch (e) {
       setErro(
-        e instanceof CadastroErro
-          ? e.message
-          : 'Não foi possível enviar o e-mail. Tente novamente.',
+        mapearErroCadastro(e, 'Não foi possível enviar o e-mail. Tente novamente.'),
       )
     } finally {
       setEnviando(false)
     }
   }
 
+  if (enviado) {
+    return (
+      <AdminAuthCard
+        titulo="Recuperar senha"
+        rodape={
+          <p className="admin-login__rodape">
+            <Link to="/admin">Voltar ao login</Link>
+          </p>
+        }
+      >
+        <div className="admin-login__aviso-email" role="status">
+          <p className="admin-login__aviso-email-titulo">Verifique seu e-mail</p>
+          <p className="admin-login__aviso-email-texto">
+            Se existir uma conta com este e-mail, você receberá um link para redefinir a
+            senha.
+          </p>
+        </div>
+      </AdminAuthCard>
+    )
+  }
+
   return (
-    <div className="admin-login">
-      <div className="admin-login__card">
-        <header className="admin-login__header">
-          <h1>Recuperar senha</h1>
-          {!enviado && (
-            <p>Informe o e-mail da conta para receber o link de redefinição.</p>
-          )}
-        </header>
+    <AdminAuthCard
+      titulo="Recuperar senha"
+      subtitulo="Informe o e-mail da conta para receber o link de redefinição."
+      rodape={
+        <p className="admin-login__rodape">
+          <Link to="/admin">Voltar ao login</Link>
+        </p>
+      }
+    >
+      <form className="admin-login__form" onSubmit={aoEnviar}>
+        <label className="admin-field">
+          <span>E-mail</span>
+          <input
+            type="email"
+            name="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={enviando}
+          />
+        </label>
 
-        {enviado ? (
-          <>
-            <div className="admin-login__aviso-email" role="status">
-              <p className="admin-login__aviso-email-titulo">Verifique seu e-mail</p>
-              <p className="admin-login__aviso-email-texto">
-                Se existir uma conta com este e-mail, você receberá um link para
-                redefinir a senha.
-              </p>
-            </div>
-            <p className="admin-login__rodape">
-              <Link to="/admin">Voltar ao login</Link>
-            </p>
-          </>
-        ) : (
-          <form className="admin-login__form" onSubmit={aoEnviar}>
-            <label className="admin-field">
-              <span>E-mail</span>
-              <input
-                type="email"
-                name="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={enviando}
-              />
-            </label>
-
-            {erro && (
-              <p className="admin-login__erro" role="alert">
-                {erro}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              className="btn btn--primary admin-login__submit"
-              disabled={enviando}
-            >
-              {enviando ? 'Enviando…' : 'Enviar link'}
-            </button>
-
-            <p className="admin-login__rodape">
-              <Link to="/admin">Voltar ao login</Link>
-            </p>
-          </form>
+        {erro && (
+          <p className="admin-login__erro" role="alert">
+            {erro}
+          </p>
         )}
-      </div>
-    </div>
+
+        <button
+          type="submit"
+          className="btn btn--primary admin-login__submit"
+          disabled={enviando}
+        >
+          {enviando ? 'Enviando…' : 'Enviar link'}
+        </button>
+      </form>
+    </AdminAuthCard>
   )
 }

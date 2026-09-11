@@ -5,10 +5,14 @@ type CampoSenhaProps = {
   name: string
   value: string
   onChange: (e: ChangeEvent<HTMLInputElement>) => void
+  onBlur?: () => void
   autoComplete?: string
   required?: boolean
   minLength?: number
   disabled?: boolean
+  dica?: string
+  invalido?: boolean
+  mensagemErro?: string | null
 }
 
 function IconeOlho() {
@@ -58,12 +62,18 @@ export function CampoSenha({
   name,
   value,
   onChange,
+  onBlur,
   autoComplete,
   required,
   minLength,
   disabled,
+  dica,
+  invalido,
+  mensagemErro,
 }: CampoSenhaProps) {
   const [visivel, setVisivel] = useState(false)
+  const erroId = `${name}-erro`
+  const dicaId = `${name}-dica`
 
   return (
     <label className="admin-field">
@@ -75,9 +85,15 @@ export function CampoSenha({
           autoComplete={autoComplete}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           required={required}
           minLength={minLength}
           disabled={disabled}
+          aria-invalid={invalido || undefined}
+          aria-describedby={
+            [mensagemErro ? erroId : null, dica ? dicaId : null].filter(Boolean).join(' ') ||
+            undefined
+          }
         />
         <button
           type="button"
@@ -90,6 +106,16 @@ export function CampoSenha({
           {visivel ? <IconeOlhoRiscado /> : <IconeOlho />}
         </button>
       </div>
+      {dica && !mensagemErro && (
+        <span id={dicaId} className="admin-field__dica">
+          {dica}
+        </span>
+      )}
+      {mensagemErro && (
+        <span id={erroId} className="admin-field__erro" role="alert">
+          {mensagemErro}
+        </span>
+      )}
     </label>
   )
 }

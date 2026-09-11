@@ -1,50 +1,32 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
-import type { DadosCliente } from '../../compartilhado/tipos'
+import { useMemo } from 'react'
+import { Navigate, useParams } from 'react-router-dom'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
-import { carregarDadosCliente } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import { AmpliarImagem } from './AmpliarImagem'
-import './PainelAdmin.css'
-import './LoginAdmin.css'
-import './EditarCategoria.css'
+import { AdminEstadoVazio } from './AdminFeedback'
+import {
+  AdminPaginaPainel,
+  AdminPainelCarregando,
+  AdminSessaoInvalida,
+} from './AdminPaginaPainel'
+import { useDadosCliente } from './useDadosCliente'
 
 export function VisualizarCategoria() {
   const { categoriaId } = useParams<{ categoriaId: string }>()
   const { cliente } = useAuth()
-  const clienteId = cliente!.id
+  const clienteId = cliente?.id
 
-  const [dados, setDados] = useState<DadosCliente | null>(null)
-  const [carregando, setCarregando] = useState(true)
-
-  useEffect(() => {
-    let ativo = true
-    void carregarDadosCliente(clienteId)
-      .then((d) => {
-        if (ativo && d) setDados(d)
-      })
-      .finally(() => {
-        if (ativo) setCarregando(false)
-      })
-    return () => {
-      ativo = false
-    }
-  }, [clienteId])
-
-  const categoria = dados?.categorias.find((c) => c.id === categoriaId)
+  const { dados, carregando } = useDadosCliente(clienteId)
 
   const itensCategoria = useMemo(
     () => (dados?.itens ?? []).filter((item) => item.categoria === categoriaId),
     [dados?.itens, categoriaId],
   )
 
-  if (carregando) {
-    return (
-      <div className="admin-painel">
-        <p className="admin-painel__alerta">Carregando…</p>
-      </div>
-    )
-  }
+  if (!clienteId) return <AdminSessaoInvalida />
+  if (carregando) return <AdminPainelCarregando />
+
+  const categoria = dados?.categorias.find((c) => c.id === categoriaId)
 
   if (!categoriaId || !categoria) {
     return <Navigate to="/admin/painel" replace />
@@ -55,25 +37,22 @@ export function VisualizarCategoria() {
   }
 
   return (
-    <div className="admin-painel">
-      <header className="admin-painel__header">
-        <div>
-          <p className="admin-painel__eyebrow">Visualizar categoria</p>
-          <h1>
-            {categoria.rotulo}{' '}
-            <span className="admin-categorias__badge">Fixa</span>
-            <span className="admin-categorias__qtd">
-              ({itensCategoria.length} {itensCategoria.length === 1 ? 'item' : 'itens'})
-            </span>
-          </h1>
-        </div>
-        <div className="admin-painel__acoes">
-          <Link className="btn btn--ghost" to="/admin/painel">
-            Voltar ao painel
-          </Link>
-        </div>
-      </header>
-
+    <AdminPaginaPainel
+      titulo={
+        <>
+          <span className="admin-painel__eyebrow" style={{ display: 'block' }}>
+            Visualizar categoria
+          </span>
+          {categoria.rotulo}{' '}
+          <span className="admin-categorias__badge">Fixa</span>
+          <span className="admin-categorias__qtd">
+            ({itensCategoria.length} {itensCategoria.length === 1 ? 'item' : 'itens'})
+          </span>
+        </>
+      }
+      voltarPara="/admin/painel"
+      voltarRotulo="Voltar ao painel"
+    >
       <section className="admin-painel__secao">
         <h2>Sobre</h2>
         <p className="admin-categorias__descricao-fixa">
@@ -87,27 +66,31 @@ export function VisualizarCategoria() {
       <section className="admin-painel__secao">
         <h2>Itens ({itensCategoria.length})</h2>
 
-        <ul className="admin-itens">
-          {itensCategoria.map((item) => (
-            <li key={item.id} className="admin-itens__item">
-              {item.imagem ? (
-                <AmpliarImagem src={item.imagem} alt={item.nome} />
-              ) : (
-                <div className="admin-itens__preview" aria-hidden="true">
-                  <span style={{ background: item.cores.primaria }} />
-                </div>
-              )}
-              <div className="admin-itens__info">
-                <strong>{item.nome}</strong>
-                {item.descricao && <p>{item.descricao}</p>}
-                {item.padrao && (
-                  <span className="admin-categorias__id">Padrão: {item.padrao}</span>
+        {itensCategoria.length === 0 ? (
+          <AdminEstadoVazio
+            titulo="Nenhum item"
+            descricao="Esta categoria fixa ainda não tem itens listados."
+          />
+        ) : (
+          <ul className="admin-itens">
+            {itensCategoria.map((item) => (
+              <li key={item.id} className="admin-itens__item">
+                {item.imagem ? (
+                  <AmpliarImagem src={item.imagem} alt={item.nome} />
+                ) : (
+                  <div className="admin-itens__preview" aria-hidden="true">
+                    <span style={{ background: item.cores.primaria }} />
+                  </div>
                 )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                <div className="admin-itens__info">
+                  <strong>{item.nome}</strong>
+                  {item.descricao && <p>{item.descricao}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
-    </div>
+    </AdminPaginaPainel>
   )
 }

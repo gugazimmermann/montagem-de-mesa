@@ -43,26 +43,10 @@
   align-items: center;
 }
 
-.admin-painel__alerta {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  background: var(--accent-bg);
-  border: 1px solid var(--border);
-  color: var(--accent-hover);
-  font-size: 0.9rem;
-}
-
-.admin-painel__alerta--erro {
-  background: #fdf2f2;
-  border-color: #f0c9c9;
-  color: #9b2c2c;
-}
-
 .admin-painel__secao {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
 }
@@ -95,36 +79,16 @@
 .admin-painel__logo-preview {
   width: fit-content;
   padding: 0.75rem;
-  background: #fff;
+  background: var(--surface-solid);
   border: 1px solid var(--border);
   border-radius: 10px;
 }
 
-.admin-painel__logo-preview img {
+.admin-painel__logo-preview > img {
   display: block;
   max-height: 3rem;
   width: auto;
   object-fit: contain;
-}
-
-.admin-categorias {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.admin-categorias__item {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #fff;
 }
 
 .admin-categorias__item strong {
@@ -153,7 +117,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
-  background: var(--surface-elevated, rgba(0, 0, 0, 0.06));
+  background: var(--surface-elevated);
   border-radius: 4px;
   vertical-align: middle;
 }
@@ -169,24 +133,6 @@
   font-size: 0.85rem;
   color: var(--text-muted);
   font-style: italic;
-}
-
-.admin-categorias__item p {
-  margin: 0.35rem 0 0;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.admin-categorias__acoes {
-  display: flex;
-  gap: 0.4rem;
-  align-items: flex-start;
-}
-
-.admin-categorias__acoes a {
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
 }
 
 .admin-categorias__vazio {

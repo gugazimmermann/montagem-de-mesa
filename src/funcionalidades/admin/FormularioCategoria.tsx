@@ -4,18 +4,26 @@ import { v4 as uuidv4 } from 'uuid'
 import type { Categoria } from '../../compartilhado/tipos'
 import { criarCategoria } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
-import './PainelAdmin.css'
-import './LoginAdmin.css'
+import {
+  AdminAlertaErro,
+  AdminPaginaPainel,
+  AdminSessaoInvalida,
+} from './AdminPaginaPainel'
 
 export function FormularioCategoria() {
   const navegar = useNavigate()
   const { cliente } = useAuth()
-  const clienteId = cliente!.id
 
   const [rotulo, setRotulo] = useState('')
   const [descricao, setDescricao] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+
+  if (!cliente) {
+    return <AdminSessaoInvalida />
+  }
+
+  const clienteId = cliente.id
 
   async function salvarCategoria(evento: FormEvent) {
     evento.preventDefault()
@@ -30,15 +38,15 @@ export function FormularioCategoria() {
     setEnviando(true)
     try {
       const id = uuidv4()
-
       const nova: Categoria = {
         id,
         rotulo: rotuloTrim,
         descricao: descricao.trim(),
       }
-
       await criarCategoria(clienteId, nova)
-      navegar(`/admin/painel/categorias/${id}`)
+      navegar(`/admin/painel/categorias/${id}`, {
+        state: { flash: 'Categoria criada.' },
+      })
     } catch {
       setErro('Não foi possível criar a categoria.')
     } finally {
@@ -47,25 +55,15 @@ export function FormularioCategoria() {
   }
 
   return (
-    <div className="admin-painel">
-      <header className="admin-painel__header">
-        <div>
-          <p className="admin-painel__eyebrow">Categorias</p>
-          <h1>Nova categoria</h1>
-        </div>
-        <div className="admin-painel__acoes">
-          <Link className="btn btn--ghost" to="/admin/painel">
-            Voltar
-          </Link>
-        </div>
-      </header>
-
-      {erro && (
-        <p className="admin-painel__alerta admin-painel__alerta--erro" role="alert">
-          {erro}
-        </p>
-      )}
-
+    <AdminPaginaPainel
+      titulo="Nova categoria"
+      breadcrumb={[
+        { rotulo: 'Painel', para: '/admin/painel' },
+        { rotulo: 'Nova categoria' },
+      ]}
+      voltarPara="/admin/painel"
+      alerta={erro ? <AdminAlertaErro>{erro}</AdminAlertaErro> : null}
+    >
       <section className="admin-painel__secao">
         <form className="admin-painel__form" onSubmit={(e) => void salvarCategoria(e)}>
           <label className="admin-field">
@@ -99,6 +97,6 @@ export function FormularioCategoria() {
           </div>
         </form>
       </section>
-    </div>
+    </AdminPaginaPainel>
   )
 }

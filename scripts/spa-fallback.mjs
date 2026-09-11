@@ -4,8 +4,12 @@ import { cpSync, mkdirSync } from 'node:fs'
 const rotas = [
   'admin',
   'entrar',
+  'cadastro',
   'admin/painel',
+  'admin/painel/cadastro',
   'admin/painel/categorias/novo',
+  'admin/recuperar-senha',
+  'admin/redefinir-senha',
   'raffiner',
 ]
 

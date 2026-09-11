@@ -11,8 +11,8 @@ Multi-cliente: cada conta tem login no admin, nome, logo, endereço público e c
 ```bash
 npm install
 cp .env.example .env          # preencha as chaves (veja Configuração)
-# aplique as migrations na ordem da seção Schema
-npm run seed:supabase
+npm run db:migrate            # schema deste app (não reseta o Database)
+npm run seed:supabase         # Auth + cliente + catálogo + imagens/
 npm run dev
 ```
 
@@ -32,9 +32,10 @@ Abra a URL do Vite (em geral `http://localhost:5173`). Detalhes de Auth, SMTP e 
 |----------|-----|
 | `VITE_SUPABASE_URL` | Project URL (`https://….supabase.co`) |
 | `VITE_SUPABASE_ANON_KEY` | Chave `anon` `public` (frontend) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role — **só** scripts locais (seed/upload); nunca no Vite/Render |
-| `DATABASE_URL` | URI do Postgres — opcional; necessário para `npm run db:migrate` |
-| `SEED_EMAIL` / `SEED_PASSWORD` | Opcional; padrão do seed: `admin@raffiner.com` / `admin123` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role — **só** scripts locais (seed); nunca no Vite/Render |
+| `DATABASE_URL` | URI do Postgres — necessário para `npm run db:migrate` (e seed transacional) |
+| `SEED_EMAIL` | Opcional; padrão `gugazimmermann@gmail.com` |
+| `SEED_PASSWORD` | Opcional; padrão `1234567890` (mín. 8 no script; o app exige 10) |
 
 ### Auth (URL Configuration)
 
@@ -48,18 +49,33 @@ Em **Authentication → URL Configuration**:
 
 (confirmação de cadastro → `/admin`; reset de senha → `/admin/redefinir-senha`; troca de e-mail → `/admin/painel/cadastro`)
 
-Com **Secure email change** ativo (**Auth → Providers → Email**), a troca de e-mail exige confirmar **dois** links (atual e novo). Para um único link no endereço novo, desative essa opção.
+Com **Secure email change** desativado (**Auth → Providers → Email**), a troca de e-mail exige só confirmar o link no endereço **novo** (comportamento esperado pelo app). Se ativar Secure email change, o Supabase passa a exigir também o link no e-mail atual.
+
+### Checklist de segurança (Auth / projeto)
+
+No dashboard Supabase:
+
+1. **Authentication → Providers → Email**
+   - Confirmação de e-mail **obrigatória** (signup aberto multi-tenant).
+   - Política de senha: mínimo **10** caracteres (alinhar com o app).
+   - Preferir **Secure password change** / fluxo que force redefinição após recovery (o app também bloqueia o painel com flag em `localStorage` até `updateUser({ password })`).
+2. **Authentication → URL Configuration** — só Redirect URLs do seu domínio (ver acima).
+3. **Bot protection** / rate limits no Auth quando disponível.
+4. Catálogo e Storage de itens/logos são **leitura pública** (montagem por slug). Isso permite scrape do catálogo; fase futura pode restringir via RPC `carregar_montagem(slug)`.
+5. `npm run db:migrate` usa `ssl: { rejectUnauthorized: false }`; prefira CA válida em `DATABASE_URL` quando possível.
 
 ### Schema e RLS
 
-Ordem (instalação nova), via SQL Editor ou `npm run db:migrate -- <arquivo>`:
+```bash
+npm run db:migrate
+```
 
-1. [`supabase/migrations/20260729120000_auth_catalogo.sql`](supabase/migrations/20260729120000_auth_catalogo.sql) — tabelas com IDs **UUID**, RLS
-2. [`supabase/migrations/20260910200000_storage_itens.sql`](supabase/migrations/20260910200000_storage_itens.sql)
-3. [`supabase/migrations/20260910210000_storage_logos.sql`](supabase/migrations/20260910210000_storage_logos.sql)
-4. [`supabase/migrations/20260910220000_clientes_insert.sql`](supabase/migrations/20260910220000_clientes_insert.sql)
+Aplica, em ordem, os arquivos em [`supabase/migrations/`](supabase/migrations/):
 
-Projeto antigo com IDs em `text`: aplique também [`20260911150000_ids_uuid.sql`](supabase/migrations/20260911150000_ids_uuid.sql) (**destrutiva** — apaga clientes/categorias/itens) e rode o seed de novo.
+1. [`20260911180000_schema.sql`](supabase/migrations/20260911180000_schema.sql) — drop **só** de `clientes` / `categorias` / `itens` (+ funções/policies/views deste app) e recria o schema final (UUID, RLS, `codigo`, view pública sem e-mail, lock de colunas sensíveis)
+2. [`20260911180001_storage.sql`](supabase/migrations/20260911180001_storage.sql) — buckets `itens` / `logos` e policies
+
+**Não** reseta o Database do projeto. Tabelas de outros apps (ex.: `leads`) permanecem intactas. Opcional: `npm run db:migrate -- caminho/arquivo.sql` para um arquivo só.
 
 ### Seed e imagens
 
@@ -67,14 +83,28 @@ Projeto antigo com IDs em `text`: aplique também [`20260911150000_ids_uuid.sql`
 npm run seed:supabase
 ```
 
-Cria o usuário Auth (se ainda não existir), o cliente com endereço público `raffiner` (UUID gerado) e importa [`src/dados/catalogo.json`](src/dados/catalogo.json).
+One-shot (precisa de `VITE_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`):
 
-Uploads opcionais (cliente pelo endereço `raffiner`, ou `UPLOAD_CLIENTE_ID` = UUID):
+- cria/atualiza o usuário Auth
+- recria o cliente **Raffiner** (`slug=raffiner`)
+- importa [`src/dados/catalogo.json`](src/dados/catalogo.json)
+- envia logo e fotos de [`imagens/`](imagens/) para o Storage
+- atualiza as URLs no banco e no JSON
 
-```bash
-npm run upload:logo
-npm run upload:imagens
+**Não apaga** os arquivos locais em `imagens/`. Layout esperado:
+
 ```
+imagens/logos/raffiner.webp
+imagens/itens/raffiner/
+  Sousplat/
+  Pratos Rasos/
+  Pratos Fundos/
+  Pratos de sobremesa/
+  Porta Guardanapos/
+  Tacas/
+```
+
+Defaults: e-mail `gugazimmermann@gmail.com`, senha `1234567890`. Com `DATABASE_URL`, o catálogo é gravado em transação SQL.
 
 ## Rotas
 
@@ -96,7 +126,7 @@ npm run upload:imagens
 | Usuários / senhas | Supabase Auth |
 | Cliente (`clientes`) | Postgres — `id` UUID; endereço público único (`slug`); `auth_user_id` |
 | Categorias e itens | Postgres — IDs UUID; RLS: leitura pública, escrita do dono |
-| Logos / fotos | Storage (`logos`, `itens`) |
+| Logos / fotos | Storage (`logos`, `itens`); fonte local em `imagens/` |
 | Toalhas fixas | [`src/dados/toalhas.json`](src/dados/toalhas.json) (merge no cliente) |
 
 Novo cliente: cadastro em `/cadastro` (ou Auth + linha em `clientes` com `auth_user_id`) e catálogo no painel. Toalhas entram automaticamente.
@@ -109,24 +139,24 @@ Novo cliente: cadastro em `/cadastro` (ou Auth + linha em `clientes` com `auth_u
 | `npm run build` | Build de produção (`dist/`) |
 | `npm run preview` | Preview do build |
 | `npm run lint` | oxlint |
-| `npm run db:migrate` | Aplica SQL via `DATABASE_URL` (arquivo opcional na CLI) |
-| `npm run seed:supabase` | Seed Auth + cliente + catálogo |
-| `npm run upload:logo` | Envia logo para Storage |
-| `npm run upload:imagens` | Envia `public/imgs` e atualiza URLs |
+| `npm run db:migrate` | Aplica todas as migrations via `DATABASE_URL` |
+| `npm run seed:supabase` | Auth + cliente + catálogo + upload de `imagens/` |
 
 ## Estrutura
 
 ```
 src/aplicacao/              # rotas e página pública
 src/dados/                  # cliente Supabase, repositório, JSON
-src/compartilhado/          # tipos e utils
+src/compartilhado/          # tipos, utils, ErrorBoundary, ImagemAmpliada
 src/funcionalidades/
   admin/                    # login, painel, cadastro, formulários
   autenticacao/             # AuthProvider, rota protegida
   catalogo/                 # helpers do catálogo
   mesa/                     # seletor e pré-visualização
-supabase/migrations/        # schema, storage, RLS
-scripts/                    # migrate, seed, uploads
+imagens/                    # logo e fotos locais (seed → Storage)
+supabase/migrations/        # schema + storage
+scripts/                    # migrate, seed
+scripts/lib/                # env, mime, cliente admin compartilhados
 ```
 
 ## Deploy (Render — Static Site)
@@ -144,4 +174,5 @@ No Auth do Supabase, atualize **Site URL** e **Redirect URLs** para o domínio d
 
 ## Regras do app
 
-- Lugar americano e sousplat são **mutuamente exclusivos** quando as duas categorias existem (ids `lugarAmericano` e `sousplat`).
+- Categorias do seed usam `codigo` estável (`sousplat`, `pratoRaso`, …) para o preview; o PK é UUID.
+- Categorias criadas no admin sem `codigo` aparecem no preview como camada genérica (se tiverem imagem).

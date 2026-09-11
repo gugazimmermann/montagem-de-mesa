@@ -1,0 +1,252 @@
+.admin-alerta {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.admin-alerta__titulo {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.admin-alerta__corpo {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.admin-alerta__corpo p {
+  margin: 0 0 0.5rem;
+}
+
+.admin-alerta__corpo p:last-child {
+  margin-bottom: 0;
+}
+
+.admin-alerta--info {
+  border-color: var(--border);
+  background: var(--accent-bg);
+}
+
+.admin-alerta--success {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+}
+
+.admin-alerta--success .admin-alerta__titulo {
+  color: var(--success);
+}
+
+.admin-alerta--warning {
+  border-color: var(--warning-border);
+  background: var(--warning-bg);
+}
+
+.admin-alerta--warning .admin-alerta__titulo {
+  color: var(--warning);
+}
+
+.admin-alerta--error {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+}
+
+.admin-alerta--error .admin-alerta__titulo,
+.admin-alerta--error .admin-alerta__corpo {
+  color: var(--danger);
+}
+
+.admin-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1.25rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.admin-estado p {
+  margin: 0;
+}
+
+.admin-estado__spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: admin-spin 0.7s linear infinite;
+}
+
+.admin-estado__titulo {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.admin-estado__desc {
+  max-width: 28rem;
+  font-size: 0.9rem;
+}
+
+.admin-estado--vazio {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.admin-breadcrumb {
+  margin: 0 0 0.75rem;
+}
+
+.admin-breadcrumb ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.admin-breadcrumb li:not(:last-child)::after {
+  content: '/';
+  margin-left: 0.35rem;
+  opacity: 0.6;
+}
+
+.admin-breadcrumb a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.admin-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.admin-breadcrumb [aria-current='page'] {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(26, 36, 33, 0.45);
+}
+
+.admin-modal {
+  width: min(420px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-md);
+}
+
+.admin-modal h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.admin-modal p {
+  margin: 0 0 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.admin-modal__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-estado__spinner {
+    animation: none;
+    border-top-color: var(--accent);
+    opacity: 0.7;
+  }
+}
+
+.admin-menu-mais {
+  position: relative;
+}
+
+.admin-menu-mais__painel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.35rem);
+  z-index: 20;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-menu-mais__painel .btn,
+.admin-menu-mais__painel a.btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.admin-acoes-desktop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.admin-acoes-mobile {
+  display: none;
+}
+
+.admin-email-passos {
+  margin: 0 0 0.75rem;
+  padding-left: 1.1rem;
+  color: var(--text);
+}
+
+.admin-email-passos li {
+  margin-bottom: 0.25rem;
+  opacity: 0.55;
+}
+
+.admin-email-passos li.is-ativo {
+  opacity: 1;
+  font-weight: 600;
+}
+
+
+@media (max-width: 720px) {
+  .admin-acoes-desktop {
+    display: none;
+  }
+
+  .admin-acoes-mobile {
+    display: block;
+  }
+}
