@@ -7,6 +7,7 @@ import {
   carregarDadosCliente,
   excluirCategoriaDb,
 } from '../../dados/repositorioClientes'
+import { enviarLogoStorage } from '../../dados/storage'
 import { useAuth } from '../autenticacao'
 import './PainelAdmin.css'
 import './LoginAdmin.css'
@@ -20,9 +21,12 @@ export function PainelAdmin() {
   const [dados, setDados] = useState<DadosCliente | null>(null)
   const [nome, setNome] = useState('')
   const [logo, setLogo] = useState('')
+  const [arquivoLogo, setArquivoLogo] = useState<File | null>(null)
+  const [previewLogo, setPreviewLogo] = useState<string | null>(null)
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
+  const [salvando, setSalvando] = useState(false)
 
   useEffect(() => {
     let ativo = true
@@ -44,28 +48,53 @@ export function PainelAdmin() {
     }
   }, [clienteId])
 
+  useEffect(() => {
+    return () => {
+      if (previewLogo) URL.revokeObjectURL(previewLogo)
+    }
+  }, [previewLogo])
+
   const linkPublico = useMemo(
     () => (cliente ? `/c/${cliente.slug}` : '/'),
     [cliente],
   )
 
+  const logoExibida = previewLogo || logo
+
   async function salvarPerfil(evento: FormEvent) {
     evento.preventDefault()
     if (!dados) return
     setErro(null)
+    setMensagem(null)
     const nomeTrim = nome.trim()
     if (!nomeTrim) {
       setErro('Informe o nome do cliente.')
       return
     }
 
-    const logoFinal = logo.trim() || dados.logo
+    setSalvando(true)
     try {
+      let logoFinal = logo.trim() || dados.logo
+      if (arquivoLogo) {
+        logoFinal = await enviarLogoStorage(clienteId, arquivoLogo)
+      }
       await atualizarPerfil(clienteId, { nome: nomeTrim, logo: logoFinal })
       setDados({ ...dados, nome: nomeTrim, logo: logoFinal })
+      setLogo(logoFinal)
+      if (previewLogo) {
+        URL.revokeObjectURL(previewLogo)
+        setPreviewLogo(null)
+      }
+      setArquivoLogo(null)
       setMensagem('Perfil salvo.')
-    } catch {
-      setErro('Não foi possível salvar o perfil.')
+    } catch (err) {
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Não foi possível salvar o perfil.'
+      setErro(msg)
+    } finally {
+      setSalvando(false)
     }
   }
 
@@ -73,13 +102,11 @@ export function PainelAdmin() {
     const arquivo = evento.target.files?.[0]
     if (!arquivo) return
 
-    const leitor = new FileReader()
-    leitor.onload = () => {
-      if (typeof leitor.result === 'string') {
-        setLogo(leitor.result)
-      }
-    }
-    leitor.readAsDataURL(arquivo)
+    if (previewLogo) URL.revokeObjectURL(previewLogo)
+    setArquivoLogo(arquivo)
+    setPreviewLogo(URL.createObjectURL(arquivo))
+    setMensagem(null)
+    setErro(null)
   }
 
   async function excluirCategoria(id: string) {
@@ -166,14 +193,14 @@ export function PainelAdmin() {
             <input type="file" accept="image/*" onChange={aoEscolherLogo} />
           </label>
 
-          {logo && (
+          {logoExibida && (
             <div className="admin-painel__logo-preview">
-              <img src={logo} alt={`Logo ${nome}`} />
+              <img src={logoExibida} alt={`Logo ${nome}`} />
             </div>
           )}
 
-          <button type="submit" className="btn btn--primary">
-            Salvar perfil
+          <button type="submit" className="btn btn--primary" disabled={salvando}>
+            {salvando ? 'Salvando…' : 'Salvar perfil'}
           </button>
         </form>
       </section>

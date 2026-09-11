@@ -8,6 +8,7 @@ import {
   criarItem,
   slugifyCategoria,
 } from '../../dados/repositorioClientes'
+import { enviarImagemItemStorage } from '../../dados/storage'
 import { useAuth } from '../autenticacao'
 import './PainelAdmin.css'
 import './LoginAdmin.css'
@@ -128,6 +129,8 @@ export function FormularioItem() {
 
   const [dados, setDados] = useState<DadosCliente | null>(null)
   const [formItem, setFormItem] = useState<FormItem>(formItemVazio)
+  const [arquivoImagem, setArquivoImagem] = useState<File | null>(null)
+  const [previewImagem, setPreviewImagem] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
@@ -151,6 +154,12 @@ export function FormularioItem() {
       ativo = false
     }
   }, [clienteId, itemId])
+
+  useEffect(() => {
+    return () => {
+      if (previewImagem) URL.revokeObjectURL(previewImagem)
+    }
+  }, [previewImagem])
 
   if (carregando) {
     return (
@@ -176,6 +185,7 @@ export function FormularioItem() {
   }
 
   const voltarPara = `/admin/painel/categorias/${categoriaId}`
+  const imagemExibida = previewImagem || formItem.imagem
 
   async function salvarItem(evento: FormEvent) {
     evento.preventDefault()
@@ -198,14 +208,26 @@ export function FormularioItem() {
 
     setEnviando(true)
     try {
+      if (arquivoImagem) {
+        resultado.imagem = await enviarImagemItemStorage(
+          clienteId,
+          categoriaId!,
+          resultado.id,
+          arquivoImagem,
+        )
+      }
       if (itemId) {
         await atualizarItem(clienteId, resultado)
       } else {
         await criarItem(clienteId, resultado)
       }
       navegar(voltarPara)
-    } catch {
-      setErro('Não foi possível salvar o item.')
+    } catch (err) {
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Não foi possível salvar o item.'
+      setErro(msg)
     } finally {
       setEnviando(false)
     }
@@ -215,13 +237,10 @@ export function FormularioItem() {
     const arquivo = evento.target.files?.[0]
     if (!arquivo) return
 
-    const leitor = new FileReader()
-    leitor.onload = () => {
-      if (typeof leitor.result === 'string') {
-        setFormItem((f) => ({ ...f, imagem: leitor.result as string }))
-      }
-    }
-    leitor.readAsDataURL(arquivo)
+    if (previewImagem) URL.revokeObjectURL(previewImagem)
+    setArquivoImagem(arquivo)
+    setPreviewImagem(URL.createObjectURL(arquivo))
+    setErro(null)
   }
 
   return (
@@ -329,13 +348,18 @@ export function FormularioItem() {
                 <span>Imagem (URL)</span>
                 <input
                   type="text"
-                  value={formItem.imagem.startsWith('data:') ? '' : formItem.imagem}
+                  value={formItem.imagem}
                   placeholder={
-                    formItem.imagem.startsWith('data:')
-                      ? 'Imagem carregada do computador'
-                      : 'URL do Storage...'
+                    arquivoImagem ? 'Novo arquivo será enviado ao salvar' : 'URL do Storage...'
                   }
-                  onChange={(e) => setFormItem((f) => ({ ...f, imagem: e.target.value }))}
+                  onChange={(e) => {
+                    setArquivoImagem(null)
+                    if (previewImagem) {
+                      URL.revokeObjectURL(previewImagem)
+                      setPreviewImagem(null)
+                    }
+                    setFormItem((f) => ({ ...f, imagem: e.target.value }))
+                  }}
                   disabled={enviando}
                 />
               </label>
@@ -352,9 +376,9 @@ export function FormularioItem() {
             />
           </label>
 
-          {formItem.imagem && (
+          {imagemExibida && (
             <div className="admin-painel__logo-preview">
-              <img src={formItem.imagem} alt="" />
+              <img src={imagemExibida} alt="" />
             </div>
           )}
 

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { Categoria, ConfiguracaoMesa, IdCategoria, ItemMesa } from '../../../../compartilhado/tipos'
+import { ehCategoriaFixa } from '../../../../dados/categoriasFixas'
 import { obterItensPorCategoria } from '../../../catalogo'
 import './SeletorItens.css'
 
@@ -57,16 +58,19 @@ export function SeletorItens({
         {categorias.map((categoria) => {
           const ativa = categoria.id === categoriaAtiva
           const temSelecao = Boolean(configuracao[categoria.id])
+          const ilustrativa = ehCategoriaFixa(categoria.id)
 
           return (
             <button
               key={categoria.id}
               type="button"
-              className={`item-picker__tab ${ativa ? 'is-active' : ''} ${temSelecao ? 'has-selection' : ''}`}
+              className={`item-picker__tab ${ativa ? 'is-active' : ''} ${temSelecao ? 'has-selection' : ''} ${ilustrativa ? 'is-illustrative' : ''}`}
               onClick={() => aoMudarCategoria(categoria.id)}
               aria-pressed={ativa}
+              title={ilustrativa ? 'Somente ilustrativo' : undefined}
             >
               {categoria.rotulo}
+              {ilustrativa && <span className="item-picker__tab-hint">ilustrativo</span>}
             </button>
           )
         })}

@@ -1,4 +1,5 @@
 export { LoginAdmin } from './LoginAdmin'
+export { CadastroAdmin } from './CadastroAdmin'
 export { PainelAdmin } from './PainelAdmin'
 export { CategoriaPainel } from './CategoriaPainel'
 export { EditarCategoria } from './EditarCategoria'

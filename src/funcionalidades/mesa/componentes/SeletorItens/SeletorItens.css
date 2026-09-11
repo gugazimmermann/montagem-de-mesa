@@ -59,6 +59,20 @@
   vertical-align: middle;
 }
 
+.item-picker__tab-hint {
+  display: inline-block;
+  margin-left: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.item-picker__tab.is-illustrative:not(.is-active) {
+  border-style: dashed;
+}
+
 .item-picker__panel {
   flex: 1;
   background: var(--surface);

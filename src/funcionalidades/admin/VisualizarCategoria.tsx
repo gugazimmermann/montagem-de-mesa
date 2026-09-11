@@ -4,6 +4,7 @@ import type { DadosCliente } from '../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import { carregarDadosCliente } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
+import { AmpliarImagem } from './AmpliarImagem'
 import './PainelAdmin.css'
 import './LoginAdmin.css'
 import './EditarCategoria.css'
@@ -89,13 +90,13 @@ export function VisualizarCategoria() {
         <ul className="admin-itens">
           {itensCategoria.map((item) => (
             <li key={item.id} className="admin-itens__item">
-              <div className="admin-itens__preview" aria-hidden="true">
-                {item.imagem ? (
-                  <img src={item.imagem} alt="" />
-                ) : (
+              {item.imagem ? (
+                <AmpliarImagem src={item.imagem} alt={item.nome} />
+              ) : (
+                <div className="admin-itens__preview" aria-hidden="true">
                   <span style={{ background: item.cores.primaria }} />
-                )}
-              </div>
+                </div>
+              )}
               <div className="admin-itens__info">
                 <strong>{item.nome}</strong>
                 {item.descricao && <p>{item.descricao}</p>}

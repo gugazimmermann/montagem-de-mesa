@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { PreVisualizacaoMesa, SeletorItens } from '../funcionalidades/mesa'
 import { criarConfiguracaoVazia, obterItemPorId } from '../funcionalidades/catalogo'
 import type { ConfiguracaoMesa, DadosCliente, IdCategoria } from '../compartilhado/tipos'
+import { ID_CATEGORIA_TOALHA } from '../dados/categoriasFixas'
 import './App.css'
 
 interface PropsApp {
@@ -39,6 +40,7 @@ export default function App({ dados }: PropsApp) {
   }
 
   const resumoSelecionado = categorias
+    .filter((categoria) => categoria.id !== ID_CATEGORIA_TOALHA)
     .map((categoria) => {
       const item = obterItemPorId(itens, configuracao[categoria.id] ?? null)
       return item ? { categoria: categoria.rotulo, item: item.nome } : null
@@ -52,8 +54,8 @@ export default function App({ dados }: PropsApp) {
           {logo && <img className="app__logo" src={logo} alt={nome} />}
           <h1>Montagem de Mesa</h1>
           <p className="app__subtitle">
-            Monte seu lugar à mesa escolhendo sousplats, pratos, porta-guardanapos e
-            taças. A mesa é atualizada conforme você seleciona cada peça.
+            Monte seu lugar à mesa escolhendo seus itens preferidos. A mesa é
+            atualizada conforme você seleciona cada peça.
           </p>
         </div>
         <div className="app__actions">
@@ -67,7 +69,7 @@ export default function App({ dados }: PropsApp) {
         <section className="app__preview" aria-label="Pré-visualização da mesa">
           <PreVisualizacaoMesa configuracao={configuracao} itens={itens} />
           {resumoSelecionado.length > 0 && (
-            <ul className="setting-summary">
+            <ul className="setting-summary" aria-label="Itens selecionados">
               {resumoSelecionado.map(({ categoria, item }) => (
                 <li key={categoria}>
                   <span className="setting-summary__cat">{categoria}</span>

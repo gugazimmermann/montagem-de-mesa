@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import {
+  CadastroAdmin,
   CategoriaPainel,
   FormularioCategoria,
   FormularioItem,
@@ -16,6 +17,7 @@ export function Rotas() {
       <Route path="/c/:slug" element={<PaginaCliente />} />
       <Route path="/admin" element={<LoginAdmin />} />
       <Route path="/entrar" element={<LoginAdmin />} />
+      <Route path="/cadastro" element={<CadastroAdmin />} />
       <Route
         path="/admin/painel"
         element={

@@ -65,7 +65,30 @@
   color: #9b2c2c;
 }
 
+.admin-login__ok {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #276749;
+}
+
 .admin-login__submit {
   margin-top: 0.25rem;
   width: 100%;
+}
+
+.admin-login__rodape {
+  margin: 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.admin-login__rodape a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.admin-login__rodape a:hover {
+  text-decoration: underline;
 }

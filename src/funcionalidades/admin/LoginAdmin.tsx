@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../autenticacao'
 import './LoginAdmin.css'
 
@@ -85,6 +85,10 @@ export function LoginAdmin() {
         >
           {enviando ? 'Entrando…' : 'Entrar'}
         </button>
+
+        <p className="admin-login__rodape">
+          Não tem conta? <Link to="/cadastro">Cadastrar</Link>
+        </p>
       </form>
     </div>
   )

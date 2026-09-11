@@ -69,15 +69,17 @@ function mapItem(row: ItemRow): ItemMesa {
   return item
 }
 
-export function slugifyCategoria(rotulo: string): string {
-  const base = rotulo
+export function slugify(texto: string): string {
+  return texto
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
 
-  return base || `categoria-${Date.now()}`
+export function slugifyCategoria(rotulo: string): string {
+  return slugify(rotulo) || `categoria-${Date.now()}`
 }
 
 export async function obterClientePorId(id: string): Promise<Cliente | null> {
@@ -115,6 +117,46 @@ export async function obterClientePorAuthUserId(
   return data ? mapCliente(data) : null
 }
 
+type AuthUser = {
+  id: string
+  email?: string | null
+  user_metadata?: Record<string, unknown>
+}
+
+async function garantirClienteParaUsuario(
+  user: AuthUser,
+): Promise<Cliente | null> {
+  const existente = await obterClientePorAuthUserId(user.id)
+  if (existente) return existente
+
+  const meta = user.user_metadata ?? {}
+  const email = (user.email ?? '').trim().toLowerCase()
+  const nomeMeta = typeof meta.nome === 'string' ? meta.nome.trim() : ''
+  const nome = nomeMeta || (email ? email.split('@')[0]! : '')
+  const slugMeta = typeof meta.slug === 'string' ? meta.slug.trim() : ''
+  const slug = slugify(slugMeta || nome)
+
+  if (!nome || !slug || !email) return null
+
+  const { data: row, error } = await supabase
+    .from('clientes')
+    .insert({
+      id: slug,
+      auth_user_id: user.id,
+      slug,
+      email,
+      nome,
+      logo: '',
+    })
+    .select('id, slug, email, nome, logo')
+    .single()
+
+  if (!error && row) return mapCliente(row)
+
+  // Concorrência / já criado no intervalo
+  return obterClientePorAuthUserId(user.id)
+}
+
 export async function entrar(email: string, senha: string): Promise<Cliente | null> {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.trim().toLowerCase(),
@@ -123,11 +165,93 @@ export async function entrar(email: string, senha: string): Promise<Cliente | nu
 
   if (error || !data.user) return null
 
-  const cliente = await obterClientePorAuthUserId(data.user.id)
+  const cliente = await garantirClienteParaUsuario(data.user)
   if (!cliente) {
     await supabase.auth.signOut()
     return null
   }
+  return cliente
+}
+
+export class CadastroErro extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'CadastroErro'
+  }
+}
+
+/** Conta Auth criada; falta confirmar e-mail antes de haver sessão/cliente. */
+export class CadastroPendenteConfirmacao extends CadastroErro {
+  constructor() {
+    super(
+      'Conta criada. Confirme o e-mail pelo link enviado; em seguida você será direcionado ao admin.',
+    )
+    this.name = 'CadastroPendenteConfirmacao'
+  }
+}
+
+export async function cadastrar(dados: {
+  nome: string
+  email: string
+  senha: string
+}): Promise<Cliente> {
+  const nome = dados.nome.trim()
+  const email = dados.email.trim().toLowerCase()
+  const slug = slugify(nome)
+
+  if (!nome) throw new CadastroErro('Informe o nome do cliente.')
+  if (!slug) throw new CadastroErro('Informe um nome válido para gerar o identificador.')
+  if (!email) throw new CadastroErro('Informe o e-mail.')
+  if (dados.senha.length < 6) {
+    throw new CadastroErro('A senha deve ter pelo menos 6 caracteres.')
+  }
+
+  const [{ data: porSlug }, { data: porEmail }] = await Promise.all([
+    supabase.from('clientes').select('id').eq('slug', slug).maybeSingle(),
+    supabase.from('clientes').select('id').eq('email', email).maybeSingle(),
+  ])
+
+  if (porSlug) {
+    throw new CadastroErro('Já existe um cliente com este nome. Escolha outro.')
+  }
+  if (porEmail) {
+    throw new CadastroErro('Já existe um cliente com este e-mail.')
+  }
+
+  const redirectAdmin = `${window.location.origin}/admin`
+
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password: dados.senha,
+    options: {
+      data: { nome, slug },
+      emailRedirectTo: redirectAdmin,
+    },
+  })
+
+  if (authError) {
+    throw new CadastroErro(
+      authError.message.includes('already registered')
+        ? 'Este e-mail já está cadastrado.'
+        : 'Não foi possível criar a conta. Tente novamente.',
+    )
+  }
+
+  if (!authData.user) {
+    throw new CadastroErro('Não foi possível criar a conta. Tente novamente.')
+  }
+
+  // Confirmação de e-mail ativa: sem sessão agora; cliente será criado após o link.
+  if (!authData.session) {
+    throw new CadastroPendenteConfirmacao()
+  }
+
+  const cliente = await garantirClienteParaUsuario(authData.user)
+  if (!cliente) {
+    await supabase.auth.signOut()
+    throw new CadastroErro('Não foi possível salvar o cliente. Tente novamente.')
+  }
+
   return cliente
 }
 
@@ -138,7 +262,7 @@ export async function sair(): Promise<void> {
 export async function obterSessaoCliente(): Promise<Cliente | null> {
   const { data, error } = await supabase.auth.getSession()
   if (error || !data.session?.user) return null
-  return obterClientePorAuthUserId(data.session.user.id)
+  return garantirClienteParaUsuario(data.session.user)
 }
 
 export function ouvirSessao(
@@ -153,7 +277,7 @@ export function ouvirSessao(
         return
       }
       try {
-        const cliente = await obterClientePorAuthUserId(session.user.id)
+        const cliente = await garantirClienteParaUsuario(session.user)
         callback(cliente)
       } catch {
         callback(null)
