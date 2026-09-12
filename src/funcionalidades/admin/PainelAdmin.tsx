@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { diasRestantesTrial } from '../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import { excluirCategoriaDb } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
@@ -97,6 +98,9 @@ export function PainelAdmin() {
   }
 
   const nomeExibido = cliente?.nome ?? dados.nome
+  const diasTrial = cliente ? diasRestantesTrial(cliente) : null
+  const mostrarBannerTrial =
+    diasTrial != null && diasTrial <= 3 && cliente?.subscriptionStatus === 'trialing'
 
   return (
     <div className="admin-painel">
@@ -107,11 +111,14 @@ export function PainelAdmin() {
         </div>
         <div className="admin-painel__acoes">
           <div className="admin-acoes-desktop">
+            <Link className="btn btn--ghost" to={linkPublico}>
+              Ver montagem
+            </Link>
             <Link className="btn btn--ghost" to="/admin/painel/cadastro">
               Atualizar cadastro
             </Link>
-            <Link className="btn btn--ghost" to={linkPublico}>
-              Ver montagem
+            <Link className="btn btn--ghost" to="/admin/assinatura">
+              Assinatura
             </Link>
             <button type="button" className="btn btn--ghost" onClick={() => void aoSair()}>
               Sair
@@ -125,6 +132,14 @@ export function PainelAdmin() {
               <Link
                 className="btn btn--ghost"
                 role="menuitem"
+                to={linkPublico}
+                onClick={() => setMenuAberto(false)}
+              >
+                Ver montagem
+              </Link>
+              <Link
+                className="btn btn--ghost"
+                role="menuitem"
                 to="/admin/painel/cadastro"
                 onClick={() => setMenuAberto(false)}
               >
@@ -133,10 +148,10 @@ export function PainelAdmin() {
               <Link
                 className="btn btn--ghost"
                 role="menuitem"
-                to={linkPublico}
+                to="/admin/assinatura"
                 onClick={() => setMenuAberto(false)}
               >
-                Ver montagem
+                Assinatura
               </Link>
               <button
                 type="button"
@@ -150,6 +165,19 @@ export function PainelAdmin() {
           </div>
         </div>
       </header>
+
+      {mostrarBannerTrial ? (
+        <div className="admin-painel__banner-trial" role="status">
+          <p>
+            Seu período de avaliação termina em {diasTrial} dia
+            {diasTrial === 1 ? '' : 's'}. Assine para manter o painel e a página
+            pública no ar.
+          </p>
+          <Link className="btn btn--primary" to="/admin/assinatura">
+            Ver assinatura
+          </Link>
+        </div>
+      ) : null}
 
       {feedback && (
         <AdminAlerta

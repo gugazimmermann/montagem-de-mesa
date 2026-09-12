@@ -1,0 +1,20 @@
+# Config mínima do CLI Supabase (Edge Functions).
+# Gerado/ajustado para o montagem-de-mesa — não é um projeto local full `supabase init`.
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.criar-checkout]
+verify_jwt = true
+
+[functions.criar-portal]
+verify_jwt = true
+
+[functions.cancelar-assinatura]
+verify_jwt = true
+
+[functions.listar-faturas]
+verify_jwt = true
+
+[functions.sincronizar-assinatura]
+verify_jwt = true

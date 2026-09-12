@@ -139,6 +139,9 @@ async function upsertCliente(authUserId) {
     email,
     nome: NOME,
     logo: logoUrl,
+    subscription_status: 'active',
+    trial_ends_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+    current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   })
   if (error) throw error
 

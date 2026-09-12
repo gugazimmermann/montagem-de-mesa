@@ -1,0 +1,106 @@
+.admin-assinatura__secao {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-assinatura__intro {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.admin-assinatura__lista {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-assinatura__lista > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.admin-assinatura__lista dt {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.admin-assinatura__lista dd {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.admin-assinatura__aviso-stripe {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.admin-assinatura__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-assinatura__carregando {
+  margin: 0;
+  opacity: 0.75;
+}
+
+.admin-assinatura__faturas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-assinatura__fatura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.admin-assinatura__fatura:last-child {
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.admin-assinatura__fatura-valor {
+  margin: 0;
+  font-weight: 600;
+}
+
+.admin-assinatura__fatura-meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.admin-assinatura__fatura-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.admin-painel__banner-trial {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, #c4a574 12%, transparent);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-painel__banner-trial p {
+  margin: 0;
+  max-width: 36rem;
+}

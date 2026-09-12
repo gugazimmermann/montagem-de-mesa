@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import {
+  AssinaturaAdmin,
   AtualizarCadastroAdmin,
   CadastroAdmin,
   CategoriaPainel,
@@ -27,6 +28,14 @@ export function Rotas() {
       <Route path="/cadastro" element={<CadastroAdmin />} />
       <Route path="/admin/recuperar-senha" element={<RecuperarSenhaAdmin />} />
       <Route path="/admin/redefinir-senha" element={<RedefinirSenhaAdmin />} />
+      <Route
+        path="/admin/assinatura"
+        element={
+          <RotaProtegida>
+            <AssinaturaAdmin />
+          </RotaProtegida>
+        }
+      />
       <Route
         path="/admin/painel"
         element={

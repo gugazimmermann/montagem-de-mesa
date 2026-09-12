@@ -84,9 +84,10 @@ export function PaginaCliente() {
   if (estado === 'nao-encontrado' || !dados || !clienteId) {
     return (
       <div className="app app--mensagem">
-        <h1>Endereço não encontrado</h1>
+        <h1>Montagem indisponível</h1>
         <p className="app__subtitle">
-          Não existe uma montagem em <code>/{slug}</code>.
+          Não há uma montagem pública ativa em <code>/{slug}</code>. O endereço
+          pode não existir ou a assinatura do estabelecimento não está ativa.
         </p>
         <Link className="btn btn--primary" to="/">
           Voltar ao início

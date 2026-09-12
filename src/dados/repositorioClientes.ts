@@ -4,10 +4,14 @@ import type {
   DadosCliente,
   ItemMesa,
   PadraoTecido,
+  StatusAssinatura,
 } from '../compartilhado/tipos'
 import { v4 as uuidv4 } from 'uuid'
 import { mesclarToalhasFixas } from './categoriasFixas'
 import { supabase } from './supabase'
+
+const CAMPOS_CLIENTE =
+  'id, slug, email, nome, logo, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id'
 
 type ClienteRow = {
   id: string
@@ -15,6 +19,11 @@ type ClienteRow = {
   email: string
   nome: string
   logo: string
+  subscription_status?: string | null
+  trial_ends_at?: string | null
+  current_period_end?: string | null
+  stripe_customer_id?: string | null
+  stripe_subscription_id?: string | null
 }
 
 type CategoriaRow = {
@@ -38,6 +47,20 @@ type ItemRow = {
   ordem: number
 }
 
+function mapStatus(status: string | null | undefined): StatusAssinatura {
+  switch (status) {
+    case 'active':
+    case 'past_due':
+    case 'canceled':
+    case 'unpaid':
+    case 'incomplete':
+    case 'trialing':
+      return status
+    default:
+      return 'trialing'
+  }
+}
+
 function mapCliente(row: ClienteRow): Cliente {
   return {
     id: row.id,
@@ -45,6 +68,11 @@ function mapCliente(row: ClienteRow): Cliente {
     email: row.email,
     nome: row.nome,
     logo: row.logo,
+    subscriptionStatus: mapStatus(row.subscription_status),
+    trialEndsAt: row.trial_ends_at ?? null,
+    currentPeriodEnd: row.current_period_end ?? null,
+    stripeCustomerId: row.stripe_customer_id ?? null,
+    stripeSubscriptionId: row.stripe_subscription_id ?? null,
   }
 }
 
@@ -93,7 +121,7 @@ export function ehSlugReservado(slug: string): boolean {
 export async function obterClientePorId(id: string): Promise<Cliente | null> {
   const { data: proprio, error: erroProprio } = await supabase
     .from('clientes')
-    .select('id, slug, email, nome, logo')
+    .select(CAMPOS_CLIENTE)
     .eq('id', id)
     .maybeSingle()
 
@@ -107,7 +135,11 @@ export async function obterClientePorId(id: string): Promise<Cliente | null> {
 
   if (error) throw error
   if (!data) return null
-  return mapCliente({ ...data, email: '' })
+  return mapCliente({
+    ...data,
+    email: '',
+    subscription_status: 'active',
+  })
 }
 
 export async function obterClientePorSlug(slug: string): Promise<Cliente | null> {
@@ -119,7 +151,11 @@ export async function obterClientePorSlug(slug: string): Promise<Cliente | null>
 
   if (error) throw error
   if (!data) return null
-  return mapCliente({ ...data, email: '' })
+  return mapCliente({
+    ...data,
+    email: '',
+    subscription_status: 'active',
+  })
 }
 
 export async function obterClientePorAuthUserId(
@@ -127,7 +163,7 @@ export async function obterClientePorAuthUserId(
 ): Promise<Cliente | null> {
   const { data, error } = await supabase
     .from('clientes')
-    .select('id, slug, email, nome, logo')
+    .select(CAMPOS_CLIENTE)
     .eq('auth_user_id', authUserId)
     .maybeSingle()
 
@@ -179,7 +215,7 @@ async function garantirClienteParaUsuario(
         nome,
         logo: '',
       })
-      .select('id, slug, email, nome, logo')
+      .select(CAMPOS_CLIENTE)
       .single()
 
   let slugCandidato = slug
@@ -560,7 +596,7 @@ export async function atualizarCadastro(
       updated_at: new Date().toISOString(),
     })
     .eq('id', clienteId)
-    .select('id, slug, email, nome, logo')
+    .select(CAMPOS_CLIENTE)
     .single()
 
   if (error || !data) {

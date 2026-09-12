@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { clienteTemAcesso } from '../../compartilhado/tipos'
 import { EntrarErro } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import { AdminAuthCard, AdminAuthCarregando } from './AdminAuthCard'
@@ -25,7 +26,12 @@ export function LoginAdmin() {
 
   if (cliente) {
     const from = (localizacao.state as { from?: string } | null)?.from
-    return <Navigate to={destinoPosLogin(from)} replace />
+    return (
+      <Navigate
+        to={destinoPosLogin(from, { temAcesso: clienteTemAcesso(cliente) })}
+        replace
+      />
+    )
   }
 
   async function aoEnviar(evento: FormEvent) {
@@ -40,7 +46,10 @@ export function LoginAdmin() {
         return
       }
       const from = (localizacao.state as { from?: string } | null)?.from
-      navegar(destinoPosLogin(from), { replace: true })
+      navegar(
+        destinoPosLogin(from, { temAcesso: clienteTemAcesso(resultado) }),
+        { replace: true },
+      )
     } catch (e) {
       if (e instanceof EntrarErro) {
         setErro(e.message)

@@ -3,13 +3,35 @@ import { UploadErro } from '../../dados/storage'
 
 export const SENHA_MIN = 10
 
-export function destinoPosLogin(from: unknown): string {
+/** Rotas de auth/paywall que não devem ser o destino após login com acesso. */
+const DESTINOS_POS_LOGIN_IGNORADOS = new Set([
+  '/admin',
+  '/entrar',
+  '/admin/assinatura',
+  '/admin/recuperar-senha',
+  '/admin/redefinir-senha',
+])
+
+/**
+ * Destino após login.
+ * Sem acesso → sempre assinatura.
+ * Com acesso → painel (ou deep link válido do admin, nunca a própria paywall).
+ */
+export function destinoPosLogin(
+  from: unknown,
+  opcoes?: { temAcesso?: boolean },
+): string {
+  if (opcoes?.temAcesso === false) {
+    return '/admin/assinatura'
+  }
+
   if (typeof from !== 'string') return '/admin/painel'
   if (
     !/^\/admin(\/[\w./-]*)?$/.test(from) ||
     from.includes('..') ||
     from.includes('//') ||
-    from.includes('\\')
+    from.includes('\\') ||
+    DESTINOS_POS_LOGIN_IGNORADOS.has(from)
   ) {
     return '/admin/painel'
   }
