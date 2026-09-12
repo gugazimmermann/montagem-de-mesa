@@ -374,7 +374,7 @@ export function PreVisualizacaoMesa({
         </div>
         {vazia && (
           <div className="table-preview__empty">
-            <p>Toque numa peça abaixo para montar a mesa</p>
+            <p>Toque numa peça nas categorias para montar a mesa</p>
             {aoComecarVazio && (
               <button type="button" className="btn btn--ghost" onClick={aoComecarVazio}>
                 Ir para as categorias

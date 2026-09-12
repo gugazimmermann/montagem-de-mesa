@@ -107,6 +107,14 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface-solid);
+  overflow: visible;
+  min-width: 0;
+}
+
+.admin-list__item > div:first-child,
+.admin-categorias__item > div:first-child {
+  min-width: 0;
+  flex: 1 1 10rem;
 }
 
 .admin-list__item p,
@@ -129,6 +137,17 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+}
+
+.admin-categorias__item .admin-acoes-mobile,
+.admin-itens__item .admin-acoes-mobile {
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.admin-categorias__acoes {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* Alerta legado → tokens (preferir AdminAlerta no TSX) */

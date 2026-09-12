@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import './AdminFeedback.css'
 
 type PropsConfirmacao = {
@@ -127,10 +127,43 @@ export function AdminMenuMais({
 }: PropsMenuMais) {
   const menuId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
+  const painelRef = useRef<HTMLDivElement>(null)
   const aoFecharRef = useRef(aoFechar)
   const aoAlternarRef = useRef(aoAlternar)
   aoFecharRef.current = aoFechar
   aoAlternarRef.current = aoAlternar
+
+  const [posicao, setPosicao] = useState({ up: false, start: false })
+
+  useLayoutEffect(() => {
+    if (!aberto) {
+      setPosicao({ up: false, start: false })
+      return
+    }
+
+    function medir() {
+      const trigger = rootRef.current?.querySelector('.admin-menu-mais__trigger')
+      const painel = painelRef.current
+      if (!(trigger instanceof HTMLElement) || !painel) return
+
+      const tr = trigger.getBoundingClientRect()
+      const ph = painel.offsetHeight
+      const pw = Math.max(painel.offsetWidth, painel.scrollWidth)
+      const espacoAbaixo = window.innerHeight - tr.bottom
+      const espacoAcima = tr.top
+      const up = espacoAbaixo < ph + 12 && espacoAcima > espacoAbaixo
+      const start = tr.right - pw < 8 && tr.left + pw <= window.innerWidth - 8
+      setPosicao({ up, start })
+    }
+
+    medir()
+    window.addEventListener('resize', medir)
+    window.addEventListener('scroll', medir, true)
+    return () => {
+      window.removeEventListener('resize', medir)
+      window.removeEventListener('scroll', medir, true)
+    }
+  }, [aberto, children])
 
   useEffect(() => {
     if (!aberto) return
@@ -144,20 +177,29 @@ export function AdminMenuMais({
       if (evento.key === 'Escape') fechar()
     }
 
-    function aoPointer(evento: MouseEvent) {
+    function aoPointer(evento: PointerEvent) {
       if (!rootRef.current?.contains(evento.target as Node)) fechar()
     }
 
     document.addEventListener('keydown', aoTecla)
-    document.addEventListener('mousedown', aoPointer)
+    document.addEventListener('pointerdown', aoPointer)
     return () => {
       document.removeEventListener('keydown', aoTecla)
-      document.removeEventListener('mousedown', aoPointer)
+      document.removeEventListener('pointerdown', aoPointer)
     }
   }, [aberto])
 
+  const classes = [
+    'admin-menu-mais',
+    aberto ? 'is-open' : '',
+    posicao.up ? 'is-up' : '',
+    posicao.start ? 'is-start' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div ref={rootRef} className={`admin-menu-mais ${aberto ? 'is-open' : ''}`}>
+    <div ref={rootRef} className={classes}>
       <button
         type="button"
         className="btn btn--ghost admin-menu-mais__trigger"
@@ -169,7 +211,12 @@ export function AdminMenuMais({
         {rotulo}
       </button>
       {aberto && (
-        <div id={menuId} className="admin-menu-mais__painel" role="menu">
+        <div
+          ref={painelRef}
+          id={menuId}
+          className="admin-menu-mais__painel"
+          role="menu"
+        >
           {children}
         </div>
       )}

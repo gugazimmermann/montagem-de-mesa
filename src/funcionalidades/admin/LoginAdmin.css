@@ -107,3 +107,18 @@
 .admin-login__rodape a:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 480px) {
+  .admin-login {
+    padding: 1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    align-items: start;
+  }
+
+  .admin-login__card {
+    padding: 1.35rem 1.15rem;
+  }
+
+  .admin-login__header h1 {
+    font-size: 1.65rem;
+  }
+}

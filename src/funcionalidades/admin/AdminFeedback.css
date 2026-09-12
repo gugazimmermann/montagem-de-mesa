@@ -250,14 +250,23 @@
 
 .admin-menu-mais {
   position: relative;
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+  vertical-align: top;
 }
 
 .admin-menu-mais__painel {
   position: absolute;
   right: 0;
   top: calc(100% + 0.35rem);
-  z-index: 20;
+  z-index: 40;
   min-width: 12rem;
+  max-width: min(18rem, calc(100vw - 1.5rem));
+  max-height: min(70vh, 20rem);
+  max-height: min(70dvh, 20rem);
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -266,6 +275,16 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
+}
+
+.admin-menu-mais.is-up .admin-menu-mais__painel {
+  top: auto;
+  bottom: calc(100% + 0.35rem);
+}
+
+.admin-menu-mais.is-start .admin-menu-mais__painel {
+  right: auto;
+  left: 0;
 }
 
 .admin-menu-mais__painel .btn,
@@ -302,11 +321,34 @@
 
 
 @media (max-width: 720px) {
-  .admin-acoes-desktop {
+  .admin-painel__acoes .admin-acoes-desktop {
     display: none;
   }
 
-  .admin-acoes-mobile {
-    display: block;
+  .admin-painel__acoes .admin-acoes-mobile {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .admin-modal__acoes {
+    flex-direction: column-reverse;
+    justify-content: stretch;
+  }
+
+  .admin-modal__acoes .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-modal-backdrop {
+    padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    align-items: flex-end;
+  }
+
+  .admin-modal {
+    width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 }

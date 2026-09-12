@@ -67,4 +67,13 @@ button.admin-itens__preview--clicavel:focus-visible {
   .admin-itens__grid-campos {
     grid-template-columns: 1fr;
   }
+
+  .admin-itens__info {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .admin-itens__item {
+    gap: 0.6rem;
+  }
 }

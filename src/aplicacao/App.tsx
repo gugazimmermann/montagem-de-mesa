@@ -286,27 +286,9 @@ export default function App({ dados }: PropsApp) {
 
       <main id="conteudo-principal" className="app__main">
         <section
-          className={`app__preview ${pulsoPreview ? 'is-pulse' : ''} ${previewExpandido ? 'is-expanded' : ''}`}
+          className={`app__preview app__preview--compact ${pulsoPreview ? 'is-pulse' : ''} ${previewExpandido ? 'is-expanded' : ''}`}
           aria-label="Pré-visualização da mesa"
         >
-          {haSelecao && (
-            <div className="setting-summary--compact" aria-live="polite">
-              <p className="setting-summary--compact__count">
-                {resumoSelecionado.length}{' '}
-                {resumoSelecionado.length === 1 ? 'item' : 'itens'}
-                {ultimoItem ? ` · ${ultimoItem.item}` : ''}
-              </p>
-              <ul className="setting-summary--compact__chips" aria-label="Itens selecionados">
-                {resumoSelecionado.map(({ categoria, item }) => (
-                  <li key={categoria}>
-                    <span className="setting-summary__cat">{categoria}</span>
-                    <span className="setting-summary__item">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           <div className="app__preview-toolbar">
             <button
               ref={expandirBtnRef}
@@ -326,6 +308,25 @@ export default function App({ dados }: PropsApp) {
             aoComecarVazio={focarPicker}
             aoAmpliarItem={setItemAmpliado}
           />
+
+          {haSelecao && (
+            <div className="setting-summary--compact" aria-live="polite">
+              <p className="setting-summary--compact__count">
+                {resumoSelecionado.length}{' '}
+                {resumoSelecionado.length === 1 ? 'item' : 'itens'}
+                {ultimoItem ? ` · ${ultimoItem.item}` : ''}
+              </p>
+              <ul className="setting-summary--compact__chips" aria-label="Itens selecionados">
+                {resumoSelecionado.map(({ categoria, item }) => (
+                  <li key={categoria}>
+                    <span className="setting-summary__cat">{categoria}</span>
+                    <span className="setting-summary__item">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {haSelecao && (
             <ul className="setting-summary" aria-label="Itens selecionados">
               {resumoSelecionado.map(({ categoria, item }) => (

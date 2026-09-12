@@ -140,3 +140,46 @@
   font-size: 0.9rem;
   padding: 0.5rem 0;
 }
+
+@media (max-width: 720px) {
+  .admin-painel {
+    padding: 1.25rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+    gap: 1.25rem;
+    overflow-x: clip;
+  }
+
+  .admin-painel__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-painel__acoes {
+    width: 100%;
+  }
+
+  .admin-painel__acoes > .btn,
+  .admin-painel__acoes > a.btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .admin-painel__secao {
+    padding: 1rem;
+    overflow: visible;
+  }
+
+  .admin-painel__form-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .admin-painel__form-acoes .btn,
+  .admin-painel__form-acoes a.btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-categorias__acoes .btn {
+    font-size: 0.85rem;
+    padding-inline: 0.7rem;
+  }
+}

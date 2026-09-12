@@ -243,33 +243,92 @@
 }
 
 @media (max-width: 900px) {
-  .app__main {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  .app {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    overflow-x: clip;
   }
 
-  .app__picker {
-    order: 1;
-    min-height: 0;
+  .app__main {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
   }
 
   .app__preview {
-    order: 2;
+    order: 1;
     position: sticky;
-    bottom: 0;
-    top: auto;
+    top: env(safe-area-inset-top, 0px);
     z-index: 2;
-    margin: 0 -1rem -1rem;
-    padding: 0.75rem 1rem 1rem;
-    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    flex-shrink: 0;
+    align-self: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.5rem 0 0.65rem;
+    display: flex;
+    flex-direction: column;
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
     backdrop-filter: blur(8px);
-    border-top: 1px solid var(--border);
-    max-height: 42vh;
-    overflow: auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .app__preview.is-expanded {
+    display: none;
   }
 
   .app__preview-toolbar {
     display: flex;
+    flex-shrink: 0;
+    margin-bottom: 0.25rem;
+  }
+
+  .app__preview .app__preview-expand {
+    font-size: 0.8rem;
+    padding-inline: 0.65rem;
+    min-height: 2.25rem;
+  }
+
+  .app__preview--compact .table-preview {
+    flex: 0 1 auto;
+    min-height: 0;
+    height: min(28vh, 220px);
+    max-height: min(28vh, 220px);
+    height: min(28dvh, 220px);
+    max-height: min(28dvh, 220px);
+    padding: 0.35rem 0.5rem;
+    overflow: hidden;
+  }
+
+  .app__preview--compact .table-surface {
+    width: min(100%, 360px);
+    max-height: 100%;
+    aspect-ratio: 4 / 3;
+  }
+
+  .app__preview--compact .place-setting {
+    width: min(150px, 40vw);
+    height: min(150px, 40vw);
+    margin-right: clamp(0px, 2vw, 16px);
+    margin-bottom: 4%;
+  }
+
+  .app__preview--compact .table-preview__empty {
+    font-size: 0.8rem;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .app__preview--compact .table-preview__empty .btn {
+    min-height: 2.25rem;
+    font-size: 0.8rem;
+    padding-inline: 0.75rem;
+  }
+
+  .app__picker {
+    order: 2;
+    min-height: 0;
   }
 
   .setting-summary {
@@ -279,13 +338,15 @@
   .setting-summary--compact {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    margin: 0 0 0.5rem;
+    gap: 0.3rem;
+    margin: 0 0 0.35rem;
+    flex-shrink: 0;
+    min-height: 0;
   }
 
   .setting-summary--compact__count {
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 500;
     color: var(--text-muted);
   }
@@ -293,12 +354,19 @@
   .setting-summary--compact__chips {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 0 0 0.15rem;
     display: flex;
     flex-wrap: nowrap;
-    gap: 0.4rem;
+    gap: 0.35rem;
     overflow-x: auto;
     scrollbar-width: thin;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 0.5rem,
+      #000 calc(100% - 0.5rem),
+      transparent
+    );
   }
 
   .setting-summary--compact__chips li {
@@ -306,7 +374,7 @@
     flex-direction: column;
     gap: 0.05rem;
     flex-shrink: 0;
-    padding: 0.3rem 0.55rem;
+    padding: 0.25rem 0.5rem;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -319,7 +387,8 @@
     inset: 0;
     z-index: 50;
     background: var(--bg);
-    padding: 1rem;
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem
+      calc(1rem + env(safe-area-inset-bottom, 0px));
     overflow: auto;
   }
 
@@ -335,31 +404,49 @@
     margin: 0;
     font-weight: 600;
   }
-
-  .app__preview.is-expanded {
-    /* sheet takes over; keep dock visible but quieter */
-    opacity: 0.55;
-    pointer-events: none;
-  }
 }
 
 @media (max-width: 480px) {
   .app {
-    padding: 1.25rem 1rem 2rem;
+    padding: 1rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app__header {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .app__brand {
+    gap: 0.15rem;
   }
 
   .app__logo {
-    height: 3rem;
+    height: 2.5rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .app__header h1 {
+    font-size: clamp(1.5rem, 6vw, 1.85rem);
+  }
+
+  .app__subtitle {
+    display: none;
   }
 
   .app__picker-toolbar {
-    justify-content: stretch;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    margin-inline: -0.25rem;
+    padding-inline: 0.25rem;
+    -webkit-overflow-scrolling: touch;
   }
 
   .app__picker-toolbar .btn {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     font-size: 0.8rem;
-    padding-inline: 0.7rem;
+    padding-inline: 0.75rem;
   }
 }
 

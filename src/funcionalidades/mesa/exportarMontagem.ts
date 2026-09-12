@@ -1,11 +1,27 @@
 import type { ConfiguracaoMesa, Categoria, ItemMesa, PadraoTecido } from '../../compartilhado/tipos'
-import { inferirDimensoes, temDimensoes } from '../../compartilhado/utils/dimensoes'
+import {
+  inferirDimensoes,
+  PREVIEW_SCALE,
+  PREVIEW_SCALE_PRATO,
+  PREVIEW_SCALE_TACA,
+  REFERENCIA_PREVIEW_CM,
+  temDimensoes,
+} from '../../compartilhado/utils/dimensoes'
 import { obterItemPorId } from '../catalogo'
 import { chaveCamada, ordenarCategoriasPorCamada } from './ordemCamadas'
 
 const LARGURA = 800
 const ALTURA = 600
 const TIMEOUT_IMAGEM_MS = 8000
+
+/** Caixa do lugar à mesa (espelha `.place-setting` no preview). */
+const PLACE_SIZE = Math.min(360, LARGURA * 0.45)
+const PLACE_X = (LARGURA - PLACE_SIZE) / 2 - PLACE_SIZE * 0.06
+const PLACE_Y = ALTURA - PLACE_SIZE - ALTURA * 0.08
+
+/** Centro das peças empilhadas (`left: 50%; top: 66%` + translate). */
+const LAYER_CX = PLACE_X + PLACE_SIZE * 0.5
+const LAYER_CY = PLACE_Y + PLACE_SIZE * 0.66
 
 function carregarImagem(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -49,6 +65,63 @@ function dimensoesParaExport(item: ItemMesa, codigo: string): { largura: number;
   return inferirDimensoes(item.nome, codigo)
 }
 
+function escalaPreview(codigo: string): number {
+  if (codigo === 'taca') return PREVIEW_SCALE_TACA
+  if (codigo === 'pratoRaso' || codigo === 'pratoFundo' || codigo === 'pratoSobremesa') {
+    return PREVIEW_SCALE_PRATO
+  }
+  return PREVIEW_SCALE
+}
+
+/** Tamanho da caixa da peça em px (mesma fórmula do CSS `--item-*` / referência). */
+function caixaCamada(
+  codigo: string,
+  larguraCm: number,
+  comprimentoCm: number,
+): { w: number; h: number } {
+  const scale = escalaPreview(codigo)
+  return {
+    w: (larguraCm / REFERENCIA_PREVIEW_CM) * PLACE_SIZE * scale,
+    h: (comprimentoCm / REFERENCIA_PREVIEW_CM) * PLACE_SIZE * scale,
+  }
+}
+
+/** Âncora da caixa: centro (pratos) ou canto superior esquerdo da taça (75% / -15%). */
+function origemCaixa(
+  codigo: string,
+  boxW: number,
+  boxH: number,
+): { x: number; y: number } {
+  if (codigo === 'taca') {
+    return {
+      x: PLACE_X + PLACE_SIZE * 0.75,
+      y: PLACE_Y + PLACE_SIZE * -0.15,
+    }
+  }
+  return {
+    x: LAYER_CX - boxW / 2,
+    y: LAYER_CY - boxH / 2,
+  }
+}
+
+function desenharImagemNaCaixa(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  boxX: number,
+  boxY: number,
+  boxW: number,
+  boxH: number,
+  /** Taça no preview usa `object-position: center bottom`. */
+  alinhar: 'center' | 'bottom' = 'center',
+): void {
+  const ratio = Math.min(boxW / img.width, boxH / img.height)
+  const w = img.width * ratio
+  const h = img.height * ratio
+  const x = boxX + (boxW - w) / 2
+  const y = alinhar === 'bottom' ? boxY + (boxH - h) : boxY + (boxH - h) / 2
+  ctx.drawImage(img, x, y, w, h)
+}
+
 /**
  * Exporta a montagem como PNG (canvas: madeira + camadas com imagem ou cor).
  * Retorna aviso opcional (ex.: fotos que falharam por CORS).
@@ -73,8 +146,6 @@ export async function exportarMontagemPng(
   ctx.fillRect(0, 0, LARGURA, ALTURA)
 
   const ordem = ordenarCategoriasPorCamada(categorias)
-  const cx = LARGURA / 2
-  const cy = ALTURA / 2 + 20
   let imagensFalharam = 0
 
   for (const categoria of ordem) {
@@ -88,25 +159,33 @@ export async function exportarMontagemPng(
     }
 
     const dims = dimensoesParaExport(item, codigo)
-    const tamanho = tamanhoCamada(codigo, dims.largura, dims.comprimento)
+    const { w: boxW, h: boxH } = caixaCamada(codigo, dims.largura, dims.comprimento)
+    const { x: boxX, y: boxY } = origemCaixa(codigo, boxW, boxH)
 
     if (item.imagem) {
       const img = await carregarImagem(item.imagem)
       if (img) {
-        const ratio = Math.min(tamanho / img.width, tamanho / img.height)
-        const w = img.width * ratio
-        const h = img.height * ratio
-        const offsetY = codigo === 'taca' ? -tamanho * 0.35 : 0
-        ctx.drawImage(img, cx - w / 2, cy - h / 2 + offsetY, w, h)
+        desenharImagemNaCaixa(
+          ctx,
+          img,
+          boxX,
+          boxY,
+          boxW,
+          boxH,
+          codigo === 'taca' ? 'bottom' : 'center',
+        )
         continue
       }
       imagensFalharam += 1
     }
 
     // Fallback de cor (alinha ao preview quando não há imagem).
+    const raio = Math.min(boxW, boxH) / 2
+    const cx = codigo === 'taca' ? boxX + boxW / 2 : LAYER_CX
+    const cy = codigo === 'taca' ? boxY + boxH / 2 : LAYER_CY
     ctx.fillStyle = item.cores.primaria
     ctx.beginPath()
-    ctx.arc(cx, cy, tamanho / 2, 0, Math.PI * 2)
+    ctx.arc(cx, cy, raio, 0, Math.PI * 2)
     ctx.fill()
   }
 
@@ -232,18 +311,6 @@ function desenharToalha(ctx: CanvasRenderingContext2D, item: ItemMesa): void {
   }
 
   ctx.restore()
-}
-
-function tamanhoCamada(codigo: string, largura: number, comprimento: number): number {
-  const base = Math.max(largura, comprimento, 1)
-  const escala = Math.min(base / 40, 1.2)
-  if (codigo === 'sousplat') return 280 * escala
-  if (codigo === 'pratoRaso') return 220 * escala
-  if (codigo === 'pratoFundo') return 180 * escala
-  if (codigo === 'pratoSobremesa') return 140 * escala
-  if (codigo === 'portaGuardanapo') return 90 * escala
-  if (codigo === 'taca') return 120 * escala
-  return 160 * escala
 }
 
 function roundRect(

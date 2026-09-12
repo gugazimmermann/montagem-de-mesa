@@ -104,3 +104,34 @@
   margin: 0;
   max-width: 36rem;
 }
+
+@media (max-width: 720px) {
+  .admin-assinatura__acoes {
+    flex-direction: column;
+  }
+
+  .admin-assinatura__acoes .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-painel__banner-trial {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-painel__banner-trial .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-assinatura__fatura-links {
+    width: 100%;
+  }
+
+  .admin-assinatura__fatura-links .btn,
+  .admin-assinatura__fatura-links a.btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
