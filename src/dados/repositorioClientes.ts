@@ -7,8 +7,28 @@ import type {
   StatusAssinatura,
 } from '../compartilhado/tipos'
 import { v4 as uuidv4 } from 'uuid'
+import { CadastroErro, CadastroPendenteConfirmacao, EntrarErro } from './erros'
 import { mesclarToalhasFixas } from './categoriasFixas'
 import { supabase } from './supabase'
+import {
+  META_PRECISA_REDEFINIR_SENHA,
+  metadataMarcaRecovery,
+} from './authRecovery'
+
+export {
+  CadastroErro,
+  CadastroPendenteConfirmacao,
+  EntrarErro,
+} from './erros'
+
+export {
+  atualizarCategoria,
+  atualizarItem,
+  criarCategoria,
+  criarItem,
+  excluirCategoriaDb,
+  excluirItemDb,
+} from './repositorioCatalogo'
 
 const CAMPOS_CLIENTE =
   'id, slug, email, nome, logo, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id'
@@ -240,19 +260,6 @@ async function garantirClienteParaUsuario(
   return obterClientePorAuthUserId(user.id)
 }
 
-export class EntrarErro extends Error {
-  codigo?: 'email_not_confirmed' | 'credenciais' | 'conta_incompleta'
-
-  constructor(
-    message: string,
-    codigo?: 'email_not_confirmed' | 'credenciais' | 'conta_incompleta',
-  ) {
-    super(message)
-    this.name = 'EntrarErro'
-    this.codigo = codigo
-  }
-}
-
 export async function entrar(email: string, senha: string): Promise<Cliente | null> {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.trim().toLowerCase(),
@@ -281,24 +288,19 @@ export async function entrar(email: string, senha: string): Promise<Cliente | nu
       'conta_incompleta',
     )
   }
+
+  // Login com senha prova a conta — limpa marca residual de recovery.
+  if (metadataMarcaRecovery(data.user.user_metadata as Record<string, unknown>)) {
+    try {
+      await supabase.auth.updateUser({
+        data: { [META_PRECISA_REDEFINIR_SENHA]: false },
+      })
+    } catch {
+      // ignore
+    }
+  }
+
   return cliente
-}
-
-export class CadastroErro extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'CadastroErro'
-  }
-}
-
-/** Conta Auth criada; falta confirmar e-mail antes de haver sessão/cliente. */
-export class CadastroPendenteConfirmacao extends CadastroErro {
-  constructor() {
-    super(
-      'Conta criada. Confirme o e-mail pelo link enviado; em seguida você será direcionado ao admin.',
-    )
-    this.name = 'CadastroPendenteConfirmacao'
-  }
 }
 
 const SENHA_MIN_REPO = 10
@@ -440,7 +442,10 @@ export async function reenviarEmailConfirmacao(email: string): Promise<void> {
 export async function atualizarSenha(novaSenha: string): Promise<void> {
   validarSenha(novaSenha)
 
-  const { error } = await supabase.auth.updateUser({ password: novaSenha })
+  const { error } = await supabase.auth.updateUser({
+    password: novaSenha,
+    data: { [META_PRECISA_REDEFINIR_SENHA]: false },
+  })
   if (error) {
     throw new CadastroErro('Não foi possível atualizar a senha. Tente novamente.')
   }
@@ -454,6 +459,13 @@ export async function obterSessaoAuthPresente(): Promise<boolean> {
   const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) return false
   return true
+}
+
+/** True se user_metadata indica que ainda falta redefinir senha pós-recovery. */
+export async function sessaoExigeRedefinirSenha(): Promise<boolean> {
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data.user) return false
+  return metadataMarcaRecovery(data.user.user_metadata as Record<string, unknown>)
 }
 
 export function ouvirSessaoAuth(
@@ -483,7 +495,11 @@ export async function obterSessaoCliente(): Promise<Cliente | null> {
 export function ouvirSessao(
   callback: (
     cliente: Cliente | null,
-    meta?: { evento?: string; sessaoValida?: boolean },
+    meta?: {
+      evento?: string
+      sessaoValida?: boolean
+      precisaRedefinirSenha?: boolean
+    },
   ) => void,
 ): () => void {
   let geracao = 0
@@ -498,14 +514,48 @@ export function ouvirSessao(
         callback(null, { evento, sessaoValida: false })
         return
       }
+
+      const precisaRedefinir =
+        evento === 'PASSWORD_RECOVERY' ||
+        metadataMarcaRecovery(session.user.user_metadata as Record<string, unknown>)
+
+      if (evento === 'PASSWORD_RECOVERY' && !metadataMarcaRecovery(session.user.user_metadata as Record<string, unknown>)) {
+        // Persiste no user_metadata para sobreviver a limpeza de localStorage.
+        try {
+          await supabase.auth.updateUser({
+            data: { [META_PRECISA_REDEFINIR_SENHA]: true },
+          })
+        } catch {
+          // Continua com flag local mesmo se metadata falhar.
+        }
+      }
+
+      if (precisaRedefinir) {
+        if (atual !== geracao) return
+        callback(null, {
+          evento,
+          sessaoValida: true,
+          precisaRedefinirSenha: true,
+        })
+        return
+      }
+
       try {
         const cliente = await garantirClienteParaUsuario(session.user)
         if (atual !== geracao) return
         // Mantém sessaoValida mesmo se o mapeamento falhar (não “desloga” a UI por erro transitório).
-        callback(cliente, { evento, sessaoValida: true })
+        callback(cliente, {
+          evento,
+          sessaoValida: true,
+          precisaRedefinirSenha: false,
+        })
       } catch {
         if (atual !== geracao) return
-        callback(null, { evento, sessaoValida: true })
+        callback(null, {
+          evento,
+          sessaoValida: true,
+          precisaRedefinirSenha: false,
+        })
       }
     })()
   })
@@ -669,107 +719,4 @@ export async function atualizarPerfil(
     slug: cliente.slug,
     logo: perfil.logo,
   })
-}
-
-export async function criarCategoria(
-  clienteId: string,
-  categoria: Categoria,
-): Promise<void> {
-  const { count } = await supabase
-    .from('categorias')
-    .select('*', { count: 'exact', head: true })
-    .eq('cliente_id', clienteId)
-
-  const { error } = await supabase.from('categorias').insert({
-    cliente_id: clienteId,
-    id: categoria.id,
-    codigo: categoria.codigo ?? null,
-    rotulo: categoria.rotulo,
-    descricao: categoria.descricao,
-    ordem: count ?? 0,
-  })
-
-  if (error) throw error
-}
-
-export async function atualizarCategoria(
-  clienteId: string,
-  categoria: Categoria,
-): Promise<void> {
-  const { error } = await supabase
-    .from('categorias')
-    .update({
-      rotulo: categoria.rotulo,
-      descricao: categoria.descricao,
-    })
-    .eq('cliente_id', clienteId)
-    .eq('id', categoria.id)
-
-  if (error) throw error
-}
-
-export async function excluirCategoriaDb(
-  clienteId: string,
-  categoriaId: string,
-): Promise<void> {
-  const { error } = await supabase
-    .from('categorias')
-    .delete()
-    .eq('cliente_id', clienteId)
-    .eq('id', categoriaId)
-
-  if (error) throw error
-}
-
-export async function criarItem(clienteId: string, item: ItemMesa): Promise<void> {
-  const { count } = await supabase
-    .from('itens')
-    .select('*', { count: 'exact', head: true })
-    .eq('cliente_id', clienteId)
-    .eq('categoria_id', item.categoria)
-
-  const { error } = await supabase.from('itens').insert({
-    cliente_id: clienteId,
-    id: item.id,
-    categoria_id: item.categoria,
-    nome: item.nome,
-    imagem: item.imagem ?? null,
-    cores: item.cores,
-    largura: item.largura ?? null,
-    comprimento: item.comprimento ?? null,
-    padrao: item.padrao ?? null,
-    descricao: item.descricao ?? null,
-    ordem: count ?? 0,
-  })
-
-  if (error) throw error
-}
-
-export async function atualizarItem(clienteId: string, item: ItemMesa): Promise<void> {
-  const { error } = await supabase
-    .from('itens')
-    .update({
-      nome: item.nome,
-      imagem: item.imagem ?? null,
-      cores: item.cores,
-      largura: item.largura ?? null,
-      comprimento: item.comprimento ?? null,
-      padrao: item.padrao ?? null,
-      descricao: item.descricao ?? null,
-      categoria_id: item.categoria,
-    })
-    .eq('cliente_id', clienteId)
-    .eq('id', item.id)
-
-  if (error) throw error
-}
-
-export async function excluirItemDb(clienteId: string, itemId: string): Promise<void> {
-  const { error } = await supabase
-    .from('itens')
-    .delete()
-    .eq('cliente_id', clienteId)
-    .eq('id', itemId)
-
-  if (error) throw error
 }

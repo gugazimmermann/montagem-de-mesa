@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import type { DadosCliente } from '../compartilhado/tipos'
 import {
@@ -15,6 +15,11 @@ export function PaginaCliente() {
   const [estado, setEstado] = useState<'carregando' | 'ok' | 'nao-encontrado' | 'erro'>(
     'carregando',
   )
+  const [tentativa, setTentativa] = useState(0)
+
+  const tentarNovamente = useCallback(() => {
+    setTentativa((n) => n + 1)
+  }, [])
 
   useEffect(() => {
     let ativo = true
@@ -57,14 +62,15 @@ export function PaginaCliente() {
     return () => {
       ativo = false
     }
-  }, [slug])
+  }, [slug, tentativa])
 
   if (estado === 'carregando') {
     return (
       <div className="app app--mensagem">
-        <p className="app__subtitle" role="status" aria-live="polite">
-          Carregando montagem…
-        </p>
+        <div className="app__loading" role="status" aria-live="polite" aria-busy="true">
+          <span className="app__loading-spinner" aria-hidden="true" />
+          <p>Carregando montagem…</p>
+        </div>
       </div>
     )
   }
@@ -74,8 +80,11 @@ export function PaginaCliente() {
       <div className="app app--mensagem">
         <h1>Erro ao carregar</h1>
         <p className="app__subtitle">Não foi possível carregar os dados deste endereço.</p>
-        <Link className="btn btn--primary" to="/">
+        <button type="button" className="btn btn--primary" onClick={tentarNovamente}>
           Tentar novamente
+        </button>
+        <Link className="btn btn--ghost" to="/admin">
+          Ir para o admin
         </Link>
       </div>
     )
@@ -89,8 +98,11 @@ export function PaginaCliente() {
           Não há uma montagem pública ativa em <code>/{slug}</code>. O endereço
           pode não existir ou a assinatura do estabelecimento não está ativa.
         </p>
-        <Link className="btn btn--primary" to="/">
-          Voltar ao início
+        <button type="button" className="btn btn--primary" onClick={tentarNovamente}>
+          Tentar novamente
+        </button>
+        <Link className="btn btn--ghost" to="/admin">
+          Entrar no admin
         </Link>
       </div>
     )

@@ -35,6 +35,28 @@ export function AdminEstadoCarregando({
   )
 }
 
+type PropsAdminSkeleton = {
+  linhas?: number
+  mensagem?: string
+}
+
+export function AdminEstadoSkeleton({
+  linhas = 4,
+  mensagem = 'Carregando…',
+}: PropsAdminSkeleton) {
+  return (
+    <div className="admin-estado" role="status" aria-live="polite" aria-busy="true">
+      <p className="visually-hidden">{mensagem}</p>
+      <div className="admin-skeleton" aria-hidden="true">
+        <div className="admin-skeleton__linha admin-skeleton__linha--curta" />
+        {Array.from({ length: linhas }, (_, i) => (
+          <div key={i} className="admin-skeleton__linha" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 type PropsAdminEstadoVazio = {
   titulo: string
   descricao?: string

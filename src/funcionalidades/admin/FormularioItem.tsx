@@ -16,6 +16,7 @@ import { AmpliarImagem } from './AmpliarImagem'
 import { mapearErroUpload } from './adminUtils'
 import { useDadosCliente } from './useDadosCliente'
 import { useObjectUrlPreview } from './useObjectUrlPreview'
+import './EditarCategoria.css'
 
 const PADROES: { valor: PadraoTecido; rotulo: string }[] = [
   { valor: 'solid', rotulo: 'Liso' },
@@ -28,7 +29,7 @@ const PADROES: { valor: PadraoTecido; rotulo: string }[] = [
   { valor: 'border', rotulo: 'Borda' },
 ]
 
-const COR_PADRAO = '#c4a574'
+const COR_PADRAO = '#c4a574' // alinhar com --trial em index.css
 
 interface FormItem {
   nome: string
@@ -66,7 +67,8 @@ function montarItem(
   form: FormItem,
   categoriaId: string,
   idExistente: string | null,
-  itemAnterior?: ItemMesa,
+  itemAnterior: ItemMesa | undefined,
+  clienteId: string,
 ): ItemMesa | { erro: string } {
   const nome = form.nome.trim()
   if (!nome) return { erro: 'Informe o nome do item.' }
@@ -99,7 +101,10 @@ function montarItem(
   const imagem = form.imagem.trim()
   if (imagem) {
     try {
-      item.imagem = exigirUrlStorageOuVazio(imagem, 'URL da imagem')
+      item.imagem = exigirUrlStorageOuVazio(imagem, 'URL da imagem', {
+        clienteId,
+        tipo: 'item',
+      })
     } catch (e) {
       return {
         erro:
@@ -112,10 +117,10 @@ function montarItem(
 
   const largura = form.largura.trim() ? Number(form.largura) : undefined
   const comprimento = form.comprimento.trim() ? Number(form.comprimento) : undefined
-  if (largura != null && !Number.isFinite(largura)) {
+  if (largura != null && (!Number.isFinite(largura) || largura < 0)) {
     return { erro: 'Largura inválida.' }
   }
-  if (comprimento != null && !Number.isFinite(comprimento)) {
+  if (comprimento != null && (!Number.isFinite(comprimento) || comprimento < 0)) {
     return { erro: 'Comprimento inválido.' }
   }
   if (largura != null) item.largura = largura
@@ -146,6 +151,7 @@ export function FormularioItem() {
 
   const [formItem, setFormItem] = useState<FormItem>(formItemVazio)
   const [erro, setErro] = useState<string | null>(null)
+  const [erroNome, setErroNome] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
@@ -183,14 +189,25 @@ export function FormularioItem() {
   async function salvarItem(evento: FormEvent) {
     evento.preventDefault()
     setErro(null)
+    setErroNome(null)
 
     const itemAnterior = itemId
       ? dadosAtuais.itens.find((i) => i.id === itemId)
       : undefined
 
-    const resultado = montarItem(formItem, idCategoria, itemId ?? null, itemAnterior)
+    const resultado = montarItem(
+      formItem,
+      idCategoria,
+      itemId ?? null,
+      itemAnterior,
+      idCliente,
+    )
     if ('erro' in resultado) {
-      setErro(resultado.erro)
+      if (resultado.erro.includes('nome')) {
+        setErroNome(resultado.erro)
+      } else {
+        setErro(resultado.erro)
+      }
       return
     }
 
@@ -237,10 +254,20 @@ export function FormularioItem() {
             <input
               type="text"
               value={formItem.nome}
-              onChange={(e) => setFormItem((f) => ({ ...f, nome: e.target.value }))}
+              onChange={(e) => {
+                setFormItem((f) => ({ ...f, nome: e.target.value }))
+                setErroNome(null)
+              }}
               required
               disabled={enviando}
+              aria-invalid={erroNome ? true : undefined}
+              aria-describedby={erroNome ? 'erro-nome-item' : undefined}
             />
+            {erroNome && (
+              <span id="erro-nome-item" className="admin-field__erro" role="alert">
+                {erroNome}
+              </span>
+            )}
           </label>
 
           <label className="admin-field">

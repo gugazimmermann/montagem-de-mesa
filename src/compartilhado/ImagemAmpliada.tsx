@@ -17,6 +17,7 @@ export function ImagemAmpliada({
   triggerRef,
 }: ImagemAmpliadaProps) {
   const tituloId = useId()
+  const dialogRef = useRef<HTMLDivElement>(null)
   const fecharRef = useRef<HTMLButtonElement>(null)
   const aoFecharRef = useRef(aoFechar)
   aoFecharRef.current = aoFechar
@@ -28,11 +29,25 @@ export function ImagemAmpliada({
     fecharRef.current?.focus()
 
     function aoTecla(evento: KeyboardEvent) {
-      if (evento.key === 'Escape') aoFecharRef.current()
-      if (evento.key !== 'Tab') return
+      if (evento.key === 'Escape') {
+        aoFecharRef.current()
+        return
+      }
+      if (evento.key !== 'Tab' || !dialogRef.current) return
 
-      evento.preventDefault()
-      fecharRef.current?.focus()
+      const focaveis = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      if (focaveis.length === 0) return
+      const primeiro = focaveis[0]
+      const ultimo = focaveis[focaveis.length - 1]
+      if (evento.shiftKey && document.activeElement === primeiro) {
+        evento.preventDefault()
+        ultimo.focus()
+      } else if (!evento.shiftKey && document.activeElement === ultimo) {
+        evento.preventDefault()
+        primeiro.focus()
+      }
     }
 
     document.addEventListener('keydown', aoTecla)
@@ -56,7 +71,11 @@ export function ImagemAmpliada({
       aria-labelledby={tituloId}
       onClick={() => aoFecharRef.current()}
     >
-      <div className="imagem-ampliada__conteudo" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={dialogRef}
+        className="imagem-ampliada__conteudo"
+        onClick={(e) => e.stopPropagation()}
+      >
         <p id={tituloId} className="imagem-ampliada__titulo">
           {alt}
         </p>

@@ -29,6 +29,8 @@ import {
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
 
+import './AssinaturaAdmin.css'
+
 function formatarData(iso: string | null): string {
   if (!iso) return '—'
   try {
@@ -81,7 +83,9 @@ export function AssinaturaAdmin() {
   const { cliente, definirCliente, sair, carregando } = useAuth()
   const [erro, setErro] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
-  const [ocupado, setOcupado] = useState(false)
+  const [acaoOcupada, setAcaoOcupada] = useState<
+    null | 'checkout' | 'portal' | 'cancelar'
+  >(null)
   const [atualizandoAposCheckout, setAtualizandoAposCheckout] = useState(false)
   const [confirmarCancelar, setConfirmarCancelar] = useState(false)
   const [faturas, setFaturas] = useState<FaturaPaga[]>([])
@@ -207,34 +211,44 @@ export function AssinaturaAdmin() {
   async function aoAssinar() {
     setErro(null)
     setOk(null)
-    setOcupado(true)
+    setAcaoOcupada('checkout')
     try {
       const url = await iniciarCheckoutAssinatura()
       window.location.assign(url)
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível abrir o checkout.')
-      setOcupado(false)
+      setAcaoOcupada(null)
     }
   }
 
   async function aoGerenciar() {
     setErro(null)
     setOk(null)
-    setOcupado(true)
+    setAcaoOcupada('portal')
+    const portal = window.open('about:blank', '_blank')
     try {
       const url = await abrirPortalAssinatura()
-      window.location.assign(url)
+      if (!portal) {
+        setErro(
+          'Não foi possível abrir o portal. Permita pop-ups neste site e tente novamente.',
+        )
+      } else {
+        portal.opener = null
+        portal.location.assign(url)
+      }
     } catch (e) {
+      portal?.close()
       setErro(e instanceof Error ? e.message : 'Não foi possível abrir o portal.')
-      setOcupado(false)
+    } finally {
+      setAcaoOcupada(null)
     }
   }
 
   async function aoConfirmarCancelamento() {
-    setConfirmarCancelar(false)
+    if (acaoOcupada) return
     setErro(null)
     setOk(null)
-    setOcupado(true)
+    setAcaoOcupada('cancelar')
     try {
       const resultado = await cancelarAssinatura()
       setResumoStripe({
@@ -249,12 +263,14 @@ export function AssinaturaAdmin() {
           : 'Assinatura cancelada ao fim do período atual.',
       )
       await carregarHistorico()
+      setConfirmarCancelar(false)
     } catch (e) {
       setErro(
         e instanceof Error ? e.message : 'Não foi possível cancelar a assinatura.',
       )
+      setConfirmarCancelar(false)
     } finally {
-      setOcupado(false)
+      setAcaoOcupada(null)
     }
   }
 
@@ -301,7 +317,13 @@ export function AssinaturaAdmin() {
     !cancelamentoAgendado &&
     statusEfetivo !== 'canceled'
 
-  const alerta = (
+  const temAlerta =
+    Boolean(ok) ||
+    Boolean(erro) ||
+    !temAcesso ||
+    Boolean(cancelamentoAgendado && periodoFim)
+
+  const alerta = temAlerta ? (
     <>
       {ok ? (
         <AdminAlerta tipo="success" titulo="Pronto">
@@ -326,7 +348,7 @@ export function AssinaturaAdmin() {
         </AdminAlerta>
       ) : null}
     </>
-  )
+  ) : null
 
   return (
     <>
@@ -393,27 +415,27 @@ export function AssinaturaAdmin() {
               <button
                 type="button"
                 className="btn btn--primary"
-                disabled={ocupado || atualizandoAposCheckout}
+                disabled={acaoOcupada !== null || atualizandoAposCheckout}
                 onClick={() => void aoAssinar()}
               >
-                {ocupado ? 'Abrindo checkout…' : 'Assinar agora'}
+                {acaoOcupada === 'checkout' ? 'Abrindo checkout…' : 'Assinar agora'}
               </button>
             ) : null}
             {temStripe ? (
               <button
                 type="button"
                 className="btn btn--ghost"
-                disabled={ocupado || atualizandoAposCheckout}
+                disabled={acaoOcupada !== null || atualizandoAposCheckout}
                 onClick={() => void aoGerenciar()}
               >
-                {ocupado ? 'Abrindo portal…' : 'Gerenciar cobrança'}
+                {acaoOcupada === 'portal' ? 'Abrindo portal…' : 'Gerenciar cobrança'}
               </button>
             ) : null}
             {podeCancelar ? (
               <button
                 type="button"
-                className="btn btn--danger"
-                disabled={ocupado || atualizandoAposCheckout}
+                className="btn btn--danger-soft"
+                disabled={acaoOcupada !== null || atualizandoAposCheckout}
                 onClick={() => setConfirmarCancelar(true)}
               >
                 Cancelar assinatura
@@ -496,9 +518,13 @@ export function AssinaturaAdmin() {
         }
         confirmarRotulo="Confirmar cancelamento"
         cancelarRotulo="Manter assinatura"
+        processando={acaoOcupada === 'cancelar'}
+        processandoRotulo="Cancelando…"
         perigo
         aoConfirmar={() => void aoConfirmarCancelamento()}
-        aoCancelar={() => setConfirmarCancelar(false)}
+        aoCancelar={() => {
+          if (acaoOcupada !== 'cancelar') setConfirmarCancelar(false)
+        }}
       />
     </>
   )

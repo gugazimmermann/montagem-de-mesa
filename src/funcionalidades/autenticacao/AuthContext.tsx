@@ -6,42 +6,22 @@ import {
   obterSessaoCliente,
   ouvirSessao,
   sair as sairRepo,
+  sessaoExigeRedefinirSenha,
 } from '../../dados/repositorioClientes'
 import { AuthContext } from './auth-context'
-
-/** localStorage: compartilhado entre abas (sessionStorage era bypassável). */
-const CHAVE_RECOVERY = 'montagem:precisaRedefinirSenha'
-
-function lerFlagRecovery(): boolean {
-  try {
-    return localStorage.getItem(CHAVE_RECOVERY) === '1'
-  } catch {
-    return false
-  }
-}
-
-function gravarFlagRecovery(valor: boolean): void {
-  try {
-    if (valor) {
-      localStorage.setItem(CHAVE_RECOVERY, '1')
-      // Limpa flag legada por aba
-      sessionStorage.removeItem(CHAVE_RECOVERY)
-    } else {
-      localStorage.removeItem(CHAVE_RECOVERY)
-      sessionStorage.removeItem(CHAVE_RECOVERY)
-    }
-  } catch {
-    // ignore
-  }
-}
+import {
+  CHAVE_RECOVERY_STORAGE,
+  gravarFlagRecoveryLocal,
+  lerFlagRecoveryLocal,
+} from '../../dados/authRecovery'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [carregando, setCarregando] = useState(true)
-  const [precisaRedefinirSenha, setPrecisaRedefinirSenha] = useState(lerFlagRecovery)
+  const [precisaRedefinirSenha, setPrecisaRedefinirSenha] = useState(lerFlagRecoveryLocal)
 
   function marcarPrecisaRedefinirSenha(valor: boolean) {
-    gravarFlagRecovery(valor)
+    gravarFlagRecoveryLocal(valor)
     setPrecisaRedefinirSenha(valor)
   }
 
@@ -50,29 +30,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Migra flag antiga de sessionStorage → localStorage
     try {
-      if (sessionStorage.getItem(CHAVE_RECOVERY) === '1') {
+      if (sessionStorage.getItem(CHAVE_RECOVERY_STORAGE) === '1') {
         marcarPrecisaRedefinirSenha(true)
       }
     } catch {
       // ignore
     }
 
-    // Em recovery: não carregar perfil admin até a senha ser redefinida.
-    if (lerFlagRecovery()) {
-      setCliente(null)
-      setCarregando(false)
-    } else {
-      void obterSessaoCliente()
-        .then((sessao) => {
-          if (ativo) setCliente(sessao)
-        })
-        .catch(() => {
-          if (ativo) setCliente(null)
-        })
-        .finally(() => {
-          if (ativo) setCarregando(false)
-        })
-    }
+    void (async () => {
+      try {
+        const exigeMeta = await sessaoExigeRedefinirSenha()
+        if (!ativo) return
+
+        if (lerFlagRecoveryLocal() || exigeMeta) {
+          marcarPrecisaRedefinirSenha(true)
+          setCliente(null)
+          setCarregando(false)
+          return
+        }
+
+        const sessao = await obterSessaoCliente()
+        if (!ativo) return
+        setCliente(sessao)
+      } catch {
+        if (ativo) setCliente(null)
+      } finally {
+        if (ativo) setCarregando(false)
+      }
+    })()
 
     const cancelar = ouvirSessao((proximo, meta) => {
       if (!ativo) return
@@ -84,16 +69,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      if (!meta?.sessaoValida) {
+      if (meta?.precisaRedefinirSenha) {
+        marcarPrecisaRedefinirSenha(true)
         setCliente(null)
-        // Não limpar flag de recovery no sign-out transitório durante o link;
-        // só limpa em sair()/entrar()/após redefinir.
         setCarregando(false)
         return
       }
 
-      // Sessão válida, mas ainda em fluxo de recovery → sem dados admin.
-      if (lerFlagRecovery()) {
+      if (!meta?.sessaoValida) {
+        setCliente(null)
+        setCarregando(false)
+        return
+      }
+
+      // Sessão válida, mas ainda em fluxo de recovery (flag local) → sem dados admin.
+      if (lerFlagRecoveryLocal()) {
         setCliente(null)
         setCarregando(false)
         return
@@ -106,8 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     const aoStorage = (evento: StorageEvent) => {
-      if (evento.key === CHAVE_RECOVERY) {
-        setPrecisaRedefinirSenha(evento.newValue === '1')
+      if (evento.key === CHAVE_RECOVERY_STORAGE) {
+        const ativoFlag = evento.newValue === '1'
+        setPrecisaRedefinirSenha(ativoFlag)
+        if (ativoFlag) setCliente(null)
       }
     }
     window.addEventListener('storage', aoStorage)

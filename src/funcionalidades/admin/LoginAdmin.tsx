@@ -4,6 +4,7 @@ import { clienteTemAcesso } from '../../compartilhado/tipos'
 import { EntrarErro } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import { AdminAuthCard, AdminAuthCarregando } from './AdminAuthCard'
+import { AdminAlerta } from './AdminFeedback'
 import { destinoPosLogin } from './adminUtils'
 import { CampoSenha } from './CampoSenha'
 
@@ -101,7 +102,11 @@ export function LoginAdmin() {
         disabled={enviando}
       />
 
-      {erro && <p className="admin-login__erro" role="alert">{erro}</p>}
+      {erro && (
+        <AdminAlerta tipo="error" titulo="Atenção">
+          {erro}
+        </AdminAlerta>
+      )}
 
       <button
         type="submit"

@@ -16,19 +16,19 @@ export function RotaProtegida({ children }: PropsRotaProtegida) {
     return <AdminAuthCarregando mensagem="Carregando sessão…" />
   }
 
+  if (
+    precisaRedefinirSenha &&
+    localizacao.pathname !== '/admin/redefinir-senha'
+  ) {
+    return <Navigate to="/admin/redefinir-senha" replace />
+  }
+
   if (!cliente) {
     const from =
       localizacao.pathname === '/admin/assinatura'
         ? '/admin/painel'
         : localizacao.pathname
     return <Navigate to="/admin" replace state={{ from }} />
-  }
-
-  if (
-    precisaRedefinirSenha &&
-    localizacao.pathname !== '/admin/redefinir-senha'
-  ) {
-    return <Navigate to="/admin/redefinir-senha" replace />
   }
 
   const rotaAssinatura = localizacao.pathname === '/admin/assinatura'

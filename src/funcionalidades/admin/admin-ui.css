@@ -27,7 +27,7 @@
   font: inherit;
   padding: 0.65rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-solid);
   color: var(--text);
 }
@@ -46,20 +46,22 @@
 .admin-field__senha input {
   width: 100%;
   box-sizing: border-box;
-  padding-right: 2.5rem;
+  padding-right: 3rem;
 }
 
 .admin-field__senha-toggle {
   position: absolute;
   top: 50%;
-  right: 0.4rem;
+  right: 0.25rem;
   transform: translateY(-50%);
   display: grid;
   place-items: center;
   margin: 0;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
   padding: 0.35rem;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;

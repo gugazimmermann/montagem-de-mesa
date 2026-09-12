@@ -43,8 +43,17 @@ function contentTypeDoArquivo(arquivo: File): string {
   return arquivo.type
 }
 
-/** Aceita só URLs públicas do Storage deste projeto. */
-export function ehUrlStoragePublicaPermitida(urlTexto: string): boolean {
+export type OpcoesUrlStorage = {
+  /** Se informado, exige que a URL pertença a este cliente. */
+  clienteId?: string
+  tipo?: 'logo' | 'item'
+}
+
+/** Aceita só URLs públicas do Storage deste projeto (opcionalmente do próprio tenant). */
+export function ehUrlStoragePublicaPermitida(
+  urlTexto: string,
+  opcoes?: OpcoesUrlStorage,
+): boolean {
   const base = import.meta.env.VITE_SUPABASE_URL as string | undefined
   if (!base || !urlTexto.trim()) return false
   try {
@@ -52,18 +61,39 @@ export function ehUrlStoragePublicaPermitida(urlTexto: string): boolean {
     if (url.protocol !== 'https:') return false
     const origemProjeto = new URL(base).origin
     if (url.origin !== origemProjeto) return false
-    return url.pathname.includes('/storage/v1/object/public/')
+
+    const path = url.pathname
+    if (!path.includes('/storage/v1/object/public/')) return false
+
+    if (opcoes?.clienteId) {
+      if (opcoes.tipo === 'logo') {
+        return path.includes(`/storage/v1/object/public/logos/${opcoes.clienteId}.`)
+      }
+      if (opcoes.tipo === 'item') {
+        return path.includes(
+          `/storage/v1/object/public/itens/${opcoes.clienteId}/`,
+        )
+      }
+    }
+
+    return true
   } catch {
     return false
   }
 }
 
-export function exigirUrlStorageOuVazio(urlTexto: string, rotulo: string): string {
+export function exigirUrlStorageOuVazio(
+  urlTexto: string,
+  rotulo: string,
+  opcoes?: OpcoesUrlStorage,
+): string {
   const trim = urlTexto.trim()
   if (!trim) return ''
-  if (!ehUrlStoragePublicaPermitida(trim)) {
+  if (!ehUrlStoragePublicaPermitida(trim, opcoes)) {
     throw new UploadErro(
-      `${rotulo} inválida. Use upload ou uma URL pública do Storage deste projeto.`,
+      `${rotulo} inválida. Use upload ou uma URL pública do Storage deste projeto${
+        opcoes?.clienteId ? ' (do seu cliente)' : ''
+      }.`,
     )
   }
   return trim

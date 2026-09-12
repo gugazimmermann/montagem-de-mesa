@@ -73,7 +73,13 @@ export function SeletorItens({
 
     evento.preventDefault()
     const id = categorias[proximo]?.id
-    if (id) aoMudarCategoria(id)
+    if (id) {
+      aoMudarCategoria(id)
+      // Roving tabindex: move o foco para a aba recém-ativada.
+      window.requestAnimationFrame(() => {
+        document.getElementById(`tab-${id}`)?.focus()
+      })
+    }
   }
 
   return (
@@ -101,9 +107,19 @@ export function SeletorItens({
               aria-controls={painelId}
               tabIndex={ativa ? 0 : -1}
               title={ilustrativa ? 'Somente ilustrativo — ambientação' : undefined}
+              aria-label={
+                temSelecao
+                  ? `${categoria.rotulo}, com seleção${ilustrativa ? ', ambientação' : ''}`
+                  : ilustrativa
+                    ? `${categoria.rotulo}, ambientação`
+                    : undefined
+              }
             >
               {categoria.rotulo}
               {ilustrativa && <span className="item-picker__tab-hint">ambientação</span>}
+              {temSelecao && (
+                <span className="visually-hidden"> (selecionado)</span>
+              )}
             </button>
           )
         })}

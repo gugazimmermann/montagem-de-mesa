@@ -196,7 +196,10 @@ function FormularioAtualizarCadastro({
       if (arquivoLogo) {
         logoFinal = await enviarLogoStorage(clienteAtual.id, arquivoLogo)
       } else if (logoFinal) {
-        logoFinal = exigirUrlStorageOuVazio(logoFinal, 'Logo')
+        logoFinal = exigirUrlStorageOuVazio(logoFinal, 'Logo', {
+          clienteId: clienteAtual.id,
+          tipo: 'logo',
+        })
       }
 
       const atualizado = await atualizarCadastro(clienteAtual.id, {
@@ -257,65 +260,67 @@ function FormularioAtualizarCadastro({
       voltarPara="/admin/painel"
       voltarRotulo="Voltar ao painel"
       alerta={
-        <>
-          {avisoEmail && (
-            <AdminAlerta tipo="warning" titulo="Troca de e-mail em andamento">
-              <ol className="admin-email-passos">
-                <li className="is-ativo">
-                  1. Link enviado
-                  {emailNovoPendente ? ` para ${emailNovoPendente}` : ''}
-                </li>
-                <li>2. Confirmar o link no e-mail novo</li>
-              </ol>
-              <p>{avisoEmail}</p>
-              {emailNovoPendente && (
-                <p>
-                  <button
-                    type="button"
-                    className="btn btn--primary"
-                    disabled={salvando}
-                    onClick={() => {
-                      void (async () => {
-                        setSalvando(true)
-                        setErro(null)
-                        try {
-                          await solicitarTrocaEmail(clienteAtual.id, emailNovoPendente, {
-                            forcarReenvio: true,
-                          })
-                          setAvisoEmail(
-                            `Reenviamos o link de confirmação para ${emailNovoPendente}.`,
-                          )
-                        } catch (e) {
-                          setErro(
-                            mapearErroCadastro(e, 'Não foi possível reenviar o e-mail.'),
-                          )
-                        } finally {
-                          setSalvando(false)
-                        }
-                      })()
-                    }}
-                  >
-                    Reenviar e-mail
-                  </button>
-                </p>
-              )}
-            </AdminAlerta>
-          )}
+        avisoEmail || mensagem || erro ? (
+          <>
+            {avisoEmail && (
+              <AdminAlerta tipo="warning" titulo="Troca de e-mail em andamento">
+                <ol className="admin-email-passos">
+                  <li className="is-ativo">
+                    1. Link enviado
+                    {emailNovoPendente ? ` para ${emailNovoPendente}` : ''}
+                  </li>
+                  <li>2. Confirmar o link no e-mail novo</li>
+                </ol>
+                <p>{avisoEmail}</p>
+                {emailNovoPendente && (
+                  <p>
+                    <button
+                      type="button"
+                      className="btn btn--primary"
+                      disabled={salvando}
+                      onClick={() => {
+                        void (async () => {
+                          setSalvando(true)
+                          setErro(null)
+                          try {
+                            await solicitarTrocaEmail(clienteAtual.id, emailNovoPendente, {
+                              forcarReenvio: true,
+                            })
+                            setAvisoEmail(
+                              `Reenviamos o link de confirmação para ${emailNovoPendente}.`,
+                            )
+                          } catch (e) {
+                            setErro(
+                              mapearErroCadastro(e, 'Não foi possível reenviar o e-mail.'),
+                            )
+                          } finally {
+                            setSalvando(false)
+                          }
+                        })()
+                      }}
+                    >
+                      Reenviar e-mail
+                    </button>
+                  </p>
+                )}
+              </AdminAlerta>
+            )}
 
-          {mensagem && (
-            <AdminAlerta tipo="success" titulo="Cadastro atualizado">
-              {erro
-                ? 'Nome, endereço e logo foram salvos.'
-                : 'As alterações foram salvas.'}
-            </AdminAlerta>
-          )}
+            {mensagem && (
+              <AdminAlerta tipo="success" titulo="Cadastro atualizado">
+                {erro
+                  ? 'Nome, endereço e logo foram salvos.'
+                  : 'As alterações foram salvas.'}
+              </AdminAlerta>
+            )}
 
-          {erro && (
-            <AdminAlerta tipo="error" titulo="Atenção">
-              {erro}
-            </AdminAlerta>
-          )}
-        </>
+            {erro && (
+              <AdminAlerta tipo="error" titulo="Atenção">
+                {erro}
+              </AdminAlerta>
+            )}
+          </>
+        ) : null
       }
     >
       <section className="admin-painel__secao">

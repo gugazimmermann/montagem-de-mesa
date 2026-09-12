@@ -12,6 +12,7 @@ import {
 } from './AdminPaginaPainel'
 import { useDadosCliente } from './useDadosCliente'
 import { useFlashLocation } from './useFlashLocation'
+import './EditarCategoria.css'
 
 export function EditarCategoria() {
   const { categoriaId } = useParams<{ categoriaId: string }>()
@@ -25,7 +26,10 @@ export function EditarCategoria() {
   const [descricao, setDescricao] = useState('')
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [erroRotulo, setErroRotulo] = useState<string | null>(null)
+  const [salvando, setSalvando] = useState(false)
   const [excluirItemId, setExcluirItemId] = useState<string | null>(null)
+  const [excluindo, setExcluindo] = useState(false)
 
   useEffect(() => {
     if (flash) setMensagem(flash)
@@ -66,12 +70,14 @@ export function EditarCategoria() {
     evento.preventDefault()
     setMensagem(null)
     setErro(null)
+    setErroRotulo(null)
     const rotuloTrim = rotulo.trim()
     if (!rotuloTrim) {
-      setErro('Informe o rótulo da categoria.')
+      setErroRotulo('Informe o rótulo da categoria.')
       return
     }
 
+    setSalvando(true)
     try {
       await atualizarCategoria(idCliente, {
         id: idCategoria,
@@ -89,13 +95,15 @@ export function EditarCategoria() {
       setMensagem('Categoria salva.')
     } catch {
       setErro('Não foi possível salvar a categoria.')
+    } finally {
+      setSalvando(false)
     }
   }
 
   async function confirmarExcluirItem() {
-    if (!excluirItemId) return
+    if (!excluirItemId || excluindo) return
     const id = excluirItemId
-    setExcluirItemId(null)
+    setExcluindo(true)
     setMensagem(null)
     setErro(null)
     try {
@@ -104,9 +112,12 @@ export function EditarCategoria() {
         ...dadosAtuais,
         itens: dadosAtuais.itens.filter((i) => i.id !== id),
       })
+      setExcluirItemId(null)
       setMensagem('Item excluído.')
     } catch {
       setErro('Não foi possível excluir o item.')
+    } finally {
+      setExcluindo(false)
     }
   }
 
@@ -120,18 +131,20 @@ export function EditarCategoria() {
       voltarPara="/admin/painel"
       voltarRotulo="Voltar ao painel"
       alerta={
-        <>
-          {erro && (
-            <AdminAlerta tipo="error" titulo="Atenção">
-              {erro}
-            </AdminAlerta>
-          )}
-          {mensagem && !erro && (
-            <AdminAlerta tipo="success" titulo="Pronto">
-              {mensagem}
-            </AdminAlerta>
-          )}
-        </>
+        erro || mensagem ? (
+          <>
+            {erro && (
+              <AdminAlerta tipo="error" titulo="Atenção">
+                {erro}
+              </AdminAlerta>
+            )}
+            {mensagem && !erro && (
+              <AdminAlerta tipo="success" titulo="Pronto">
+                {mensagem}
+              </AdminAlerta>
+            )}
+          </>
+        ) : null
       }
     >
       <section className="admin-painel__secao">
@@ -142,9 +155,20 @@ export function EditarCategoria() {
             <input
               type="text"
               value={rotulo}
-              onChange={(e) => setRotulo(e.target.value)}
+              onChange={(e) => {
+                setRotulo(e.target.value)
+                setErroRotulo(null)
+              }}
               required
+              disabled={salvando}
+              aria-invalid={erroRotulo ? true : undefined}
+              aria-describedby={erroRotulo ? 'erro-rotulo-categoria' : undefined}
             />
+            {erroRotulo && (
+              <span id="erro-rotulo-categoria" className="admin-field__erro" role="alert">
+                {erroRotulo}
+              </span>
+            )}
           </label>
 
           <label className="admin-field">
@@ -153,11 +177,12 @@ export function EditarCategoria() {
               rows={3}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
+              disabled={salvando}
             />
           </label>
 
-          <button type="submit" className="btn btn--primary">
-            Salvar categoria
+          <button type="submit" className="btn btn--primary" disabled={salvando}>
+            {salvando ? 'Salvando…' : 'Salvar categoria'}
           </button>
         </form>
       </section>
@@ -210,7 +235,7 @@ export function EditarCategoria() {
                   </Link>
                   <button
                     type="button"
-                    className="btn btn--danger"
+                    className="btn btn--danger-soft"
                     onClick={() => setExcluirItemId(item.id)}
                   >
                     Excluir
@@ -227,8 +252,12 @@ export function EditarCategoria() {
         titulo="Excluir item?"
         descricao="Esta ação não pode ser desfeita."
         confirmarRotulo="Excluir"
+        processando={excluindo}
+        processandoRotulo="Excluindo…"
         perigo
-        aoCancelar={() => setExcluirItemId(null)}
+        aoCancelar={() => {
+          if (!excluindo) setExcluirItemId(null)
+        }}
         aoConfirmar={() => void confirmarExcluirItem()}
       />
     </AdminPaginaPainel>

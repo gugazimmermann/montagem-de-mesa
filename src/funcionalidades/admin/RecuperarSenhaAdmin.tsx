@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { solicitarRedefinicaoSenha } from '../../dados/repositorioClientes'
 import { AdminAuthCard } from './AdminAuthCard'
+import { AdminAlerta } from './AdminFeedback'
 import { mapearErroCadastro } from './adminUtils'
 
 export function RecuperarSenhaAdmin() {
@@ -73,9 +74,9 @@ export function RecuperarSenhaAdmin() {
         </label>
 
         {erro && (
-          <p className="admin-login__erro" role="alert">
+          <AdminAlerta tipo="error" titulo="Atenção">
             {erro}
-          </p>
+          </AdminAlerta>
         )}
 
         <button

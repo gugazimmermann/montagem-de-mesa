@@ -12,6 +12,8 @@ import {
 } from './AdminPaginaPainel'
 import { useDadosCliente } from './useDadosCliente'
 import { useFlashLocation } from './useFlashLocation'
+import './PainelAdmin.css'
+import './AssinaturaAdmin.css'
 
 type Feedback = { tipo: 'success' | 'error'; texto: string }
 
@@ -26,6 +28,7 @@ export function PainelAdmin() {
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [menuAberto, setMenuAberto] = useState(false)
   const [excluirId, setExcluirId] = useState<string | null>(null)
+  const [excluindo, setExcluindo] = useState(false)
 
   useEffect(() => {
     if (flash) setFeedback({ tipo: 'success', texto: flash })
@@ -47,9 +50,9 @@ export function PainelAdmin() {
   )
 
   async function confirmarExclusao() {
-    if (!dados || !clienteId || !excluirId) return
+    if (!dados || !clienteId || !excluirId || excluindo) return
     const id = excluirId
-    setExcluirId(null)
+    setExcluindo(true)
     try {
       await excluirCategoriaDb(clienteId, id)
       setDados({
@@ -57,9 +60,12 @@ export function PainelAdmin() {
         categorias: dados.categorias.filter((c) => c.id !== id),
         itens: dados.itens.filter((item) => item.categoria !== id),
       })
+      setExcluirId(null)
       setFeedback({ tipo: 'success', texto: 'Categoria excluída.' })
     } catch {
       setFeedback({ tipo: 'error', texto: 'Não foi possível excluir a categoria.' })
+    } finally {
+      setExcluindo(false)
     }
   }
 
@@ -128,6 +134,7 @@ export function PainelAdmin() {
             <AdminMenuMais
               aberto={menuAberto}
               aoAlternar={() => setMenuAberto((v) => !v)}
+              aoFechar={() => setMenuAberto(false)}
             >
               <Link
                 className="btn btn--ghost"
@@ -241,7 +248,7 @@ export function PainelAdmin() {
                         </Link>
                         <button
                           type="button"
-                          className="btn btn--danger"
+                          className="btn btn--danger-soft"
                           onClick={() => setExcluirId(categoria.id)}
                         >
                           Excluir
@@ -261,8 +268,12 @@ export function PainelAdmin() {
         titulo="Excluir categoria?"
         descricao="Os itens vinculados também serão removidos. Esta ação não pode ser desfeita."
         confirmarRotulo="Excluir"
+        processando={excluindo}
+        processandoRotulo="Excluindo…"
         perigo
-        aoCancelar={() => setExcluirId(null)}
+        aoCancelar={() => {
+          if (!excluindo) setExcluirId(null)
+        }}
         aoConfirmar={() => void confirmarExclusao()}
       />
     </div>

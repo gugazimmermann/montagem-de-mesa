@@ -101,12 +101,12 @@ Deno.serve(async (req) => {
             await atualizarPorSubscription(subscription)
           }
         } else if (clienteId && customerId) {
+          // Checkout sem subscription ainda: só vincula o customer; status vem do evento de assinatura.
           const admin = supabaseAdmin()
           await admin
             .from('clientes')
             .update({
               stripe_customer_id: customerId,
-              subscription_status: 'active',
             })
             .eq('id', clienteId)
         }

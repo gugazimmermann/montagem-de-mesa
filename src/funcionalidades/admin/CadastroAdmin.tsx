@@ -191,7 +191,11 @@ export function CadastroAdmin() {
           mensagemErro={erroSenha}
         />
 
-        {erro && <p className="admin-login__erro" role="alert">{erro}</p>}
+        {erro && (
+          <AdminAlerta tipo="error" titulo="Atenção">
+            {erro}
+          </AdminAlerta>
+        )}
 
         <button
           type="submit"

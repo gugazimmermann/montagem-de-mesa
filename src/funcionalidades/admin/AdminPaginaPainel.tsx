@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { AdminAlerta, AdminBreadcrumb, AdminEstadoCarregando } from './AdminFeedback'
+import { AdminAlerta, AdminBreadcrumb, AdminEstadoSkeleton } from './AdminFeedback'
+import './admin-ui.css'
+import './PainelAdmin.css'
 
 type PropsAdminPaginaPainel = {
   titulo: ReactNode
@@ -36,12 +38,14 @@ export function AdminPaginaPainel({
         <div>
           {breadcrumb && breadcrumb.length > 0 ? (
             <AdminBreadcrumb itens={breadcrumb} />
-          ) : null}
+          ) : (
+            <p className="admin-painel__eyebrow">Painel do cliente</p>
+          )}
           <h1>{titulo}</h1>
         </div>
         {acoesFinais ? <div className="admin-painel__acoes">{acoesFinais}</div> : null}
       </header>
-      {alerta}
+      {alerta ? <div className="admin-alerta-stack">{alerta}</div> : null}
       {children}
     </div>
   )
@@ -50,7 +54,14 @@ export function AdminPaginaPainel({
 export function AdminSessaoInvalida() {
   return (
     <div className="admin-painel">
-      <AdminAlerta tipo="error">Sessão inválida.</AdminAlerta>
+      <AdminAlerta tipo="error" titulo="Sessão inválida">
+        Faça login novamente para continuar.
+      </AdminAlerta>
+      <div className="admin-sessao-invalida__acao">
+        <Link className="btn btn--primary" to="/admin">
+          Entrar
+        </Link>
+      </div>
     </div>
   )
 }
@@ -62,7 +73,7 @@ export function AdminPainelCarregando({
 }) {
   return (
     <div className="admin-painel">
-      <AdminEstadoCarregando mensagem={mensagem} />
+      <AdminEstadoSkeleton mensagem={mensagem} />
     </div>
   )
 }

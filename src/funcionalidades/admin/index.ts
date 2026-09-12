@@ -1,10 +1,3 @@
-import './admin-ui.css'
-import './LoginAdmin.css'
-import './PainelAdmin.css'
-import './EditarCategoria.css'
-import './AdminFeedback.css'
-import './AssinaturaAdmin.css'
-
 export { LoginAdmin } from './LoginAdmin'
 export { CadastroAdmin } from './CadastroAdmin'
 export { RecuperarSenhaAdmin } from './RecuperarSenhaAdmin'

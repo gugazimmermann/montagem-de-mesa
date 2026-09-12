@@ -68,7 +68,7 @@ No dashboard Supabase:
 1. **Authentication → Providers → Email**
    - Confirmação de e-mail **obrigatória** (signup aberto multi-tenant).
    - Política de senha: mínimo **10** caracteres (alinhar com o app).
-   - Preferir **Secure password change** / fluxo que force redefinição após recovery (o app também bloqueia o painel com flag em `localStorage` até `updateUser({ password })`).
+   - Preferir **Secure password change**. O app bloqueia o painel após recovery com flag em `localStorage` **e** `user_metadata.precisa_redefinir_senha` (sobrevive se a flag local for limpa) até `updateUser({ password })`.
 2. **Authentication → URL Configuration** — só Redirect URLs do seu domínio (ver acima).
 3. **Bot protection** / rate limits no Auth quando disponível.
 4. Catálogo e Storage de itens/logos são **leitura pública** quando o cliente tem assinatura/trial ativos (`cliente_tem_acesso`). Sem acesso, a montagem pública some da view `clientes_publicos` e das policies.
@@ -85,6 +85,7 @@ Aplica, em ordem, os arquivos em [`supabase/migrations/`](supabase/migrations/):
 1. [`20260911180000_schema.sql`](supabase/migrations/20260911180000_schema.sql) — drop **só** de `clientes` / `categorias` / `itens` (+ funções/policies/views deste app) e recria o schema final (UUID, RLS, `codigo`, view pública sem e-mail, lock de colunas sensíveis)
 2. [`20260911180001_storage.sql`](supabase/migrations/20260911180001_storage.sql) — buckets `itens` / `logos` e policies
 3. [`20260912000000_assinatura_stripe.sql`](supabase/migrations/20260912000000_assinatura_stripe.sql) — trial/Stripe em `clientes`, `cliente_tem_acesso`, RLS e view só com assinatura/trial ativos
+4. [`20260912120000_validacao_conteudo.sql`](supabase/migrations/20260912120000_validacao_conteudo.sql) — CHECKs de cores hex, padrões, dimensões e URLs de Storage por tenant
 
 **Não** reseta o Database do projeto. Tabelas de outros apps (ex.: `leads`) permanecem intactas. Opcional: `npm run db:migrate -- caminho/arquivo.sql` para um arquivo só.
 

@@ -17,6 +17,7 @@ export function FormularioCategoria() {
   const [rotulo, setRotulo] = useState('')
   const [descricao, setDescricao] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [erroRotulo, setErroRotulo] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   if (!cliente) {
@@ -28,10 +29,11 @@ export function FormularioCategoria() {
   async function salvarCategoria(evento: FormEvent) {
     evento.preventDefault()
     setErro(null)
+    setErroRotulo(null)
 
     const rotuloTrim = rotulo.trim()
     if (!rotuloTrim) {
-      setErro('Informe o rótulo da categoria.')
+      setErroRotulo('Informe o rótulo da categoria.')
       return
     }
 
@@ -71,10 +73,20 @@ export function FormularioCategoria() {
             <input
               type="text"
               value={rotulo}
-              onChange={(e) => setRotulo(e.target.value)}
+              onChange={(e) => {
+                setRotulo(e.target.value)
+                setErroRotulo(null)
+              }}
               required
               disabled={enviando}
+              aria-invalid={erroRotulo ? true : undefined}
+              aria-describedby={erroRotulo ? 'erro-rotulo-nova' : undefined}
             />
+            {erroRotulo && (
+              <span id="erro-rotulo-nova" className="admin-field__erro" role="alert">
+                {erroRotulo}
+              </span>
+            )}
           </label>
 
           <label className="admin-field">

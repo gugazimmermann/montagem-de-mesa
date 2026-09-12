@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { atualizarSenha, ouvirSessaoAuth } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import { AdminAuthCard, AdminAuthCarregando } from './AdminAuthCard'
+import { AdminAlerta } from './AdminFeedback'
 import {
   mapearErroCadastro,
   SENHA_MIN,
@@ -12,22 +13,26 @@ import { CampoSenha } from './CampoSenha'
 
 export function RedefinirSenhaAdmin() {
   const navegar = useNavigate()
-  const { limparPrecisaRedefinirSenha } = useAuth()
+  const { limparPrecisaRedefinirSenha, precisaRedefinirSenha } = useAuth()
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [sessaoOk, setSessaoOk] = useState<boolean | null>(null)
+  const [eventoRecovery, setEventoRecovery] = useState(false)
 
   useEffect(() => {
     return ouvirSessaoAuth((tem, evento) => {
-      if (evento === 'PASSWORD_RECOVERY' || tem) {
+      if (evento === 'PASSWORD_RECOVERY') {
+        setEventoRecovery(true)
         setSessaoOk(true)
         return
       }
       setSessaoOk(tem)
     })
   }, [])
+
+  const podeRedefinir = Boolean(sessaoOk && (precisaRedefinirSenha || eventoRecovery))
 
   async function aoEnviar(evento: FormEvent) {
     evento.preventDefault()
@@ -76,6 +81,11 @@ export function RedefinirSenhaAdmin() {
     )
   }
 
+  // Sessão normal (sem recovery): não permite trocar senha sem o fluxo de e-mail.
+  if (!podeRedefinir) {
+    return <Navigate to="/admin/painel" replace />
+  }
+
   return (
     <AdminAuthCard
       titulo="Redefinir senha"
@@ -111,9 +121,9 @@ export function RedefinirSenhaAdmin() {
       />
 
       {erro && (
-        <p className="admin-login__erro" role="alert">
+        <AdminAlerta tipo="error" titulo="Atenção">
           {erro}
-        </p>
+        </AdminAlerta>
       )}
 
       <button

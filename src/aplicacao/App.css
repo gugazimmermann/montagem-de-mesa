@@ -2,6 +2,24 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.5rem 3rem;
+  position: relative;
+}
+
+.app__skip {
+  position: absolute;
+  left: 1rem;
+  top: -100px;
+  z-index: 100;
+  padding: 0.55rem 1rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.app__skip:focus {
+  top: 1rem;
 }
 
 .app--mensagem {
@@ -16,13 +34,40 @@
   text-decoration: none;
 }
 
+.app__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--text-muted);
+}
+
+.app__loading p {
+  margin: 0;
+}
+
+.app__loading-spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: var(--radius-pill);
+  animation: app-spin 0.7s linear infinite;
+}
+
+@keyframes app-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .app__sem-categorias {
   margin: 0;
   padding: 1.5rem;
   color: var(--text-muted);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
 }
 
 .app__header {
@@ -77,6 +122,16 @@
   color: var(--text-muted);
 }
 
+.app__toast {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--success-border);
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: 0.9rem;
+}
+
 .app__main {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -87,12 +142,17 @@
 .app__preview {
   position: sticky;
   top: 1.5rem;
-  /* Sem card: a mesa é o produto */
   background: transparent;
   border: none;
   border-radius: 0;
   overflow: visible;
   box-shadow: none;
+}
+
+.app__preview-toolbar {
+  display: none;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
 }
 
 .app__preview.is-pulse .table-surface {
@@ -127,7 +187,7 @@
   padding: 0.4rem 0.7rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   min-width: 0;
 }
 
@@ -155,8 +215,15 @@
 
 .app__picker-toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
+}
+
+.app__picker-toolbar .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .app__live {
@@ -171,13 +238,16 @@
   border: 0;
 }
 
+.app__preview-sheet {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .app__main {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
 
-  /* Picker primeiro; preview compacto sticky no topo visual após scroll-up via order */
   .app__picker {
     order: 1;
     min-height: 0;
@@ -198,16 +268,78 @@
     overflow: auto;
   }
 
+  .app__preview-toolbar {
+    display: flex;
+  }
+
   .setting-summary {
     display: none;
   }
 
   .setting-summary--compact {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
     margin: 0 0 0.5rem;
+  }
+
+  .setting-summary--compact__count {
+    margin: 0;
     font-size: 0.8rem;
     font-weight: 500;
     color: var(--text-muted);
+  }
+
+  .setting-summary--compact__chips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .setting-summary--compact__chips li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    flex-shrink: 0;
+    padding: 0.3rem 0.55rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .app__preview-sheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: var(--bg);
+    padding: 1rem;
+    overflow: auto;
+  }
+
+  .app__preview-sheet__barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .app__preview-sheet__barra p {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .app__preview.is-expanded {
+    /* sheet takes over; keep dock visible but quieter */
+    opacity: 0.55;
+    pointer-events: none;
   }
 }
 
@@ -218,6 +350,16 @@
 
   .app__logo {
     height: 3rem;
+  }
+
+  .app__picker-toolbar {
+    justify-content: stretch;
+  }
+
+  .app__picker-toolbar .btn {
+    flex: 1 1 auto;
+    font-size: 0.8rem;
+    padding-inline: 0.7rem;
   }
 }
 

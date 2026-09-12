@@ -1,5 +1,7 @@
 import type { FormEvent, ReactNode } from 'react'
 import { AdminEstadoCarregando } from './AdminFeedback'
+import './LoginAdmin.css'
+import './admin-ui.css'
 
 type PropsAdminAuthCard = {
   titulo: string

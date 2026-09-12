@@ -3,6 +3,7 @@ import type { Categoria, ConfiguracaoMesa, ItemMesa } from '../../../../comparti
 import { obterItemPorId } from '../../../catalogo'
 import {
   estiloCamadaDimensionada,
+  inferirDimensoes,
   itemRedondo,
   PREVIEW_SCALE,
   PREVIEW_SCALE_PRATO,
@@ -10,6 +11,11 @@ import {
   REFERENCIA_PREVIEW_CM,
   temDimensoes,
 } from '../../../../compartilhado/utils/dimensoes'
+import {
+  type CodigoCamada,
+  ehCodigoCamadaConhecido,
+  chaveCamada,
+} from '../../ordemCamadas'
 import './PreVisualizacaoMesa.css'
 import '../../padroes-tecido.css'
 
@@ -21,25 +27,13 @@ interface PropsPreVisualizacaoMesa {
   aoAmpliarItem?: (item: ItemMesa) => void
 }
 
-const CODIGOS_CAMADA = [
-  'toalha',
-  'sousplat',
-  'pratoRaso',
-  'pratoFundo',
-  'pratoSobremesa',
-  'portaGuardanapo',
-  'taca',
-] as const
-
-type CodigoCamada = (typeof CODIGOS_CAMADA)[number]
-
 function obterItemPorCodigo(
   categorias: Categoria[],
   configuracao: ConfiguracaoMesa,
   itens: ItemMesa[],
   codigo: CodigoCamada,
 ): ItemMesa | null {
-  const categoria = categorias.find((c) => (c.codigo ?? c.id) === codigo)
+  const categoria = categorias.find((c) => chaveCamada(c) === codigo)
   if (!categoria) return null
   return obterItemPorId(itens, configuracao[categoria.id] ?? null)
 }
@@ -53,8 +47,19 @@ function varsCores(item: ItemMesa): CSSProperties {
   } as CSSProperties
 }
 
-function estiloDimensionado(item: ItemMesa): CSSProperties {
-  if (!temDimensoes(item)) return {}
+/** Dimensões reais ou inferidas — evita sumir do preview quando o admin omite cm. */
+function itemComDimensoes(
+  item: ItemMesa,
+  codigo: string,
+): ItemMesa & { largura: number; comprimento: number } {
+  if (temDimensoes(item)) return item
+  const inferidas = inferirDimensoes(item.nome, codigo)
+  return { ...item, ...inferidas }
+}
+
+function estiloDimensionado(
+  item: ItemMesa & { largura: number; comprimento: number },
+): CSSProperties {
   return estiloCamadaDimensionada(item)
 }
 
@@ -115,17 +120,16 @@ function CamadaSousplat({
   item: ItemMesa
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
-  if (!temDimensoes(item)) return null
-
+  const comDim = itemComDimensoes(item, 'sousplat')
   const comImagem = Boolean(item.imagem)
-  const redondo = !comImagem && itemRedondo(item)
+  const redondo = !comImagem && itemRedondo(comDim)
 
   return (
     <CamadaClicavel
       item={item}
       aoAmpliarItem={aoAmpliarItem}
       className={`layer layer--sized sousplat ${redondo ? 'layer--round' : ''} ${comImagem ? 'sousplat--image' : ''}`}
-      style={{ ...estiloDimensionado(item), ...(!comImagem ? varsCores(item) : {}) }}
+      style={{ ...estiloDimensionado(comDim), ...(!comImagem ? varsCores(item) : {}) }}
     >
       {comImagem && <img src={item.imagem} alt="" draggable={false} />}
     </CamadaClicavel>
@@ -141,8 +145,13 @@ function CamadaPrato({
   variante: 'raso' | 'fundo' | 'sobremesa'
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
-  if (!temDimensoes(item)) return null
-
+  const codigo =
+    variante === 'fundo'
+      ? 'pratoFundo'
+      : variante === 'sobremesa'
+        ? 'pratoSobremesa'
+        : 'pratoRaso'
+  const comDim = itemComDimensoes(item, codigo)
   const comImagem = Boolean(item.imagem)
   const classeVariante =
     variante === 'fundo'
@@ -158,7 +167,7 @@ function CamadaPrato({
       className={`layer layer--sized plate ${classeVariante} ${comImagem ? 'plate--image' : 'layer--round'}`}
       style={
         {
-          ...estiloDimensionado(item),
+          ...estiloDimensionado(comDim),
           '--preview-scale': PREVIEW_SCALE_PRATO,
           ...(!comImagem ? varsCores(item) : {}),
         } as CSSProperties
@@ -180,16 +189,20 @@ function CamadaPortaGuardanapo({
   item: ItemMesa
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
-  if (!temDimensoes(item)) return null
+  const comDim = itemComDimensoes(item, 'portaGuardanapo')
+  const comImagem = Boolean(item.imagem)
 
   return (
     <CamadaClicavel
       item={item}
       aoAmpliarItem={aoAmpliarItem}
-      className="layer layer--sized porta-guardanapo"
-      style={estiloDimensionado(item)}
+      className={`layer layer--sized porta-guardanapo ${!comImagem ? 'layer--round' : ''}`}
+      style={{
+        ...estiloDimensionado(comDim),
+        ...(!comImagem ? varsCores(item) : {}),
+      }}
     >
-      {item.imagem && <img src={item.imagem} alt="" draggable={false} />}
+      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
@@ -201,26 +214,28 @@ function CamadaTaca({
   item: ItemMesa
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
-  if (!temDimensoes(item)) return null
+  const comDim = itemComDimensoes(item, 'taca')
+  const comImagem = Boolean(item.imagem)
 
   return (
     <CamadaClicavel
       item={item}
       aoAmpliarItem={aoAmpliarItem}
-      className="layer layer--sized taca"
+      className={`layer layer--sized taca ${!comImagem ? 'layer--round' : ''}`}
       style={
         {
-          ...estiloDimensionado(item),
+          ...estiloDimensionado(comDim),
           '--preview-scale': PREVIEW_SCALE_TACA,
+          ...(!comImagem ? varsCores(item) : {}),
         } as CSSProperties
       }
     >
-      {item.imagem && <img src={item.imagem} alt="" draggable={false} />}
+      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
 
-/** Camada genérica para categorias customizadas com imagem. */
+/** Camada genérica para categorias customizadas com imagem ou cor. */
 function CamadaGenerica({
   item,
   aoAmpliarItem,
@@ -228,33 +243,22 @@ function CamadaGenerica({
   item: ItemMesa
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
-  if (!item.imagem) return null
-  if (!temDimensoes(item)) {
-    return (
-      <CamadaClicavel
-        item={item}
-        aoAmpliarItem={aoAmpliarItem}
-        className="layer layer--sized layer--generica"
-      >
-        <img src={item.imagem} alt="" draggable={false} />
-      </CamadaClicavel>
-    )
-  }
+  const comDim = itemComDimensoes(item, item.categoria)
+  const comImagem = Boolean(item.imagem)
 
   return (
     <CamadaClicavel
       item={item}
       aoAmpliarItem={aoAmpliarItem}
-      className="layer layer--sized layer--generica"
-      style={estiloDimensionado(item)}
+      className={`layer layer--sized layer--generica ${!comImagem ? 'layer--round' : ''}`}
+      style={{
+        ...estiloDimensionado(comDim),
+        ...(!comImagem ? varsCores(item) : {}),
+      }}
     >
-      <img src={item.imagem} alt="" draggable={false} />
+      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
     </CamadaClicavel>
   )
-}
-
-function ehCodigoCamadaConhecido(codigo: string): codigo is CodigoCamada {
-  return (CODIGOS_CAMADA as readonly string[]).includes(codigo)
 }
 
 export function PreVisualizacaoMesa({
@@ -283,12 +287,9 @@ export function PreVisualizacaoMesa({
   const taca = obterItemPorCodigo(categorias, configuracao, itens, 'taca')
 
   const genericas = categorias
-    .filter((c) => {
-      const chave = c.codigo ?? c.id
-      return !ehCodigoCamadaConhecido(chave)
-    })
+    .filter((c) => !ehCodigoCamadaConhecido(chaveCamada(c)))
     .map((c) => obterItemPorId(itens, configuracao[c.id] ?? null))
-    .filter((item): item is ItemMesa => Boolean(item?.imagem))
+    .filter((item): item is ItemMesa => Boolean(item))
 
   const resumo = [
     toalha,
@@ -373,10 +374,10 @@ export function PreVisualizacaoMesa({
         </div>
         {vazia && (
           <div className="table-preview__empty">
-            <p>Selecione itens para montar a mesa</p>
+            <p>Toque numa peça abaixo para montar a mesa</p>
             {aoComecarVazio && (
               <button type="button" className="btn btn--ghost" onClick={aoComecarVazio}>
-                Começar pela primeira categoria
+                Ir para as categorias
               </button>
             )}
           </div>

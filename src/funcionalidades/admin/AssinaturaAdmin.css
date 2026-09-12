@@ -90,9 +90,9 @@
 .admin-painel__banner-trial {
   margin: 0 0 1rem;
   padding: 0.85rem 1rem;
-  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  border-radius: 0.5rem;
-  background: color-mix(in srgb, #c4a574 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--trial) 28%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--trial-bg);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
