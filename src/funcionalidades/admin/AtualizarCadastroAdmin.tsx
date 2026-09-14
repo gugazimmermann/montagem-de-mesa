@@ -4,7 +4,9 @@ import {
   atualizarCadastro,
   CadastroErro,
   enderecoMontagemEmUso,
+  formatarWhatsapp,
   gerarSlug,
+  normalizarWhatsapp,
   obterSessaoCliente,
   solicitarTrocaEmail,
 } from '../../dados/repositorioClientes'
@@ -17,6 +19,7 @@ import {
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
 import { mapearErroCadastro, mapearErroUpload } from './adminUtils'
+import * as ui from './adminClasses'
 import { useObjectUrlPreview } from './useObjectUrlPreview'
 
 function limparHashUrl() {
@@ -44,6 +47,7 @@ function FormularioAtualizarCadastro({
   const [nome, setNome] = useState(clienteAtual.nome)
   const [slug, setSlug] = useState(clienteAtual.slug)
   const [email, setEmail] = useState(clienteAtual.email)
+  const [whatsapp, setWhatsapp] = useState(() => formatarWhatsapp(clienteAtual.whatsapp))
   const [logo, setLogo] = useState(clienteAtual.logo)
   const {
     arquivo: arquivoLogo,
@@ -63,8 +67,15 @@ function FormularioAtualizarCadastro({
     setNome(clienteAtual.nome)
     setSlug(clienteAtual.slug)
     setEmail(clienteAtual.email)
+    setWhatsapp(formatarWhatsapp(clienteAtual.whatsapp))
     setLogo(clienteAtual.logo)
-  }, [clienteAtual.nome, clienteAtual.slug, clienteAtual.email, clienteAtual.logo])
+  }, [
+    clienteAtual.nome,
+    clienteAtual.slug,
+    clienteAtual.email,
+    clienteAtual.whatsapp,
+    clienteAtual.logo,
+  ])
 
   useEffect(() => {
     const bruto = window.location.hash.replace(/^#/, '')
@@ -111,6 +122,7 @@ function FormularioAtualizarCadastro({
           setEmail(sessao.email)
           setNome(sessao.nome)
           setSlug(sessao.slug)
+          setWhatsapp(formatarWhatsapp(sessao.whatsapp))
           setLogo(sessao.logo)
           setAvisoEmail(null)
           setEmailNovoPendente('')
@@ -171,6 +183,7 @@ function FormularioAtualizarCadastro({
     const nomeTrim = nome.trim()
     const slugNormalizado = gerarSlug(slug)
     const emailTrim = email.trim().toLowerCase()
+    const whatsappNormalizado = normalizarWhatsapp(whatsapp)
 
     if (!nomeTrim) {
       setErro('Informe o nome do cliente.')
@@ -184,6 +197,11 @@ function FormularioAtualizarCadastro({
     }
     if (!emailTrim) {
       setErro('Informe o e-mail.')
+      salvandoRef.current = false
+      return
+    }
+    if (whatsapp.trim() && whatsappNormalizado.length < 12) {
+      setErro('Informe um WhatsApp válido com DDD, por exemplo (11) 99999-9999.')
       salvandoRef.current = false
       return
     }
@@ -206,11 +224,13 @@ function FormularioAtualizarCadastro({
         nome: nomeTrim,
         slug: slugNormalizado,
         logo: logoFinal,
+        whatsapp: whatsappNormalizado,
       })
 
       definirCliente(atualizado)
       setLogo(logoFinal)
       setSlug(atualizado.slug)
+      setWhatsapp(formatarWhatsapp(atualizado.whatsapp))
       if (previewLogo) {
         limparPreviewLogo()
       }
@@ -264,7 +284,7 @@ function FormularioAtualizarCadastro({
           <>
             {avisoEmail && (
               <AdminAlerta tipo="warning" titulo="Troca de e-mail em andamento">
-                <ol className="admin-email-passos">
+                <ol className={ui.emailPassos}>
                   <li className="is-ativo">
                     1. Link enviado
                     {emailNovoPendente ? ` para ${emailNovoPendente}` : ''}
@@ -323,11 +343,12 @@ function FormularioAtualizarCadastro({
         ) : null
       }
     >
-      <section className="admin-painel__secao">
-        <form className="admin-painel__form" onSubmit={(e) => void aoSalvar(e)}>
-          <label className="admin-field">
-            <span>Nome</span>
+      <section className={ui.painelSecao}>
+        <form className={ui.painelForm} onSubmit={(e) => void aoSalvar(e)}>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Nome</span>
             <input
+              className={ui.fieldInput}
               type="text"
               name="nome"
               autoComplete="organization"
@@ -338,9 +359,10 @@ function FormularioAtualizarCadastro({
             />
           </label>
 
-          <label className="admin-field">
-            <span>Endereço da montagem</span>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Endereço da montagem</span>
             <input
+              className={ui.fieldInput}
               type="text"
               name="endereco"
               value={slug}
@@ -359,14 +381,15 @@ function FormularioAtualizarCadastro({
               disabled={salvando}
               aria-describedby="endereco-montagem-dica"
             />
-            <span id="endereco-montagem-dica" className="admin-field__dica">
+            <span id="endereco-montagem-dica" className={ui.fieldDica}>
               Aparece na URL, por exemplo /raffiner
             </span>
           </label>
 
-          <label className="admin-field">
-            <span>E-mail</span>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>E-mail</span>
             <input
+              className={ui.fieldInput}
               type="email"
               name="email"
               autoComplete="email"
@@ -377,9 +400,26 @@ function FormularioAtualizarCadastro({
             />
           </label>
 
-          <label className="admin-field">
-            <span>Logo</span>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>WhatsApp</span>
             <input
+              className={ui.fieldInput}
+              type="tel"
+              name="whatsapp"
+              autoComplete="tel-national"
+              inputMode="numeric"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(formatarWhatsapp(e.target.value))}
+              disabled={salvando}
+              placeholder="(11) 99999-9999"
+              maxLength={15}
+            />
+          </label>
+
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Logo</span>
+            <input
+              className={ui.fieldInput}
               type="file"
               accept={acceptLogo}
               onChange={(e) => {
@@ -392,12 +432,12 @@ function FormularioAtualizarCadastro({
           </label>
 
           {logoExibida && (
-            <div className="admin-painel__logo-preview">
+            <div className={ui.painelLogoPreview}>
               <img src={logoExibida} alt={`Logo ${nome}`} />
             </div>
           )}
 
-          <div className="admin-painel__form-acoes">
+          <div className={ui.painelFormAcoes}>
             <button type="submit" className="btn btn--primary" disabled={salvando}>
               {salvando ? 'Salvando…' : 'Salvar cadastro'}
             </button>

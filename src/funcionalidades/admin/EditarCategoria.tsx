@@ -10,9 +10,9 @@ import {
   AdminPainelCarregando,
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
+import * as ui from './adminClasses'
 import { useDadosCliente } from './useDadosCliente'
 import { useFlashLocation } from './useFlashLocation'
-import './EditarCategoria.css'
 
 export function EditarCategoria() {
   const { categoriaId } = useParams<{ categoriaId: string }>()
@@ -147,12 +147,13 @@ export function EditarCategoria() {
         ) : null
       }
     >
-      <section className="admin-painel__secao">
+      <section className={ui.painelSecao}>
         <h2>Dados da categoria</h2>
-        <form className="admin-painel__form" onSubmit={(e) => void salvarCategoria(e)}>
-          <label className="admin-field">
-            <span>Rótulo</span>
+        <form className={ui.painelForm} onSubmit={(e) => void salvarCategoria(e)}>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Rótulo</span>
             <input
+              className={ui.fieldInput}
               type="text"
               value={rotulo}
               onChange={(e) => {
@@ -165,15 +166,16 @@ export function EditarCategoria() {
               aria-describedby={erroRotulo ? 'erro-rotulo-categoria' : undefined}
             />
             {erroRotulo && (
-              <span id="erro-rotulo-categoria" className="admin-field__erro" role="alert">
+              <span id="erro-rotulo-categoria" className={ui.fieldErro} role="alert">
                 {erroRotulo}
               </span>
             )}
           </label>
 
-          <label className="admin-field">
-            <span>Descrição</span>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Descrição</span>
             <textarea
+              className={ui.fieldInput}
               rows={3}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
@@ -187,8 +189,8 @@ export function EditarCategoria() {
         </form>
       </section>
 
-      <section className="admin-painel__secao">
-        <div className="admin-itens__cabecalho">
+      <section className={ui.painelSecao}>
+        <div className={ui.itensCabecalho}>
           <h2>Itens</h2>
           <Link
             className="btn btn--primary"
@@ -212,21 +214,21 @@ export function EditarCategoria() {
             }
           />
         ) : (
-          <ul className="admin-itens">
+          <ul className={ui.list}>
             {itensCategoria.map((item) => (
-              <li key={item.id} className="admin-itens__item">
+              <li key={item.id} className={ui.itensItem}>
                 {item.imagem ? (
                   <AmpliarImagem src={item.imagem} alt={item.nome} />
                 ) : (
-                  <div className="admin-itens__preview" aria-hidden="true">
+                  <div className={ui.itensPreview} aria-hidden="true">
                     <span style={{ background: item.cores.primaria }} />
                   </div>
                 )}
-                <div className="admin-itens__info">
+                <div className={ui.itensInfo}>
                   <strong>{item.nome}</strong>
                   {item.descricao && <p>{item.descricao}</p>}
                 </div>
-                <div className="admin-categorias__acoes">
+                <div className={ui.listAcoes}>
                   <Link
                     className="btn btn--ghost"
                     to={`/admin/painel/categorias/${categoriaId}/itens/${item.id}`}

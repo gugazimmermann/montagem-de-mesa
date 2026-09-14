@@ -13,10 +13,10 @@ import {
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
 import { AmpliarImagem } from './AmpliarImagem'
+import * as ui from './adminClasses'
 import { mapearErroUpload } from './adminUtils'
 import { useDadosCliente } from './useDadosCliente'
 import { useObjectUrlPreview } from './useObjectUrlPreview'
-import './EditarCategoria.css'
 
 const PADROES: { valor: PadraoTecido; rotulo: string }[] = [
   { valor: 'solid', rotulo: 'Liso' },
@@ -247,11 +247,12 @@ export function FormularioItem() {
       voltarPara={voltarPara}
       alerta={erro ? <AdminAlertaErro>{erro}</AdminAlertaErro> : null}
     >
-      <section className="admin-painel__secao">
-        <form className="admin-painel__form" onSubmit={(e) => void salvarItem(e)}>
-          <label className="admin-field">
-            <span>Nome</span>
+      <section className={ui.painelSecao}>
+        <form className={ui.painelForm} onSubmit={(e) => void salvarItem(e)}>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Nome</span>
             <input
+              className={ui.fieldInput}
               type="text"
               value={formItem.nome}
               onChange={(e) => {
@@ -264,15 +265,16 @@ export function FormularioItem() {
               aria-describedby={erroNome ? 'erro-nome-item' : undefined}
             />
             {erroNome && (
-              <span id="erro-nome-item" className="admin-field__erro" role="alert">
+              <span id="erro-nome-item" className={ui.fieldErro} role="alert">
                 {erroNome}
               </span>
             )}
           </label>
 
-          <label className="admin-field">
-            <span>Descrição</span>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Descrição</span>
             <textarea
+              className={ui.fieldInput}
               rows={2}
               value={formItem.descricao}
               onChange={(e) => setFormItem((f) => ({ ...f, descricao: e.target.value }))}
@@ -281,9 +283,10 @@ export function FormularioItem() {
           </label>
 
           {ehToalha && (
-            <label className="admin-field">
-              <span>Cor primária</span>
+            <label className={ui.field}>
+              <span className={ui.fieldLabel}>Cor primária</span>
               <input
+                className={ui.fieldInput}
                 type="color"
                 value={formItem.corPrimaria}
                 onChange={(e) =>
@@ -294,10 +297,11 @@ export function FormularioItem() {
             </label>
           )}
 
-          <div className="admin-itens__grid-campos">
-            <label className="admin-field">
-              <span>Largura (cm)</span>
+          <div className={ui.itensGridCampos}>
+            <label className={ui.field}>
+              <span className={ui.fieldLabel}>Largura (cm)</span>
               <input
+                className={ui.fieldInput}
                 type="number"
                 min="0"
                 step="0.1"
@@ -306,9 +310,10 @@ export function FormularioItem() {
                 disabled={enviando}
               />
             </label>
-            <label className="admin-field">
-              <span>Comprimento (cm)</span>
+            <label className={ui.field}>
+              <span className={ui.fieldLabel}>Comprimento (cm)</span>
               <input
+                className={ui.fieldInput}
                 type="number"
                 min="0"
                 step="0.1"
@@ -323,9 +328,10 @@ export function FormularioItem() {
 
           {ehToalha && (
             <>
-              <label className="admin-field">
-                <span>Padrão do tecido</span>
+              <label className={ui.field}>
+                <span className={ui.fieldLabel}>Padrão do tecido</span>
                 <select
+                  className={ui.fieldInput}
                   value={formItem.padrao}
                   onChange={(e) => setFormItem((f) => ({ ...f, padrao: e.target.value }))}
                   disabled={enviando}
@@ -339,9 +345,10 @@ export function FormularioItem() {
                 </select>
               </label>
 
-              <label className="admin-field">
-                <span>Imagem (URL)</span>
+              <label className={ui.field}>
+                <span className={ui.fieldLabel}>Imagem (URL)</span>
                 <input
+                  className={ui.fieldInput}
                   type="text"
                   value={formItem.imagem}
                   placeholder={
@@ -359,9 +366,10 @@ export function FormularioItem() {
             </>
           )}
 
-          <label className="admin-field">
-            <span>{ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}</span>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>{ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}</span>
             <input
+              className={ui.fieldInput}
               type="file"
               accept={accept}
               onChange={(e) => {
@@ -373,7 +381,7 @@ export function FormularioItem() {
           </label>
 
           {imagemExibida && (
-            <div className="admin-painel__logo-preview">
+            <div className={ui.painelLogoPreview}>
               <AmpliarImagem
                 src={imagemExibida}
                 alt={formItem.nome.trim() || 'Pré-visualização do item'}
@@ -381,7 +389,7 @@ export function FormularioItem() {
             </div>
           )}
 
-          <div className="admin-painel__form-acoes">
+          <div className={ui.painelFormAcoes}>
             <button type="submit" className="btn btn--primary" disabled={enviando}>
               {enviando ? 'Salvando…' : ehNovo ? 'Criar item' : 'Salvar item'}
             </button>

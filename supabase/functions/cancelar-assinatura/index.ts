@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
 
     if (!cliente.stripe_subscription_id) {
       return jsonResponse(
-        { error: 'Nenhuma assinatura Stripe ativa para cancelar.' },
+        { error: 'Nenhuma assinatura ativa para cancelar.' },
         400,
       )
     }

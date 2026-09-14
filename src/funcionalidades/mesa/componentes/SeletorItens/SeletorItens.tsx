@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties, type KeyboardEvent } from 'react'
+import { type CSSProperties, type KeyboardEvent } from 'react'
 import type { Categoria, ConfiguracaoMesa, IdCategoria, ItemMesa } from '../../../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../../../dados/categoriasFixas'
 import { obterItensPorCategoria } from '../../../catalogo'
@@ -53,13 +53,6 @@ export function SeletorItens({
   const metaAtiva = categorias.find((c) => c.id === categoriaAtiva)
   const idSelecionado = configuracao[categoriaAtiva]
   const painelId = 'item-picker-panel'
-
-  useEffect(() => {
-    if (!categoriaAtiva) return
-    document
-      .getElementById(`tab-${categoriaAtiva}`)
-      ?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
-  }, [categoriaAtiva])
 
   function aoTeclaTab(evento: KeyboardEvent<HTMLDivElement>) {
     const atual = categorias.findIndex((c) => c.id === categoriaAtiva)

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { ImagemAmpliada } from '../../compartilhado/ImagemAmpliada'
+import * as ui from './adminClasses'
 
 type AmpliarImagemProps = {
   src: string
@@ -15,7 +16,7 @@ export function AmpliarImagem({ src, alt }: AmpliarImagemProps) {
       <button
         ref={triggerRef}
         type="button"
-        className="admin-itens__preview admin-itens__preview--clicavel"
+        className={ui.itensPreviewClicavel}
         onClick={() => setAberto(true)}
         aria-label={`Ampliar imagem de ${alt}`}
       >

@@ -60,6 +60,8 @@ export interface Cliente {
   email: string
   nome: string
   logo: string
+  /** Número WhatsApp com DDI 55 (somente dígitos). */
+  whatsapp: string
   subscriptionStatus: StatusAssinatura
   trialEndsAt: string | null
   currentPeriodEnd: string | null
@@ -67,15 +69,16 @@ export interface Cliente {
   stripeSubscriptionId: string | null
 }
 
-/** Trial válido ou assinatura active/past_due. */
+/** Trial válido, assinatura active com período vigente, ou past_due. */
 export function clienteTemAcesso(
-  cliente: Pick<Cliente, 'subscriptionStatus' | 'trialEndsAt'>,
+  cliente: Pick<Cliente, 'subscriptionStatus' | 'trialEndsAt' | 'currentPeriodEnd'>,
 ): boolean {
-  if (
-    cliente.subscriptionStatus === 'active' ||
-    cliente.subscriptionStatus === 'past_due'
-  ) {
+  if (cliente.subscriptionStatus === 'past_due') {
     return true
+  }
+  if (cliente.subscriptionStatus === 'active') {
+    if (!cliente.currentPeriodEnd) return true
+    return new Date(cliente.currentPeriodEnd).getTime() > Date.now()
   }
   if (cliente.subscriptionStatus === 'trialing') {
     if (!cliente.trialEndsAt) return false
@@ -100,6 +103,26 @@ export interface DadosCliente {
   logo: string
   categorias: Categoria[]
   itens: ItemMesa[]
+}
+
+export interface ItemMontagemEnviada {
+  categoria: string
+  nome: string
+}
+
+/** Envio de montagem feito por um visitante (histórico do estabelecimento). */
+export interface MontagemEnviada {
+  id: string
+  clienteId: string
+  visitanteNome: string
+  visitanteEmail: string
+  visitanteWhatsapp: string
+  visitanteEndereco: string
+  visitanteCidade: string
+  visitanteEstado: string
+  itens: ItemMontagemEnviada[]
+  linkMontagem: string
+  createdAt: string
 }
 
 export interface Credenciais {

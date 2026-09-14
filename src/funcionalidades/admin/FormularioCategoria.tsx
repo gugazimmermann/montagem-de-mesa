@@ -9,6 +9,7 @@ import {
   AdminPaginaPainel,
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
+import * as ui from './adminClasses'
 
 export function FormularioCategoria() {
   const navegar = useNavigate()
@@ -66,11 +67,12 @@ export function FormularioCategoria() {
       voltarPara="/admin/painel"
       alerta={erro ? <AdminAlertaErro>{erro}</AdminAlertaErro> : null}
     >
-      <section className="admin-painel__secao">
-        <form className="admin-painel__form" onSubmit={(e) => void salvarCategoria(e)}>
-          <label className="admin-field">
-            <span>Rótulo</span>
+      <section className={ui.painelSecao}>
+        <form className={ui.painelForm} onSubmit={(e) => void salvarCategoria(e)}>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Rótulo</span>
             <input
+              className={ui.fieldInput}
               type="text"
               value={rotulo}
               onChange={(e) => {
@@ -83,15 +85,16 @@ export function FormularioCategoria() {
               aria-describedby={erroRotulo ? 'erro-rotulo-nova' : undefined}
             />
             {erroRotulo && (
-              <span id="erro-rotulo-nova" className="admin-field__erro" role="alert">
+              <span id="erro-rotulo-nova" className={ui.fieldErro} role="alert">
                 {erroRotulo}
               </span>
             )}
           </label>
 
-          <label className="admin-field">
-            <span>Descrição</span>
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Descrição</span>
             <textarea
+              className={ui.fieldInput}
               rows={3}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
@@ -99,7 +102,7 @@ export function FormularioCategoria() {
             />
           </label>
 
-          <div className="admin-painel__form-acoes">
+          <div className={ui.painelFormAcoes}>
             <button type="submit" className="btn btn--primary" disabled={enviando}>
               {enviando ? 'Criando…' : 'Criar categoria'}
             </button>

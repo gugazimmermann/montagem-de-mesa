@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         .eq('id', cliente.id)
       if (error) {
         console.error('Falha ao salvar stripe_customer_id', error)
-        return jsonResponse({ error: 'Não foi possível preparar o cliente Stripe' }, 500)
+        return jsonResponse({ error: 'Não foi possível preparar a cobrança' }, 500)
       }
     }
 

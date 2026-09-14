@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AdminAlerta, AdminBreadcrumb, AdminEstadoSkeleton } from './AdminFeedback'
-import './admin-ui.css'
-import './PainelAdmin.css'
+import { AdminBannerTrial } from './AdminBannerTrial'
+import * as ui from './adminClasses'
 
 type PropsAdminPaginaPainel = {
   titulo: ReactNode
@@ -33,19 +33,20 @@ export function AdminPaginaPainel({
     ) : null)
 
   return (
-    <div className="admin-painel">
-      <header className="admin-painel__header">
+    <div className={ui.painel}>
+      <AdminBannerTrial />
+      <header className={ui.painelHeader}>
         <div>
           {breadcrumb && breadcrumb.length > 0 ? (
             <AdminBreadcrumb itens={breadcrumb} />
           ) : (
-            <p className="admin-painel__eyebrow">Painel do cliente</p>
+            <p className={ui.painelEyebrow}>Painel do cliente</p>
           )}
-          <h1>{titulo}</h1>
+          <h1 className={ui.painelTitulo}>{titulo}</h1>
         </div>
-        {acoesFinais ? <div className="admin-painel__acoes">{acoesFinais}</div> : null}
+        {acoesFinais ? <div className={ui.painelAcoes}>{acoesFinais}</div> : null}
       </header>
-      {alerta ? <div className="admin-alerta-stack">{alerta}</div> : null}
+      {alerta ? <div className={ui.alertaStack}>{alerta}</div> : null}
       {children}
     </div>
   )
@@ -53,11 +54,11 @@ export function AdminPaginaPainel({
 
 export function AdminSessaoInvalida() {
   return (
-    <div className="admin-painel">
+    <div className={ui.painel}>
       <AdminAlerta tipo="error" titulo="Sessão inválida">
         Faça login novamente para continuar.
       </AdminAlerta>
-      <div className="admin-sessao-invalida__acao">
+      <div className="mt-4">
         <Link className="btn btn--primary" to="/admin">
           Entrar
         </Link>
@@ -72,7 +73,7 @@ export function AdminPainelCarregando({
   mensagem?: string
 }) {
   return (
-    <div className="admin-painel">
+    <div className={ui.painel}>
       <AdminEstadoSkeleton mensagem={mensagem} />
     </div>
   )

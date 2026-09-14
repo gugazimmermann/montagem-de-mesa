@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import './AdminFeedback.css'
+import * as ui from './adminClasses'
 
 export type TipoAlerta = 'info' | 'success' | 'warning' | 'error'
 
@@ -13,9 +13,11 @@ type PropsAdminAlerta = {
 export function AdminAlerta({ tipo, titulo, children }: PropsAdminAlerta) {
   const role = tipo === 'error' ? 'alert' : 'status'
   return (
-    <div className={`admin-alerta admin-alerta--${tipo}`} role={role}>
-      {titulo && <p className="admin-alerta__titulo">{titulo}</p>}
-      <div className="admin-alerta__corpo">{children}</div>
+    <div className={ui.alertaPorTipo[tipo]} role={role}>
+      {titulo && <p className={ui.alertaTituloPorTipo[tipo]}>{titulo}</p>}
+      <div className={tipo === 'error' ? ui.alertaCorpoErro : ui.alertaCorpo}>
+        {children}
+      </div>
     </div>
   )
 }
@@ -28,8 +30,8 @@ export function AdminEstadoCarregando({
   mensagem = 'Carregando…',
 }: PropsAdminEstado) {
   return (
-    <div className="admin-estado" role="status" aria-live="polite" aria-busy="true">
-      <span className="admin-estado__spinner" aria-hidden="true" />
+    <div className={ui.estado} role="status" aria-live="polite" aria-busy="true">
+      <span className={ui.estadoSpinner} aria-hidden="true" />
       <p>{mensagem}</p>
     </div>
   )
@@ -45,12 +47,12 @@ export function AdminEstadoSkeleton({
   mensagem = 'Carregando…',
 }: PropsAdminSkeleton) {
   return (
-    <div className="admin-estado" role="status" aria-live="polite" aria-busy="true">
-      <p className="visually-hidden">{mensagem}</p>
-      <div className="admin-skeleton" aria-hidden="true">
-        <div className="admin-skeleton__linha admin-skeleton__linha--curta" />
+    <div className={ui.estado} role="status" aria-live="polite" aria-busy="true">
+      <p className="sr-only">{mensagem}</p>
+      <div className={ui.skeleton} aria-hidden="true">
+        <div className={ui.skeletonLinhaCurta} />
         {Array.from({ length: linhas }, (_, i) => (
-          <div key={i} className="admin-skeleton__linha" />
+          <div key={i} className={ui.skeletonLinha} />
         ))}
       </div>
     </div>
@@ -69,9 +71,9 @@ export function AdminEstadoVazio({
   acao,
 }: PropsAdminEstadoVazio) {
   return (
-    <div className="admin-estado admin-estado--vazio">
-      <p className="admin-estado__titulo">{titulo}</p>
-      {descricao && <p className="admin-estado__desc">{descricao}</p>}
+    <div className={ui.estadoVazio}>
+      <p className={ui.estadoTitulo}>{titulo}</p>
+      {descricao && <p className={ui.estadoDesc}>{descricao}</p>}
       {acao}
     </div>
   )
@@ -83,15 +85,20 @@ type PropsAdminBreadcrumb = {
 
 export function AdminBreadcrumb({ itens }: PropsAdminBreadcrumb) {
   return (
-    <nav className="admin-breadcrumb" aria-label="Navegação">
-      <ol>
+    <nav className={ui.breadcrumb} aria-label="Navegação">
+      <ol className={ui.breadcrumbList}>
         {itens.map((item, i) => (
-          <li key={`${item.rotulo}-${i}`}>
+          <li key={`${item.rotulo}-${i}`} className="flex items-center gap-[0.35rem]">
             {item.para ? (
-              <Link to={item.para}>{item.rotulo}</Link>
+              <Link className={ui.breadcrumbLink} to={item.para}>
+                {item.rotulo}
+              </Link>
             ) : (
-              <span aria-current="page">{item.rotulo}</span>
+              <span className={ui.breadcrumbAtual} aria-current="page">
+                {item.rotulo}
+              </span>
             )}
+            {i < itens.length - 1 ? <span className="opacity-60">/</span> : null}
           </li>
         ))}
       </ol>

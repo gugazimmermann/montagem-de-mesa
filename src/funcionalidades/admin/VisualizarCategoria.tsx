@@ -9,6 +9,7 @@ import {
   AdminPainelCarregando,
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
+import * as ui from './adminClasses'
 import { useDadosCliente } from './useDadosCliente'
 
 export function VisualizarCategoria() {
@@ -40,12 +41,12 @@ export function VisualizarCategoria() {
     <AdminPaginaPainel
       titulo={
         <>
-          <span className="admin-painel__eyebrow" style={{ display: 'block' }}>
+          <span className={`${ui.painelEyebrow} block`}>
             Visualizar categoria
           </span>
           {categoria.rotulo}{' '}
-          <span className="admin-categorias__badge">Fixa</span>
-          <span className="admin-categorias__qtd">
+          <span className={ui.categoriasBadge}>Fixa</span>
+          <span className={ui.categoriasQtd}>
             ({itensCategoria.length} {itensCategoria.length === 1 ? 'item' : 'itens'})
           </span>
         </>
@@ -53,17 +54,17 @@ export function VisualizarCategoria() {
       voltarPara="/admin/painel"
       voltarRotulo="Voltar ao painel"
     >
-      <section className="admin-painel__secao">
+      <section className={ui.painelSecao}>
         <h2>Sobre</h2>
-        <p className="admin-categorias__descricao-fixa">
+        <p className="text-muted text-[0.95rem] m-0">
           {categoria.descricao || 'Catálogo compartilhado entre todos os clientes.'}
         </p>
-        <p className="admin-categorias__aviso-fixa">
+        <p className="mt-3 text-[0.85rem] text-muted italic m-0">
           Esta categoria é fixa e não pode ser editada pelo painel.
         </p>
       </section>
 
-      <section className="admin-painel__secao">
+      <section className={ui.painelSecao}>
         <h2>Itens ({itensCategoria.length})</h2>
 
         {itensCategoria.length === 0 ? (
@@ -72,17 +73,17 @@ export function VisualizarCategoria() {
             descricao="Esta categoria fixa ainda não tem itens listados."
           />
         ) : (
-          <ul className="admin-itens">
+          <ul className={ui.list}>
             {itensCategoria.map((item) => (
-              <li key={item.id} className="admin-itens__item">
+              <li key={item.id} className={ui.itensItem}>
                 {item.imagem ? (
                   <AmpliarImagem src={item.imagem} alt={item.nome} />
                 ) : (
-                  <div className="admin-itens__preview" aria-hidden="true">
+                  <div className={ui.itensPreview} aria-hidden="true">
                     <span style={{ background: item.cores.primaria }} />
                   </div>
                 )}
-                <div className="admin-itens__info">
+                <div className={ui.itensInfo}>
                   <strong>{item.nome}</strong>
                   {item.descricao && <p>{item.descricao}</p>}
                 </div>

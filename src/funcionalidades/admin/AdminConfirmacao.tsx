@@ -1,5 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import './AdminFeedback.css'
+import * as ui from './adminClasses'
 
 type PropsConfirmacao = {
   aberto: boolean
@@ -70,13 +70,13 @@ export function AdminConfirmacao({
 
   return (
     <div
-      className="admin-modal-backdrop"
+      className={ui.modalBackdrop}
       role="presentation"
       onClick={processando ? undefined : aoCancelar}
     >
       <div
         ref={dialogRef}
-        className="admin-modal"
+        className={ui.modal}
         role="dialog"
         aria-modal="true"
         aria-labelledby={tituloId}
@@ -86,7 +86,7 @@ export function AdminConfirmacao({
       >
         <h2 id={tituloId}>{titulo}</h2>
         <p id={descricaoId}>{descricao}</p>
-        <div className="admin-modal__acoes">
+        <div className={ui.modalAcoes}>
           <button
             ref={cancelarRef}
             type="button"
@@ -142,7 +142,7 @@ export function AdminMenuMais({
     }
 
     function medir() {
-      const trigger = rootRef.current?.querySelector('.admin-menu-mais__trigger')
+      const trigger = rootRef.current?.querySelector('[data-menu-trigger]')
       const painel = painelRef.current
       if (!(trigger instanceof HTMLElement) || !painel) return
 
@@ -189,20 +189,20 @@ export function AdminMenuMais({
     }
   }, [aberto])
 
-  const classes = [
-    'admin-menu-mais',
-    aberto ? 'is-open' : '',
-    posicao.up ? 'is-up' : '',
-    posicao.start ? 'is-start' : '',
+  const painelClasses = [
+    ui.menuMaisPainel,
+    posicao.up ? ui.menuMaisPainelUp : '',
+    posicao.start ? ui.menuMaisPainelStart : '',
   ]
     .filter(Boolean)
     .join(' ')
 
   return (
-    <div ref={rootRef} className={classes}>
+    <div ref={rootRef} className={ui.menuMais}>
       <button
         type="button"
-        className="btn btn--ghost admin-menu-mais__trigger"
+        data-menu-trigger
+        className="btn btn--ghost"
         aria-expanded={aberto}
         aria-haspopup="menu"
         aria-controls={menuId}
@@ -214,7 +214,7 @@ export function AdminMenuMais({
         <div
           ref={painelRef}
           id={menuId}
-          className="admin-menu-mais__painel"
+          className={painelClasses}
           role="menu"
         >
           {children}

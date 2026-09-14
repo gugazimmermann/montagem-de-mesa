@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { diasRestantesTrial } from '../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import { excluirCategoriaDb } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
+import { AdminBannerTrial } from './AdminBannerTrial'
 import { AdminConfirmacao, AdminMenuMais } from './AdminConfirmacao'
 import {
   AdminPainelCarregando,
@@ -12,8 +12,7 @@ import {
 } from './AdminPaginaPainel'
 import { useDadosCliente } from './useDadosCliente'
 import { useFlashLocation } from './useFlashLocation'
-import './PainelAdmin.css'
-import './AssinaturaAdmin.css'
+import * as ui from './adminClasses'
 
 type Feedback = { tipo: 'success' | 'error'; texto: string }
 
@@ -79,7 +78,7 @@ export function PainelAdmin() {
 
   if (feedback?.tipo === 'error' && !dados) {
     return (
-      <div className="admin-painel">
+      <div className={ui.painel}>
         <AdminAlerta tipo="error" titulo="Erro">
           {feedback.texto}
         </AdminAlerta>
@@ -92,7 +91,7 @@ export function PainelAdmin() {
 
   if (!dados) {
     return (
-      <div className="admin-painel">
+      <div className={ui.painel}>
         <AdminAlerta tipo="error" titulo="Conta não encontrada">
           Faça login novamente ou conclua o cadastro.
         </AdminAlerta>
@@ -104,21 +103,22 @@ export function PainelAdmin() {
   }
 
   const nomeExibido = cliente?.nome ?? dados.nome
-  const diasTrial = cliente ? diasRestantesTrial(cliente) : null
-  const mostrarBannerTrial =
-    diasTrial != null && diasTrial <= 3 && cliente?.subscriptionStatus === 'trialing'
 
   return (
-    <div className="admin-painel">
-      <header className="admin-painel__header">
+    <div className={ui.painel}>
+      <AdminBannerTrial />
+      <header className={ui.painelHeader}>
         <div>
-          <p className="admin-painel__eyebrow">Painel do cliente</p>
-          <h1>{nomeExibido}</h1>
+          <p className={ui.painelEyebrow}>Painel do cliente</p>
+          <h1 className={ui.painelTitulo}>{nomeExibido}</h1>
         </div>
-        <div className="admin-painel__acoes">
-          <div className="admin-acoes-desktop">
+        <div className={ui.painelAcoes}>
+          <div className={ui.acoesDesktop}>
             <Link className="btn btn--ghost" to={linkPublico}>
               Ver montagem
+            </Link>
+            <Link className="btn btn--ghost" to="/admin/painel/montagens">
+              Montagens enviadas
             </Link>
             <Link className="btn btn--ghost" to="/admin/painel/cadastro">
               Atualizar cadastro
@@ -130,7 +130,7 @@ export function PainelAdmin() {
               Sair
             </button>
           </div>
-          <div className="admin-acoes-mobile">
+          <div className={ui.acoesMobile}>
             <AdminMenuMais
               aberto={menuAberto}
               aoAlternar={() => setMenuAberto((v) => !v)}
@@ -143,6 +143,14 @@ export function PainelAdmin() {
                 onClick={() => setMenuAberto(false)}
               >
                 Ver montagem
+              </Link>
+              <Link
+                className="btn btn--ghost"
+                role="menuitem"
+                to="/admin/painel/montagens"
+                onClick={() => setMenuAberto(false)}
+              >
+                Montagens enviadas
               </Link>
               <Link
                 className="btn btn--ghost"
@@ -173,19 +181,6 @@ export function PainelAdmin() {
         </div>
       </header>
 
-      {mostrarBannerTrial ? (
-        <div className="admin-painel__banner-trial" role="status">
-          <p>
-            Seu período de avaliação termina em {diasTrial} dia
-            {diasTrial === 1 ? '' : 's'}. Assine para manter o painel e a página
-            pública no ar.
-          </p>
-          <Link className="btn btn--primary" to="/admin/assinatura">
-            Ver assinatura
-          </Link>
-        </div>
-      ) : null}
-
       {feedback && (
         <AdminAlerta
           tipo={feedback.tipo === 'error' ? 'error' : 'success'}
@@ -195,8 +190,8 @@ export function PainelAdmin() {
         </AdminAlerta>
       )}
 
-      <section className="admin-painel__secao">
-        <div className="admin-itens__cabecalho">
+      <section className={ui.painelSecao}>
+        <div className={ui.itensCabecalho}>
           <h2>Categorias ({dados.categorias.length})</h2>
           <Link className="btn btn--primary" to="/admin/painel/categorias/novo">
             Nova categoria
@@ -214,23 +209,23 @@ export function PainelAdmin() {
             }
           />
         ) : (
-          <ul className="admin-categorias">
+          <ul className={ui.list}>
             {dados.categorias.map((categoria) => {
               const qtdItens = dados.itens.filter((i) => i.categoria === categoria.id).length
               const fixa = ehCategoriaFixa(categoria.id)
               return (
-                <li key={categoria.id} className="admin-categorias__item">
+                <li key={categoria.id} className={ui.listItem}>
                   <div>
-                    <strong>
+                    <strong className="block">
                       {categoria.rotulo}{' '}
-                      {fixa && <span className="admin-categorias__badge">Fixa</span>}
-                      <span className="admin-categorias__qtd">
+                      {fixa && <span className={ui.categoriasBadge}>Fixa</span>}
+                      <span className={ui.categoriasQtd}>
                         ({qtdItens} {qtdItens === 1 ? 'item' : 'itens'})
                       </span>
                     </strong>
                     {categoria.descricao && <p>{categoria.descricao}</p>}
                   </div>
-                  <div className="admin-categorias__acoes">
+                  <div className={ui.listAcoes}>
                     {fixa ? (
                       <Link
                         className="btn btn--ghost"

@@ -1,7 +1,7 @@
 .app {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
+  padding: 1.25rem 0.35rem 1.75rem;
   position: relative;
 }
 
@@ -75,8 +75,8 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1.25rem;
-  margin-bottom: 1.75rem;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
 }
 
 .app__brand {
@@ -88,10 +88,10 @@
 
 .app__logo {
   display: block;
-  height: 3.5rem;
+  height: 3rem;
   width: auto;
   max-width: min(220px, 70vw);
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.2rem;
   object-fit: contain;
 }
 
@@ -135,13 +135,13 @@
 .app__main {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: start;
 }
 
 .app__preview {
   position: sticky;
-  top: 1.5rem;
+  top: 1rem;
   background: transparent;
   border: none;
   border-radius: 0;
@@ -173,7 +173,7 @@
 
 .setting-summary {
   list-style: none;
-  margin: 0.75rem 0 0;
+  margin: 0.5rem 0 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
@@ -184,7 +184,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
-  padding: 0.4rem 0.7rem;
+  padding: 0.4rem 0.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -218,7 +218,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .app__picker-toolbar .btn:disabled {
@@ -244,7 +244,7 @@
 
 @media (max-width: 900px) {
   .app {
-    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
     overflow-x: clip;
   }
 
@@ -252,7 +252,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
+    gap: 0.75rem;
     width: 100%;
   }
 
@@ -266,7 +266,7 @@
     width: 100%;
     box-sizing: border-box;
     margin: 0;
-    padding: 0.5rem 0 0.65rem;
+    padding: 0.35rem 0 0.45rem;
     display: flex;
     flex-direction: column;
     background: color-mix(in srgb, var(--bg) 94%, transparent);
@@ -297,7 +297,7 @@
     max-height: min(28vh, 220px);
     height: min(28dvh, 220px);
     max-height: min(28dvh, 220px);
-    padding: 0.35rem 0.5rem;
+    padding: 0.35rem 0.25rem;
     overflow: hidden;
   }
 
@@ -387,7 +387,7 @@
     inset: 0;
     z-index: 50;
     background: var(--bg);
-    padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) 0.35rem
       calc(1rem + env(safe-area-inset-bottom, 0px));
     overflow: auto;
   }
@@ -408,12 +408,12 @@
 
 @media (max-width: 480px) {
   .app {
-    padding: 1rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.75rem 0.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
   }
 
   .app__header {
     gap: 0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.65rem;
   }
 
   .app__brand {
@@ -438,8 +438,6 @@
     justify-content: flex-start;
     overflow-x: auto;
     scrollbar-width: thin;
-    margin-inline: -0.25rem;
-    padding-inline: 0.25rem;
     -webkit-overflow-scrolling: touch;
   }
 

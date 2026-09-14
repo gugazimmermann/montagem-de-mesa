@@ -19,6 +19,7 @@
     "uuid": "^14.0.2"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -27,6 +28,7 @@
     "oxlint": "^1.71.0",
     "pg": "^8.22.0",
     "slugify": "^1.6.9",
+    "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   }

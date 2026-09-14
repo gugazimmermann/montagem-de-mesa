@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { solicitarRedefinicaoSenha } from '../../dados/repositorioClientes'
 import { AdminAuthCard } from './AdminAuthCard'
 import { AdminAlerta } from './AdminFeedback'
+import * as ui from './adminClasses'
 import { mapearErroCadastro } from './adminUtils'
 
 export function RecuperarSenhaAdmin() {
@@ -33,14 +34,14 @@ export function RecuperarSenhaAdmin() {
       <AdminAuthCard
         titulo="Recuperar senha"
         rodape={
-          <p className="admin-login__rodape">
+          <p className={ui.loginRodape}>
             <Link to="/admin">Voltar ao login</Link>
           </p>
         }
       >
-        <div className="admin-login__aviso-email" role="status">
-          <p className="admin-login__aviso-email-titulo">Verifique seu e-mail</p>
-          <p className="admin-login__aviso-email-texto">
+        <div className={ui.loginAvisoEmail} role="status">
+          <p className={ui.loginAvisoEmailTitulo}>Verifique seu e-mail</p>
+          <p className={ui.loginAvisoEmailTexto}>
             Se existir uma conta com este e-mail, você receberá um link para redefinir a
             senha.
           </p>
@@ -54,17 +55,18 @@ export function RecuperarSenhaAdmin() {
       titulo="Recuperar senha"
       subtitulo="Informe o e-mail da conta para receber o link de redefinição."
       rodape={
-        <p className="admin-login__rodape">
+        <p className={ui.loginRodape}>
           <Link to="/admin">Voltar ao login</Link>
         </p>
       }
     >
-      <form className="admin-login__form" onSubmit={aoEnviar}>
-        <label className="admin-field">
-          <span>E-mail</span>
+      <form className={ui.loginForm} onSubmit={aoEnviar}>
+        <label className={ui.field}>
+          <span className={ui.fieldLabel}>E-mail</span>
           <input
             type="email"
             name="email"
+            className={ui.fieldInput}
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -81,7 +83,7 @@ export function RecuperarSenhaAdmin() {
 
         <button
           type="submit"
-          className="btn btn--primary admin-login__submit"
+          className={`btn btn--primary ${ui.loginSubmit}`}
           disabled={enviando}
         >
           {enviando ? 'Enviando…' : 'Enviar link'}

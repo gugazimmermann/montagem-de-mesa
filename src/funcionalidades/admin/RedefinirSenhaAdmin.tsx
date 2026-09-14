@@ -9,6 +9,7 @@ import {
   SENHA_MIN,
   validarSenhasIguais,
 } from './adminUtils'
+import * as ui from './adminClasses'
 import { CampoSenha } from './CampoSenha'
 
 export function RedefinirSenhaAdmin() {
@@ -71,7 +72,7 @@ export function RedefinirSenhaAdmin() {
         titulo="Link inválido"
         subtitulo="Este link de redefinição é inválido ou expirou."
         rodape={
-          <p className="admin-login__rodape">
+          <p className={ui.loginRodape}>
             <Link to="/admin/recuperar-senha">Solicitar novo link</Link>
           </p>
         }
@@ -93,7 +94,7 @@ export function RedefinirSenhaAdmin() {
       asForm
       onSubmit={(e) => void aoEnviar(e)}
       rodape={
-        <p className="admin-login__rodape">
+        <p className={ui.loginRodape}>
           <Link to="/admin">Voltar ao login</Link>
         </p>
       }
@@ -128,7 +129,7 @@ export function RedefinirSenhaAdmin() {
 
       <button
         type="submit"
-        className="btn btn--primary admin-login__submit"
+        className={`btn btn--primary ${ui.loginSubmit}`}
         disabled={enviando}
       >
         {enviando ? 'Salvando…' : 'Salvar senha'}

@@ -31,7 +31,7 @@ export {
 } from './repositorioCatalogo'
 
 const CAMPOS_CLIENTE =
-  'id, slug, email, nome, logo, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id'
+  'id, slug, email, nome, logo, whatsapp, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id'
 
 type ClienteRow = {
   id: string
@@ -39,6 +39,7 @@ type ClienteRow = {
   email: string
   nome: string
   logo: string
+  whatsapp?: string | null
   subscription_status?: string | null
   trial_ends_at?: string | null
   current_period_end?: string | null
@@ -81,6 +82,39 @@ function mapStatus(status: string | null | undefined): StatusAssinatura {
   }
 }
 
+const DDI_BRASIL = '55'
+
+/** DDD + número (até 11 dígitos), sem o 55. */
+export function digitosWhatsappNacional(valor: string): string {
+  let digitos = valor.replace(/\D/g, '')
+  if (digitos.startsWith(DDI_BRASIL) && digitos.length > 11) {
+    digitos = digitos.slice(DDI_BRASIL.length)
+  }
+  return digitos.slice(0, 11)
+}
+
+/** Máscara amigável: (11) 99999-9999 */
+export function formatarWhatsapp(valor: string): string {
+  const digitos = digitosWhatsappNacional(valor)
+  if (!digitos) return ''
+  if (digitos.length <= 2) return `(${digitos}`
+  if (digitos.length <= 6) return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`
+  if (digitos.length <= 10) {
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`
+  }
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7, 11)}`
+}
+
+/**
+ * Normaliza para armazenamento (E.164 BR sem +): 55 + DDD + número.
+ * Vazio se não houver dígitos.
+ */
+export function normalizarWhatsapp(valor: string): string {
+  const nacional = digitosWhatsappNacional(valor)
+  if (!nacional) return ''
+  return `${DDI_BRASIL}${nacional}`
+}
+
 function mapCliente(row: ClienteRow): Cliente {
   return {
     id: row.id,
@@ -88,6 +122,7 @@ function mapCliente(row: ClienteRow): Cliente {
     email: row.email,
     nome: row.nome,
     logo: row.logo,
+    whatsapp: row.whatsapp ?? '',
     subscriptionStatus: mapStatus(row.subscription_status),
     trialEndsAt: row.trial_ends_at ?? null,
     currentPeriodEnd: row.current_period_end ?? null,
@@ -149,7 +184,7 @@ export async function obterClientePorId(id: string): Promise<Cliente | null> {
 
   const { data, error } = await supabase
     .from('clientes_publicos')
-    .select('id, slug, nome, logo')
+    .select('id, slug, nome, logo, whatsapp')
     .eq('id', id)
     .maybeSingle()
 
@@ -165,7 +200,7 @@ export async function obterClientePorId(id: string): Promise<Cliente | null> {
 export async function obterClientePorSlug(slug: string): Promise<Cliente | null> {
   const { data, error } = await supabase
     .from('clientes_publicos')
-    .select('id, slug, nome, logo')
+    .select('id, slug, nome, logo, whatsapp')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -176,6 +211,34 @@ export async function obterClientePorSlug(slug: string): Promise<Cliente | null>
     email: '',
     subscription_status: 'active',
   })
+}
+
+export type StatusClientePublico = {
+  existe: boolean
+  temAcesso: boolean
+  nome: string | null
+}
+
+/** Slug existe? Tem acesso? (security definer; sem e-mail). */
+export async function statusClientePublico(
+  slug: string,
+): Promise<StatusClientePublico> {
+  const { data, error } = await supabase.rpc('status_cliente_publico', {
+    p_slug: slug,
+  })
+
+  if (error) throw error
+
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row) {
+    return { existe: false, temAcesso: false, nome: null }
+  }
+
+  return {
+    existe: Boolean(row.existe),
+    temAcesso: Boolean(row.tem_acesso),
+    nome: typeof row.nome === 'string' ? row.nome : null,
+  }
 }
 
 export async function obterClientePorAuthUserId(
@@ -623,14 +686,20 @@ export async function enderecoMontagemEmUso(
 
 export async function atualizarCadastro(
   clienteId: string,
-  dados: { nome: string; slug: string; logo: string },
+  dados: { nome: string; slug: string; logo: string; whatsapp?: string },
 ): Promise<Cliente> {
   const nome = dados.nome.trim()
   const slug = gerarSlug(dados.slug.trim())
   const logo = dados.logo.trim()
+  const whatsapp = normalizarWhatsapp(dados.whatsapp ?? '')
 
   if (!nome) throw new CadastroErro('Informe o nome do cliente.')
   if (!dados.slug.trim()) throw new CadastroErro('Informe o endereço da montagem.')
+  if (dados.whatsapp?.trim() && whatsapp.length < 12) {
+    throw new CadastroErro(
+      'Informe um WhatsApp válido com DDD, por exemplo (11) 99999-9999.',
+    )
+  }
   validarSlugMontagem(slug)
 
   if (await enderecoMontagemEmUso(slug, clienteId)) {
@@ -643,6 +712,7 @@ export async function atualizarCadastro(
       nome,
       slug,
       logo,
+      whatsapp,
       updated_at: new Date().toISOString(),
     })
     .eq('id', clienteId)

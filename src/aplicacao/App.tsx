@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PreVisualizacaoMesa, SeletorItens } from '../funcionalidades/mesa'
+import { FormularioEnviarMontagem } from '../funcionalidades/mesa/componentes/FormularioEnviarMontagem'
 import { criarConfiguracaoVazia, obterItemPorId } from '../funcionalidades/catalogo'
 import { exportarMontagemPng } from '../funcionalidades/mesa/exportarMontagem'
 import {
@@ -11,11 +12,14 @@ import {
 } from '../funcionalidades/mesa/montagemUrl'
 import { useAuth } from '../funcionalidades/autenticacao'
 import { ImagemAmpliada } from '../compartilhado/ImagemAmpliada'
+import { ID_CATEGORIA_TOALHA } from '../dados/categoriasFixas'
 import type { ConfiguracaoMesa, DadosCliente, IdCategoria, ItemMesa } from '../compartilhado/tipos'
 import './App.css'
 
 interface PropsApp {
   dados: DadosCliente
+  slug: string
+  whatsappAdmin: string
 }
 
 function montagemDeDados(
@@ -26,13 +30,13 @@ function montagemDeDados(
   return lerMontagemDaUrl(search, categorias, itens) ?? criarConfiguracaoVazia(categorias)
 }
 
-export default function App({ dados }: PropsApp) {
+export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
   const { nome, logo, categorias, itens } = dados
   const { cliente, carregando } = useAuth()
-  const mostrarAdmin = !carregando && !!cliente
   const localizacao = useLocation()
   const navegar = useNavigate()
-  const { slug } = useParams<{ slug: string }>()
+  const { slug: slugRota } = useParams<{ slug: string }>()
+  const mostrarAdmin = !carregando && !!cliente && cliente.slug === (slugRota ?? slug)
 
   const [configuracao, setConfiguracao] = useState<ConfiguracaoMesa>(() =>
     montagemDeDados(localizacao.search, categorias, itens),
@@ -48,6 +52,8 @@ export default function App({ dados }: PropsApp) {
   const [copiandoLink, setCopiandoLink] = useState(false)
   const [exportando, setExportando] = useState(false)
   const [feedbackAcao, setFeedbackAcao] = useState<string | null>(null)
+  const [modoKiosk, setModoKiosk] = useState(false)
+  const [enviarAberto, setEnviarAberto] = useState(false)
 
   const pulsoTimeoutRef = useRef<number | null>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -55,6 +61,14 @@ export default function App({ dados }: PropsApp) {
   const expandirBtnRef = useRef<HTMLButtonElement>(null)
 
   const categoriasKey = categorias.map((c) => c.id).join(',')
+
+  useEffect(() => {
+    function aoFullscreenChange() {
+      setModoKiosk(Boolean(document.fullscreenElement))
+    }
+    document.addEventListener('fullscreenchange', aoFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', aoFullscreenChange)
+  }, [])
 
   // Catálogo trocou (outro cliente / remount): realinha categoria e desfaz.
   useEffect(() => {
@@ -252,10 +266,22 @@ export default function App({ dados }: PropsApp) {
     .filter(Boolean) as { categoria: string; item: string }[]
 
   const haSelecao = resumoSelecionado.length > 0
+  const haSelecaoAlemToalha = categorias.some(
+    (cat) => cat.id !== ID_CATEGORIA_TOALHA && Boolean(configuracao[cat.id]),
+  )
   const ultimoItem = resumoSelecionado[resumoSelecionado.length - 1]
 
+  async function entrarKiosk() {
+    try {
+      await document.documentElement.requestFullscreen()
+      setModoKiosk(true)
+    } catch {
+      // Sem suporte ou bloqueado pelo navegador.
+    }
+  }
+
   return (
-    <div className="app">
+    <div className={modoKiosk ? 'app app--kiosk' : 'app'}>
       <a className="app__skip" href="#conteudo-principal">
         Ir para o conteúdo
       </a>
@@ -267,11 +293,22 @@ export default function App({ dados }: PropsApp) {
           <h1>{nome}</h1>
           <p className="app__subtitle">Escolha as peças — a mesa atualiza na hora.</p>
         </div>
-        {mostrarAdmin && (
-          <Link className="btn btn--ghost" to="/admin/painel">
-            Painel admin
-          </Link>
-        )}
+        <div className="app__header-actions">
+          {mostrarAdmin && !modoKiosk && (
+            <button
+              type="button"
+              className="btn btn--ghost app__kiosk-btn"
+              onClick={() => void entrarKiosk()}
+            >
+              Kiosk
+            </button>
+          )}
+          {mostrarAdmin && (
+            <Link className="btn btn--ghost app__admin-link" to="/admin/painel">
+              Painel admin
+            </Link>
+          )}
+        </div>
       </header>
 
       <p className="app__live" aria-live="polite" aria-atomic="true">
@@ -382,6 +419,15 @@ export default function App({ dados }: PropsApp) {
           aria-label="Seleção de itens"
         >
           <div className="app__picker-toolbar">
+            {haSelecaoAlemToalha && (
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => setEnviarAberto(true)}
+              >
+                Enviar montagem
+              </button>
+            )}
             {configAnterior && (
               <button type="button" className="btn btn--ghost" onClick={desfazerLimpar}>
                 Desfazer limpar
@@ -426,6 +472,23 @@ export default function App({ dados }: PropsApp) {
           )}
         </section>
       </main>
+
+      <FormularioEnviarMontagem
+        aberto={enviarAberto && haSelecaoAlemToalha}
+        slug={slug}
+        whatsappAdmin={whatsappAdmin}
+        nomeEstabelecimento={nome}
+        itens={resumoSelecionado.map(({ categoria, item }) => ({
+          categoria,
+          nome: item,
+        }))}
+        linkMontagem={`${window.location.origin}${urlComMontagem(localizacao.pathname, configuracao)}`}
+        aoFechar={() => setEnviarAberto(false)}
+        aoSucesso={(mensagem) => {
+          setFeedbackAcao(mensagem)
+          setAnuncio(mensagem)
+        }}
+      />
     </div>
   )
 }

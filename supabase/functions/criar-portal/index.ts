@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
 
     if (!cliente.stripe_customer_id) {
       return jsonResponse(
-        { error: 'Nenhuma assinatura Stripe vinculada. Assine primeiro.' },
+        { error: 'Nenhuma assinatura vinculada. Assine primeiro.' },
         400,
       )
     }

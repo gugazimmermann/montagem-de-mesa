@@ -6,6 +6,7 @@ import {
   CategoriaPainel,
   FormularioCategoria,
   FormularioItem,
+  HistoricoMontagensAdmin,
   LoginAdmin,
   PainelAdmin,
   RecuperarSenhaAdmin,
@@ -49,6 +50,14 @@ export function Rotas() {
         element={
           <RotaProtegida>
             <AtualizarCadastroAdmin />
+          </RotaProtegida>
+        }
+      />
+      <Route
+        path="/admin/painel/montagens"
+        element={
+          <RotaProtegida>
+            <HistoricoMontagensAdmin />
           </RotaProtegida>
         }
       />

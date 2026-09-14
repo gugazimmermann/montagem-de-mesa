@@ -28,8 +28,7 @@ import {
   AdminPainelCarregando,
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
-
-import './AssinaturaAdmin.css'
+import * as ui from './adminClasses'
 
 function formatarData(iso: string | null): string {
   if (!iso) return '—'
@@ -293,15 +292,6 @@ export function AssinaturaAdmin() {
   )
   const statusEfetivoLocal = mapStatusLocal(statusEfetivo)
   const pagaAtiva = assinaturaPagaAtiva(statusEfetivo)
-  const temAcesso =
-    clienteTemAcesso({
-      subscriptionStatus: statusEfetivoLocal,
-      trialEndsAt: cliente.trialEndsAt,
-    }) || pagaAtiva
-  const diasTrial = diasRestantesTrial({
-    subscriptionStatus: statusEfetivoLocal,
-    trialEndsAt: cliente.trialEndsAt,
-  })
   const temStripe = Boolean(cliente.stripeCustomerId)
   const temSubscription = Boolean(
     cliente.stripeSubscriptionId || resumoStripe,
@@ -309,8 +299,17 @@ export function AssinaturaAdmin() {
   const cancelamentoAgendado = Boolean(resumoStripe?.cancelAtPeriodEnd)
   const periodoFim =
     resumoStripe?.currentPeriodEnd ?? cliente.currentPeriodEnd
+  const temAcesso = clienteTemAcesso({
+    subscriptionStatus: statusEfetivoLocal,
+    trialEndsAt: cliente.trialEndsAt,
+    currentPeriodEnd: periodoFim ?? cliente.currentPeriodEnd,
+  })
+  const diasTrial = diasRestantesTrial({
+    subscriptionStatus: statusEfetivoLocal,
+    trialEndsAt: cliente.trialEndsAt,
+  })
   const mostrarTrial = statusEfetivo === 'trialing' && !pagaAtiva
-  const mostrarAssinar = !pagaAtiva && (mostrarTrial || !temAcesso)
+  const mostrarAssinar = !temAcesso || mostrarTrial
   const podeCancelar =
     temSubscription &&
     pagaAtiva &&
@@ -337,8 +336,10 @@ export function AssinaturaAdmin() {
       ) : null}
       {!temAcesso ? (
         <AdminAlerta tipo="error" titulo="Acesso bloqueado">
-          Seu período de avaliação acabou ou a assinatura não está ativa. Assine para
-          liberar o painel e a página pública <code>/{cliente.slug}</code>.
+          {statusEfetivoLocal === 'trialing'
+            ? 'Seu período de avaliação acabou. Assine para liberar o painel, o histórico de montagens e a página pública.'
+            : 'O período da assinatura encerrou ou ela não está ativa. Assine novamente para liberar o painel, o histórico de montagens e a página pública.'}{' '}
+          Endereço público: <code>/{cliente.slug}</code>.
         </AdminAlerta>
       ) : null}
       {cancelamentoAgendado && periodoFim ? (
@@ -371,21 +372,21 @@ export function AssinaturaAdmin() {
         }
         alerta={alerta}
       >
-        <section className="admin-painel__secao admin-assinatura__secao">
+        <section className={ui.assinaturaSecao}>
           <h2>Status atual</h2>
-          <p className="admin-assinatura__intro">
+          <p className={ui.assinaturaIntro}>
             Gerencie o período de avaliação e a cobrança recorrente da sua montagem.
           </p>
 
-          <dl className="admin-assinatura__lista">
-            <div>
-              <dt>Status</dt>
-              <dd>{rotuloStatus(statusEfetivo)}</dd>
+          <dl className={ui.assinaturaLista}>
+            <div className={ui.assinaturaListaItem}>
+              <dt className={ui.assinaturaDt}>Status</dt>
+              <dd className={ui.assinaturaDd}>{rotuloStatus(statusEfetivo)}</dd>
             </div>
             {mostrarTrial ? (
-              <div>
-                <dt>Trial até</dt>
-                <dd>
+              <div className={ui.assinaturaListaItem}>
+                <dt className={ui.assinaturaDt}>Trial até</dt>
+                <dd className={ui.assinaturaDd}>
                   {formatarData(cliente.trialEndsAt)}
                   {diasTrial != null
                     ? ` (${diasTrial} dia${diasTrial === 1 ? '' : 's'})`
@@ -394,23 +395,23 @@ export function AssinaturaAdmin() {
               </div>
             ) : null}
             {periodoFim ? (
-              <div>
-                <dt>
+              <div className={ui.assinaturaListaItem}>
+                <dt className={ui.assinaturaDt}>
                   {cancelamentoAgendado ? 'Acesso até' : 'Próxima renovação'}
                 </dt>
-                <dd>{formatarData(periodoFim)}</dd>
+                <dd className={ui.assinaturaDd}>{formatarData(periodoFim)}</dd>
               </div>
             ) : null}
           </dl>
 
           {!temStripe ? (
-            <p className="admin-assinatura__aviso-stripe">
-              Ainda não há cobrança Stripe vinculada a esta conta. Ao assinar, o
+            <p className={ui.assinaturaAviso}>
+              Ainda não há cobrança vinculada a esta conta. Ao assinar, o
               histórico de pagamentos e o cancelamento passam a aparecer aqui.
             </p>
           ) : null}
 
-          <div className="admin-assinatura__acoes">
+          <div className={ui.assinaturaAcoes}>
             {mostrarAssinar ? (
               <button
                 type="button"
@@ -444,15 +445,15 @@ export function AssinaturaAdmin() {
           </div>
         </section>
 
-        <section className="admin-painel__secao admin-assinatura__secao">
+        <section className={ui.assinaturaSecao}>
           <h2>Pagamentos anteriores</h2>
           {!temStripe ? (
             <AdminEstadoVazio
               titulo="Nenhum pagamento registrado"
-              descricao="Quando houver faturas pagas no Stripe, elas aparecerão nesta lista."
+              descricao="Quando houver faturas pagas, elas aparecerão nesta lista."
             />
           ) : carregandoHistorico ? (
-            <p className="admin-assinatura__carregando" role="status">
+            <p className={ui.assinaturaCarregando} role="status">
               Carregando histórico…
             </p>
           ) : erroHistorico ? (
@@ -465,21 +466,21 @@ export function AssinaturaAdmin() {
               descricao="Ainda não há faturas pagas vinculadas a esta conta."
             />
           ) : (
-            <ul className="admin-assinatura__faturas">
+            <ul className={ui.assinaturaFaturas}>
               {faturas.map((fatura) => (
-                <li key={fatura.id} className="admin-assinatura__fatura">
+                <li key={fatura.id} className={ui.assinaturaFatura}>
                   <div>
-                    <p className="admin-assinatura__fatura-valor">
+                    <p className={ui.assinaturaFaturaValor}>
                       {formatarValorFatura(fatura.valor, fatura.moeda)}
                     </p>
-                    <p className="admin-assinatura__fatura-meta">
+                    <p className={ui.assinaturaFaturaMeta}>
                       {formatarData(fatura.pagoEm)}
                       {fatura.descricao
                         ? ` · ${formatarDescricaoFaturaPtBr(fatura.descricao)}`
                         : ''}
                     </p>
                   </div>
-                  <div className="admin-assinatura__fatura-links">
+                  <div className={ui.assinaturaFaturaLinks}>
                     {fatura.faturaUrl ? (
                       <a
                         className="btn btn--ghost"

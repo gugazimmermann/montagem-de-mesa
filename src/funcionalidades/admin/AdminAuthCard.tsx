@@ -1,7 +1,6 @@
 import type { FormEvent, ReactNode } from 'react'
 import { AdminEstadoCarregando } from './AdminFeedback'
-import './LoginAdmin.css'
-import './admin-ui.css'
+import * as ui from './adminClasses'
 
 type PropsAdminAuthCard = {
   titulo: string
@@ -21,16 +20,16 @@ export function AdminAuthCard({
   children,
 }: PropsAdminAuthCard) {
   const Header = (
-    <header className="admin-login__header">
-      <h1>{titulo}</h1>
-      {subtitulo ? <p>{subtitulo}</p> : null}
+    <header>
+      <h1 className={ui.loginHeaderTitulo}>{titulo}</h1>
+      {subtitulo ? <p className={ui.loginHeaderSub}>{subtitulo}</p> : null}
     </header>
   )
 
   if (asForm) {
     return (
-      <div className="admin-login">
-        <form className="admin-login__card" onSubmit={onSubmit}>
+      <div className={ui.loginShell}>
+        <form className={ui.loginCard} onSubmit={onSubmit}>
           {Header}
           {children}
           {rodape}
@@ -40,8 +39,8 @@ export function AdminAuthCard({
   }
 
   return (
-    <div className="admin-login">
-      <div className="admin-login__card">
+    <div className={ui.loginShell}>
+      <div className={ui.loginCard}>
         {Header}
         {children}
         {rodape}
@@ -56,8 +55,8 @@ export function AdminAuthCarregando({
   mensagem?: string
 }) {
   return (
-    <div className="admin-login">
-      <div className="admin-login__card">
+    <div className={ui.loginShell}>
+      <div className={ui.loginCard}>
         <AdminEstadoCarregando mensagem={mensagem} />
       </div>
     </div>

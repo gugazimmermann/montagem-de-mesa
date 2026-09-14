@@ -6,6 +6,7 @@ import { useAuth } from '../autenticacao'
 import { AdminAuthCard, AdminAuthCarregando } from './AdminAuthCard'
 import { AdminAlerta } from './AdminFeedback'
 import { destinoPosLogin } from './adminUtils'
+import * as ui from './adminClasses'
 import { CampoSenha } from './CampoSenha'
 
 export function LoginAdmin() {
@@ -70,20 +71,21 @@ export function LoginAdmin() {
       onSubmit={aoEnviar}
       rodape={
         <>
-          <p className="admin-login__rodape">
+          <p className={ui.loginRodape}>
             <Link to="/admin/recuperar-senha">Esqueci a senha</Link>
           </p>
-          <p className="admin-login__rodape">
+          <p className={ui.loginRodape}>
             Não tem conta? <Link to="/cadastro">Cadastrar</Link>
           </p>
         </>
       }
     >
-      <label className="admin-field">
-        <span>E-mail</span>
+      <label className={ui.field}>
+        <span className={ui.fieldLabel}>E-mail</span>
         <input
           type="email"
           name="email"
+          className={ui.fieldInput}
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -110,7 +112,7 @@ export function LoginAdmin() {
 
       <button
         type="submit"
-        className="btn btn--primary admin-login__submit"
+        className={`btn btn--primary ${ui.loginSubmit}`}
         disabled={enviando}
       >
         {enviando ? 'Entrando…' : 'Entrar'}

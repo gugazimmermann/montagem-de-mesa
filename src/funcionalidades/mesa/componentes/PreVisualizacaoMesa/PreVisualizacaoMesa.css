@@ -4,7 +4,7 @@
   justify-content: center;
   width: 100%;
   min-height: 420px;
-  padding: 2rem;
+  padding: 1rem 0.35rem;
 }
 
 .table-surface {
@@ -276,7 +276,7 @@ button.layer--clicavel:focus-visible {
 @media (max-width: 640px) {
   .table-preview {
     min-height: 320px;
-    padding: 1rem;
+    padding: 0.65rem 0.25rem;
   }
 
   .place-setting {

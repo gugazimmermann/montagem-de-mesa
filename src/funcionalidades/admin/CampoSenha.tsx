@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent } from 'react'
+import * as ui from './adminClasses'
 
 type CampoSenhaProps = {
   label: string
@@ -76,12 +77,13 @@ export function CampoSenha({
   const dicaId = `${name}-dica`
 
   return (
-    <label className="admin-field">
-      <span>{label}</span>
-      <div className="admin-field__senha">
+    <label className={ui.field}>
+      <span className={ui.fieldLabel}>{label}</span>
+      <div className={ui.fieldSenha}>
         <input
           type={visivel ? 'text' : 'password'}
           name={name}
+          className={ui.fieldSenhaInput}
           autoComplete={autoComplete}
           value={value}
           onChange={onChange}
@@ -97,7 +99,7 @@ export function CampoSenha({
         />
         <button
           type="button"
-          className="admin-field__senha-toggle"
+          className={ui.fieldSenhaToggle}
           onClick={() => setVisivel((v) => !v)}
           aria-label={visivel ? 'Ocultar senha' : 'Mostrar senha'}
           aria-pressed={visivel}
@@ -107,12 +109,12 @@ export function CampoSenha({
         </button>
       </div>
       {dica && !mensagemErro && (
-        <span id={dicaId} className="admin-field__dica">
+        <span id={dicaId} className={ui.fieldDica}>
           {dica}
         </span>
       )}
       {mensagemErro && (
-        <span id={erroId} className="admin-field__erro" role="alert">
+        <span id={erroId} className={ui.fieldErro} role="alert">
           {mensagemErro}
         </span>
       )}

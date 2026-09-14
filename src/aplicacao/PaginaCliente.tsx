@@ -4,6 +4,7 @@ import type { DadosCliente } from '../compartilhado/tipos'
 import {
   carregarDadosCliente,
   obterClientePorSlug,
+  statusClientePublico,
 } from '../dados/repositorioClientes'
 import App from './App'
 import './App.css'
@@ -12,9 +13,11 @@ export function PaginaCliente() {
   const { slug } = useParams<{ slug: string }>()
   const [dados, setDados] = useState<DadosCliente | null>(null)
   const [clienteId, setClienteId] = useState<string | null>(null)
-  const [estado, setEstado] = useState<'carregando' | 'ok' | 'nao-encontrado' | 'erro'>(
-    'carregando',
-  )
+  const [whatsappAdmin, setWhatsappAdmin] = useState('')
+  const [nomeSuspenso, setNomeSuspenso] = useState<string | null>(null)
+  const [estado, setEstado] = useState<
+    'carregando' | 'ok' | 'nao-encontrado' | 'suspenso' | 'erro'
+  >('carregando')
   const [tentativa, setTentativa] = useState(0)
 
   const tentarNovamente = useCallback(() => {
@@ -32,11 +35,34 @@ export function PaginaCliente() {
 
       setEstado('carregando')
       try {
+        const status = await statusClientePublico(slug)
+        if (!ativo) return
+
+        if (!status.existe) {
+          setDados(null)
+          setClienteId(null)
+          setWhatsappAdmin('')
+          setNomeSuspenso(null)
+          setEstado('nao-encontrado')
+          return
+        }
+
+        if (!status.temAcesso) {
+          setDados(null)
+          setClienteId(null)
+          setWhatsappAdmin('')
+          setNomeSuspenso(status.nome)
+          setEstado('suspenso')
+          return
+        }
+
         const cliente = await obterClientePorSlug(slug)
         if (!cliente) {
           if (ativo) {
             setDados(null)
             setClienteId(null)
+            setWhatsappAdmin('')
+            setNomeSuspenso(null)
             setEstado('nao-encontrado')
           }
           return
@@ -51,6 +77,8 @@ export function PaginaCliente() {
         }
 
         setClienteId(cliente.id)
+        setWhatsappAdmin(cliente.whatsapp ?? '')
+        setNomeSuspenso(null)
         setDados(dadosCliente)
         setEstado('ok')
       } catch {
@@ -90,13 +118,15 @@ export function PaginaCliente() {
     )
   }
 
-  if (estado === 'nao-encontrado' || !dados || !clienteId) {
+  if (estado === 'suspenso') {
     return (
       <div className="app app--mensagem">
-        <h1>Montagem indisponível</h1>
+        <h1>Conta temporariamente suspensa</h1>
         <p className="app__subtitle">
-          Não há uma montagem pública ativa em <code>/{slug}</code>. O endereço
-          pode não existir ou a assinatura do estabelecimento não está ativa.
+          {nomeSuspenso
+            ? `A montagem de ${nomeSuspenso} está indisponível no momento.`
+            : `A montagem em /${slug} está indisponível no momento.`}{' '}
+          Ela volta a ficar pública quando a assinatura for reativada.
         </p>
         <button type="button" className="btn btn--primary" onClick={tentarNovamente}>
           Tentar novamente
@@ -108,5 +138,30 @@ export function PaginaCliente() {
     )
   }
 
-  return <App key={clienteId} dados={dados} />
+  if (estado === 'nao-encontrado' || !dados || !clienteId) {
+    return (
+      <div className="app app--mensagem">
+        <h1>Montagem indisponível</h1>
+        <p className="app__subtitle">
+          Não há uma montagem pública em <code>/{slug}</code>. Verifique se o
+          endereço está correto.
+        </p>
+        <button type="button" className="btn btn--primary" onClick={tentarNovamente}>
+          Tentar novamente
+        </button>
+        <Link className="btn btn--ghost" to="/admin">
+          Entrar no admin
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <App
+      key={clienteId}
+      dados={dados}
+      slug={slug!}
+      whatsappAdmin={whatsappAdmin}
+    />
+  )
 }

@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 /**
- * Seed one-shot: Auth + cliente Raffiner + catálogo + upload de imagens/.
+ * Seed: Auth + cliente Raffiner (trial) + catálogo + upload para Storage.
  *
  * Necessário: VITE_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
  * Opcional: SEED_EMAIL / SEED_PASSWORD / DATABASE_URL
  *
- * Defaults: gugazimmermann@gmail.com / 1234567890 / Raffiner / raffiner
- * Fonte de imagens: imagens/logos e imagens/itens/raffiner (não apaga locais).
+ * Defaults: financeiroraffiner@gmail.com / Raffiner / raffiner / trialing 14d
+ * Fonte: imagens/logos e imagens/itens/raffiner (não apaga locais após upload).
  */
 import { randomUUID } from 'node:crypto'
 import {
   existsSync,
   readFileSync,
   readdirSync,
-  writeFileSync,
   statSync,
 } from 'node:fs'
 import { basename, extname, join, relative } from 'node:path'
@@ -36,8 +35,8 @@ import {
 const root = carregarEnvRaiz(import.meta.url)
 const { url } = exigirUrlEServiceKey()
 const databaseUrl = process.env.DATABASE_URL
-const email = (process.env.SEED_EMAIL || 'gugazimmermann@gmail.com').trim()
-const password = process.env.SEED_PASSWORD || '1234567890'
+const email = (process.env.SEED_EMAIL || 'financeiroraffiner@gmail.com').trim()
+const password = process.env.SEED_PASSWORD || ''
 const SLUG = 'raffiner'
 const NOME = 'Raffiner'
 
@@ -51,8 +50,8 @@ const PASTA_PARA_CODIGO = {
   Tacas: 'taca',
 }
 
-if (!password || password.length < 8) {
-  console.error('SEED_PASSWORD deve ter pelo menos 8 caracteres.')
+if (!password || password.length < 10) {
+  console.error('Defina SEED_PASSWORD no .env (mín. 10 caracteres, igual ao app).')
   process.exit(1)
 }
 
@@ -139,13 +138,15 @@ async function upsertCliente(authUserId) {
     email,
     nome: NOME,
     logo: logoUrl,
-    subscription_status: 'active',
-    trial_ends_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    subscription_status: 'trialing',
+    trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    current_period_end: null,
+    stripe_customer_id: null,
+    stripe_subscription_id: null,
   })
   if (error) throw error
 
-  console.log('Cliente raffiner criado:', clienteId)
+  console.log('Cliente raffiner (trial) criado:', clienteId)
   return clienteId
 }
 
@@ -174,7 +175,8 @@ function montarCatalogo(clienteId) {
       id: randomUUID(),
       categoria_id: categoriaId,
       nome: item.nome,
-      imagem: item.imagem ?? null,
+      // URLs antigas de outro clienteId falham no CHECK; uploadItens preenche depois.
+      imagem: null,
       cores: item.cores,
       largura: item.largura ?? null,
       comprimento: item.comprimento ?? null,
@@ -373,7 +375,6 @@ async function uploadItens(clienteId) {
   )
   if (falhas > 0) throw new Error(`${falhas} upload(s) falharam`)
 
-  let atualizadosJson = 0
   let atualizadosDb = 0
   let semMatch = 0
 
@@ -384,10 +385,6 @@ async function uploadItens(clienteId) {
       console.warn('Sem imagem para:', item.categoria, item.nome)
       semMatch += 1
       continue
-    }
-    if (item.imagem !== novaUrl) {
-      item.imagem = novaUrl
-      atualizadosJson += 1
     }
 
     const categoriaId = codigoParaId.get(item.categoria)
@@ -412,10 +409,7 @@ async function uploadItens(clienteId) {
     atualizadosDb += 1
   }
 
-  writeFileSync(catalogoPath, `${JSON.stringify(catalogo, null, 2)}\n`, 'utf8')
-  console.log(
-    `URLs: catalogo.json ${atualizadosJson} alterados; banco ${atualizadosDb}; sem imagem ${semMatch}`,
-  )
+  console.log(`URLs no banco: ${atualizadosDb}; sem imagem: ${semMatch}`)
 }
 
 try {

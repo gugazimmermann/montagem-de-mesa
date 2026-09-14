@@ -12,6 +12,7 @@ import {
   SENHA_MIN,
   validarSenhasIguais,
 } from './adminUtils'
+import * as ui from './adminClasses'
 import { CampoSenha } from './CampoSenha'
 
 export function CadastroAdmin() {
@@ -87,7 +88,7 @@ export function CadastroAdmin() {
         titulo="Cadastro"
         subtitulo="Crie a conta do cliente para acessar o painel."
         rodape={
-          <p className="admin-login__rodape">
+          <p className={ui.loginRodape}>
             Já confirmou? <Link to="/admin">Entrar</Link>
           </p>
         }
@@ -101,7 +102,7 @@ export function CadastroAdmin() {
         {erro && <AdminAlerta tipo="error">{erro}</AdminAlerta>}
         <button
           type="button"
-          className="btn btn--primary admin-login__submit"
+          className={`btn btn--primary ${ui.loginSubmit}`}
           disabled={reenviando}
           onClick={() => void aoReenviar()}
         >
@@ -109,7 +110,7 @@ export function CadastroAdmin() {
         </button>
         <button
           type="button"
-          className="btn btn--ghost admin-login__submit"
+          className={`btn btn--ghost ${ui.loginSubmit}`}
           onClick={() => {
             setAvisoConfirmacao(null)
             setEmailPendente('')
@@ -127,17 +128,18 @@ export function CadastroAdmin() {
       titulo="Cadastro"
       subtitulo="Crie a conta do cliente para acessar o painel."
       rodape={
-        <p className="admin-login__rodape">
+        <p className={ui.loginRodape}>
           Já tem conta? <Link to="/admin">Entrar</Link>
         </p>
       }
     >
-      <form className="admin-login__form" onSubmit={aoEnviar}>
-        <label className="admin-field">
-          <span>Nome</span>
+      <form className={ui.loginForm} onSubmit={aoEnviar}>
+        <label className={ui.field}>
+          <span className={ui.fieldLabel}>Nome</span>
           <input
             type="text"
             name="nome"
+            className={ui.fieldInput}
             autoComplete="organization"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
@@ -146,11 +148,12 @@ export function CadastroAdmin() {
           />
         </label>
 
-        <label className="admin-field">
-          <span>E-mail</span>
+        <label className={ui.field}>
+          <span className={ui.fieldLabel}>E-mail</span>
           <input
             type="email"
             name="email"
+            className={ui.fieldInput}
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -199,7 +202,7 @@ export function CadastroAdmin() {
 
         <button
           type="submit"
-          className="btn btn--primary admin-login__submit"
+          className={`btn btn--primary ${ui.loginSubmit}`}
           disabled={enviando}
         >
           {enviando ? 'Cadastrando…' : 'Cadastrar'}

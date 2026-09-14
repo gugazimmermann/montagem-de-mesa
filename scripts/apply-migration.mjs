@@ -9,7 +9,7 @@
  * Dica: se a senha tiver caracteres especiais (& ? %), URL-encode:
  *   & → %26   % → %25   ? → %3F
  *
- * As migrations deste app droparam só clientes/categorias/itens (+ objetos ligados).
+ * As migrations deste app droparam só clientes/categorias/itens/montagens_enviadas (+ objetos ligados).
  * Não resetam o Database e não tocam em tabelas de outros apps (ex.: leads).
  */
 import pg from 'pg'
