@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { v4 as uuidv4 } from 'uuid'
 import type { ItemMesa, PadraoTecido } from '../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import { atualizarItem, criarItem } from '../../dados/repositorioClientes'
@@ -74,7 +73,7 @@ function montarItem(
   if (!nome) return { erro: 'Informe o nome do item.' }
 
   const ehToalha = categoriaId === 'toalha'
-  const id = idExistente ?? uuidv4()
+  const id = idExistente ?? crypto.randomUUID()
 
   const corPrimaria = ehToalha
     ? form.corPrimaria.trim() || COR_PADRAO

@@ -146,13 +146,32 @@ export async function exportarMontagemPng(
   ctx.fillRect(0, 0, LARGURA, ALTURA)
 
   const ordem = ordenarCategoriasPorCamada(categorias)
+  const camadas = ordem
+    .map((categoria) => {
+      const item = obterItemPorId(itens, configuracao[categoria.id] ?? null)
+      if (!item) return null
+      return { categoria, item, codigo: chaveCamada(categoria) }
+    })
+    .filter(Boolean) as {
+    categoria: (typeof ordem)[number]
+    item: ItemMesa
+    codigo: string
+  }[]
+
+  const imagens = await Promise.all(
+    camadas.map(({ item, codigo }) =>
+      codigo !== 'toalha' && item.imagem
+        ? carregarImagem(item.imagem)
+        : Promise.resolve(null),
+    ),
+  )
+
   let imagensFalharam = 0
 
-  for (const categoria of ordem) {
-    const item = obterItemPorId(itens, configuracao[categoria.id] ?? null)
-    if (!item) continue
+  for (let i = 0; i < camadas.length; i += 1) {
+    const camada = camadas[i]!
+    const { item, codigo } = camada
 
-    const codigo = chaveCamada(categoria)
     if (codigo === 'toalha') {
       desenharToalha(ctx, item)
       continue
@@ -162,8 +181,8 @@ export async function exportarMontagemPng(
     const { w: boxW, h: boxH } = caixaCamada(codigo, dims.largura, dims.comprimento)
     const { x: boxX, y: boxY } = origemCaixa(codigo, boxW, boxH)
 
+    const img = imagens[i]
     if (item.imagem) {
-      const img = await carregarImagem(item.imagem)
       if (img) {
         desenharImagemNaCaixa(
           ctx,
@@ -179,7 +198,6 @@ export async function exportarMontagemPng(
       imagensFalharam += 1
     }
 
-    // Fallback de cor (alinha ao preview quando não há imagem).
     const raio = Math.min(boxW, boxH) / 2
     const cx = codigo === 'taca' ? boxX + boxW / 2 : LAYER_CX
     const cy = codigo === 'taca' ? boxY + boxH / 2 : LAYER_CY

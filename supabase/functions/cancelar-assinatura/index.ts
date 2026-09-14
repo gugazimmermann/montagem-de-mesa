@@ -54,7 +54,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     if (err instanceof Response) return err
     console.error('cancelar-assinatura', err)
-    const message = err instanceof Error ? err.message : 'Erro interno'
-    return jsonResponse({ error: message }, 500)
+    return jsonResponse({ error: 'Erro interno' }, 500)
   }
 })

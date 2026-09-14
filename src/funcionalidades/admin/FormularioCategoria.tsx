@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { v4 as uuidv4 } from 'uuid'
 import type { Categoria } from '../../compartilhado/tipos'
 import { criarCategoria } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
@@ -40,7 +39,7 @@ export function FormularioCategoria() {
 
     setEnviando(true)
     try {
-      const id = uuidv4()
+      const id = crypto.randomUUID()
       const nova: Categoria = {
         id,
         rotulo: rotuloTrim,

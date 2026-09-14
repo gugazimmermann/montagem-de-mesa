@@ -6,10 +6,11 @@ export async function criarCategoria(
   clienteId: string,
   categoria: Categoria,
 ): Promise<void> {
-  const { count } = await supabase
-    .from('categorias')
-    .select('*', { count: 'exact', head: true })
-    .eq('cliente_id', clienteId)
+  const { data: ordem, error: erroOrdem } = await supabase.rpc(
+    'proximo_ordem_categoria',
+    { p_cliente_id: clienteId },
+  )
+  if (erroOrdem) throw erroOrdem
 
   const { error } = await supabase.from('categorias').insert({
     cliente_id: clienteId,
@@ -17,7 +18,7 @@ export async function criarCategoria(
     codigo: categoria.codigo ?? null,
     rotulo: categoria.rotulo,
     descricao: categoria.descricao,
-    ordem: count ?? 0,
+    ordem: typeof ordem === 'number' ? ordem : 0,
   })
 
   if (error) throw error
@@ -67,11 +68,11 @@ export async function excluirCategoriaDb(
 }
 
 export async function criarItem(clienteId: string, item: ItemMesa): Promise<void> {
-  const { count } = await supabase
-    .from('itens')
-    .select('*', { count: 'exact', head: true })
-    .eq('cliente_id', clienteId)
-    .eq('categoria_id', item.categoria)
+  const { data: ordem, error: erroOrdem } = await supabase.rpc('proximo_ordem_item', {
+    p_cliente_id: clienteId,
+    p_categoria_id: item.categoria,
+  })
+  if (erroOrdem) throw erroOrdem
 
   const { error } = await supabase.from('itens').insert({
     cliente_id: clienteId,
@@ -84,7 +85,7 @@ export async function criarItem(clienteId: string, item: ItemMesa): Promise<void
     comprimento: item.comprimento ?? null,
     padrao: item.padrao ?? null,
     descricao: item.descricao ?? null,
-    ordem: count ?? 0,
+    ordem: typeof ordem === 'number' ? ordem : 0,
   })
 
   if (error) throw error

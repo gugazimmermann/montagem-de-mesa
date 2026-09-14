@@ -1,6 +1,8 @@
 import type { ItemMontagemEnviada, MontagemEnviada } from '../compartilhado/tipos'
 import { supabase } from './supabase'
 
+export const MONTAGENS_PAGE_SIZE = 50
+
 type RowMontagem = {
   id: string
   cliente_id: string
@@ -47,9 +49,19 @@ function mapMontagem(row: RowMontagem): MontagemEnviada {
   }
 }
 
+export type PaginaMontagens = {
+  itens: MontagemEnviada[]
+  temMais: boolean
+}
+
 export async function listarMontagensEnviadas(
   clienteId: string,
-): Promise<MontagemEnviada[]> {
+  opcoes?: { offset?: number; limit?: number },
+): Promise<PaginaMontagens> {
+  const limit = opcoes?.limit ?? MONTAGENS_PAGE_SIZE
+  const offset = opcoes?.offset ?? 0
+  const ate = offset + limit - 1
+
   const { data, error } = await supabase
     .from('montagens_enviadas')
     .select(
@@ -57,7 +69,12 @@ export async function listarMontagensEnviadas(
     )
     .eq('cliente_id', clienteId)
     .order('created_at', { ascending: false })
+    .range(offset, ate)
 
   if (error) throw error
-  return (data as RowMontagem[] | null)?.map(mapMontagem) ?? []
+  const itens = (data as RowMontagem[] | null)?.map(mapMontagem) ?? []
+  return {
+    itens,
+    temMais: itens.length === limit,
+  }
 }

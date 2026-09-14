@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Cliente } from '../../compartilhado/tipos'
 import {
   cadastrar as cadastrarRepo,
@@ -20,15 +20,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [carregando, setCarregando] = useState(true)
   const [precisaRedefinirSenha, setPrecisaRedefinirSenha] = useState(lerFlagRecoveryLocal)
 
-  function marcarPrecisaRedefinirSenha(valor: boolean) {
+  const marcarPrecisaRedefinirSenha = useCallback((valor: boolean) => {
     gravarFlagRecoveryLocal(valor)
     setPrecisaRedefinirSenha(valor)
-  }
+  }, [])
 
   useEffect(() => {
     let ativo = true
 
-    // Migra flag antiga de sessionStorage → localStorage
     try {
       if (sessionStorage.getItem(CHAVE_RECOVERY_STORAGE) === '1') {
         marcarPrecisaRedefinirSenha(true)
@@ -82,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // Sessão válida, mas ainda em fluxo de recovery (flag local) → sem dados admin.
       if (lerFlagRecoveryLocal()) {
         setCliente(null)
         setCarregando(false)
@@ -109,37 +107,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelar()
       window.removeEventListener('storage', aoStorage)
     }
-  }, [])
+  }, [marcarPrecisaRedefinirSenha])
 
-  async function entrar(email: string, senha: string): Promise<Cliente | null> {
-    const resultado = await entrarRepo(email, senha)
-    marcarPrecisaRedefinirSenha(false)
-    setCliente(resultado)
-    return resultado
-  }
+  const entrar = useCallback(
+    async (email: string, senha: string): Promise<Cliente | null> => {
+      const resultado = await entrarRepo(email, senha)
+      marcarPrecisaRedefinirSenha(false)
+      setCliente(resultado)
+      return resultado
+    },
+    [marcarPrecisaRedefinirSenha],
+  )
 
-  async function cadastrar(dados: {
-    nome: string
-    email: string
-    senha: string
-  }): Promise<Cliente> {
-    const resultado = await cadastrarRepo(dados)
-    marcarPrecisaRedefinirSenha(false)
-    setCliente(resultado)
-    return resultado
-  }
+  const cadastrar = useCallback(
+    async (dados: {
+      nome: string
+      email: string
+      senha: string
+    }): Promise<Cliente> => {
+      const resultado = await cadastrarRepo(dados)
+      marcarPrecisaRedefinirSenha(false)
+      setCliente(resultado)
+      return resultado
+    },
+    [marcarPrecisaRedefinirSenha],
+  )
 
-  async function sair(): Promise<void> {
+  const sair = useCallback(async (): Promise<void> => {
     await sairRepo()
     marcarPrecisaRedefinirSenha(false)
     setCliente(null)
-  }
+  }, [marcarPrecisaRedefinirSenha])
 
-  function definirCliente(proximo: Cliente): void {
+  const definirCliente = useCallback((proximo: Cliente): void => {
     setCliente(proximo)
-  }
+  }, [])
 
-  async function limparPrecisaRedefinirSenha(): Promise<void> {
+  const limparPrecisaRedefinirSenha = useCallback(async (): Promise<void> => {
     marcarPrecisaRedefinirSenha(false)
     try {
       const sessao = await obterSessaoCliente()
@@ -147,22 +151,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       setCliente(null)
     }
-  }
+  }, [marcarPrecisaRedefinirSenha])
 
-  return (
-    <AuthContext.Provider
-      value={{
-        cliente,
-        carregando,
-        precisaRedefinirSenha,
-        limparPrecisaRedefinirSenha,
-        entrar,
-        cadastrar,
-        definirCliente,
-        sair,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      cliente,
+      carregando,
+      precisaRedefinirSenha,
+      limparPrecisaRedefinirSenha,
+      entrar,
+      cadastrar,
+      definirCliente,
+      sair,
+    }),
+    [
+      cliente,
+      carregando,
+      precisaRedefinirSenha,
+      limparPrecisaRedefinirSenha,
+      entrar,
+      cadastrar,
+      definirCliente,
+      sair,
+    ],
   )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

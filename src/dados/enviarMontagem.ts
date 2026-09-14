@@ -19,19 +19,30 @@ export type PayloadEnviarMontagem = {
   visitante: DadosVisitanteMontagem
   itens: ItemMontagemEnviado[]
   linkMontagem: string
+  idempotencyKey?: string
 }
 
 type RespostaEnviar = {
   ok?: boolean
+  deduplicated?: boolean
   error?: string
 }
 
 export async function enviarMontagemParaAdmin(
   payload: PayloadEnviarMontagem,
 ): Promise<void> {
+  const body = {
+    ...payload,
+    idempotencyKey:
+      payload.idempotencyKey ??
+      (typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`),
+  }
+
   const { data, error } = await supabase.functions.invoke<RespostaEnviar>(
     'enviar-montagem',
-    { body: payload },
+    { body },
   )
 
   if (error) {

@@ -1,4 +1,4 @@
-import { type CSSProperties, type KeyboardEvent } from 'react'
+import { type CSSProperties, type KeyboardEvent, memo } from 'react'
 import type { Categoria, ConfiguracaoMesa, IdCategoria, ItemMesa } from '../../../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../../../dados/categoriasFixas'
 import { obterItensPorCategoria } from '../../../catalogo'
@@ -184,3 +184,5 @@ export function SeletorItens({
     </div>
   )
 }
+
+export const SeletorItensMemo = memo(SeletorItens)

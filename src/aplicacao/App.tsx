@@ -1,20 +1,23 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { PreVisualizacaoMesa, SeletorItens } from '../funcionalidades/mesa'
-import { FormularioEnviarMontagem } from '../funcionalidades/mesa/componentes/FormularioEnviarMontagem'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { PreVisualizacaoMesa, SeletorItensMemo } from '../funcionalidades/mesa'
 import { criarConfiguracaoVazia, obterItemPorId } from '../funcionalidades/catalogo'
-import { exportarMontagemPng } from '../funcionalidades/mesa/exportarMontagem'
 import {
-  lerMontagemDaUrl,
-  mesmaMontagem,
   temSelecao,
   urlComMontagem,
 } from '../funcionalidades/mesa/montagemUrl'
+import { useMontagemNaUrl } from '../funcionalidades/mesa/useMontagemNaUrl'
 import { useAuth } from '../funcionalidades/autenticacao'
 import { ImagemAmpliada } from '../compartilhado/ImagemAmpliada'
 import { ID_CATEGORIA_TOALHA } from '../dados/categoriasFixas'
 import type { ConfiguracaoMesa, DadosCliente, IdCategoria, ItemMesa } from '../compartilhado/tipos'
 import './App.css'
+
+const FormularioEnviarMontagem = lazy(() =>
+  import('../funcionalidades/mesa/componentes/FormularioEnviarMontagem').then(
+    (m) => ({ default: m.FormularioEnviarMontagem }),
+  ),
+)
 
 interface PropsApp {
   dados: DadosCliente
@@ -22,25 +25,52 @@ interface PropsApp {
   whatsappAdmin: string
 }
 
-function montagemDeDados(
-  search: string,
-  categorias: DadosCliente['categorias'],
-  itens: DadosCliente['itens'],
-): ConfiguracaoMesa {
-  return lerMontagemDaUrl(search, categorias, itens) ?? criarConfiguracaoVazia(categorias)
+function CabecalhoAdmin({
+  slug,
+  modoKiosk,
+}: {
+  slug: string
+  modoKiosk: boolean
+}) {
+  const { cliente, carregando } = useAuth()
+  const { slug: slugRota } = useParams<{ slug: string }>()
+  const mostrarAdmin = !carregando && !!cliente && cliente.slug === (slugRota ?? slug)
+
+  if (!mostrarAdmin) return null
+
+  async function entrarKiosk() {
+    try {
+      await document.documentElement.requestFullscreen()
+    } catch {
+      // Sem suporte ou bloqueado.
+    }
+  }
+
+  return (
+    <div className="app__header-actions">
+      {!modoKiosk && (
+        <button
+          type="button"
+          className="btn btn--ghost app__kiosk-btn"
+          onClick={() => void entrarKiosk()}
+        >
+          Kiosk
+        </button>
+      )}
+      <Link className="btn btn--ghost app__admin-link" to="/admin/painel">
+        Painel admin
+      </Link>
+    </div>
+  )
 }
 
 export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
   const { nome, logo, categorias, itens } = dados
-  const { cliente, carregando } = useAuth()
-  const localizacao = useLocation()
-  const navegar = useNavigate()
-  const { slug: slugRota } = useParams<{ slug: string }>()
-  const mostrarAdmin = !carregando && !!cliente && cliente.slug === (slugRota ?? slug)
-
-  const [configuracao, setConfiguracao] = useState<ConfiguracaoMesa>(() =>
-    montagemDeDados(localizacao.search, categorias, itens),
+  const { configuracao, setConfiguracao, localizacao, navegar } = useMontagemNaUrl(
+    categorias,
+    itens,
   )
+
   const [categoriaAtiva, setCategoriaAtiva] = useState<IdCategoria>(
     () => categorias[0]?.id ?? '',
   )
@@ -52,8 +82,10 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
   const [copiandoLink, setCopiandoLink] = useState(false)
   const [exportando, setExportando] = useState(false)
   const [feedbackAcao, setFeedbackAcao] = useState<string | null>(null)
-  const [modoKiosk, setModoKiosk] = useState(false)
   const [enviarAberto, setEnviarAberto] = useState(false)
+  const [modoKiosk, setModoKiosk] = useState(
+    () => typeof document !== 'undefined' && Boolean(document.fullscreenElement),
+  )
 
   const pulsoTimeoutRef = useRef<number | null>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -61,6 +93,11 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
   const expandirBtnRef = useRef<HTMLButtonElement>(null)
 
   const categoriasKey = categorias.map((c) => c.id).join(',')
+  const itensPorId = useMemo(() => {
+    const mapa = new Map<string, ItemMesa>()
+    for (const item of itens) mapa.set(item.id, item)
+    return mapa
+  }, [itens])
 
   useEffect(() => {
     function aoFullscreenChange() {
@@ -70,7 +107,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     return () => document.removeEventListener('fullscreenchange', aoFullscreenChange)
   }, [])
 
-  // Catálogo trocou (outro cliente / remount): realinha categoria e desfaz.
   useEffect(() => {
     setCategoriaAtiva((ativa) =>
       categorias.some((c) => c.id === ativa) ? ativa : (categorias[0]?.id ?? ''),
@@ -78,20 +114,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     setConfigAnterior(null)
   }, [categoriasKey, categorias])
 
-  // Aplica montagem da URL (back/forward / link compartilhado).
-  useEffect(() => {
-    const daUrl = montagemDeDados(localizacao.search, categorias, itens)
-    setConfiguracao((anterior) => (mesmaMontagem(anterior, daUrl) ? anterior : daUrl))
-  }, [localizacao.search, categorias, itens])
-
-  // Mantém `?m=` alinhado com a seleção atual (replace).
-  useEffect(() => {
-    const caminho = urlComMontagem(localizacao.pathname, configuracao)
-    const atual = `${localizacao.pathname}${localizacao.search}`
-    if (caminho === atual) return
-    if (caminho === localizacao.pathname && !localizacao.search) return
-    navegar(caminho, { replace: true })
-  }, [configuracao, localizacao.pathname, localizacao.search, navegar])
   useEffect(() => {
     if (!feedbackAcao) return
     const t = window.setTimeout(() => setFeedbackAcao(null), 3500)
@@ -106,7 +128,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     }
   }, [])
 
-  // Sheet expandido: Escape, focus trap, trava scroll do body.
   useEffect(() => {
     if (!previewExpandido) return
 
@@ -146,11 +167,16 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     }
   }, [previewExpandido])
 
+  function itemPorId(id: string | null | undefined) {
+    if (!id) return undefined
+    return itensPorId.get(id) ?? obterItemPorId(itens, id)
+  }
+
   function selecionar(categoria: IdCategoria, idItem: string | null) {
     setConfigAnterior(null)
     setConfiguracao((anterior) => ({ ...anterior, [categoria]: idItem }))
     const cat = categorias.find((c) => c.id === categoria)
-    const item = obterItemPorId(itens, idItem)
+    const item = itemPorId(idItem)
     if (item && cat) {
       setAnuncio(`${cat.rotulo}: ${item.nome}`)
       setPulsoPreview(true)
@@ -230,6 +256,9 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     if (!temSelecao(configuracao)) return
     setExportando(true)
     try {
+      const { exportarMontagemPng } = await import(
+        '../funcionalidades/mesa/exportarMontagem'
+      )
       const data = new Date()
       const yyyy = data.getFullYear()
       const mm = String(data.getMonth() + 1).padStart(2, '0')
@@ -258,27 +287,24 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     }
   }
 
-  const resumoSelecionado = categorias
-    .map((categoria) => {
-      const item = obterItemPorId(itens, configuracao[categoria.id] ?? null)
-      return item ? { categoria: categoria.rotulo, item: item.nome } : null
-    })
-    .filter(Boolean) as { categoria: string; item: string }[]
+  const resumoSelecionado = useMemo(
+    () =>
+      categorias
+        .map((categoria) => {
+          const item = itemPorId(configuracao[categoria.id] ?? null)
+          return item ? { categoria: categoria.rotulo, item: item.nome } : null
+        })
+        .filter(Boolean) as { categoria: string; item: string }[],
+    // itemPorId depends on itensPorId/itens; configuracao drives selection
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [categorias, configuracao, itensPorId],
+  )
 
   const haSelecao = resumoSelecionado.length > 0
   const haSelecaoAlemToalha = categorias.some(
     (cat) => cat.id !== ID_CATEGORIA_TOALHA && Boolean(configuracao[cat.id]),
   )
   const ultimoItem = resumoSelecionado[resumoSelecionado.length - 1]
-
-  async function entrarKiosk() {
-    try {
-      await document.documentElement.requestFullscreen()
-      setModoKiosk(true)
-    } catch {
-      // Sem suporte ou bloqueado pelo navegador.
-    }
-  }
 
   return (
     <div className={modoKiosk ? 'app app--kiosk' : 'app'}>
@@ -293,22 +319,7 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
           <h1>{nome}</h1>
           <p className="app__subtitle">Escolha as peças — a mesa atualiza na hora.</p>
         </div>
-        <div className="app__header-actions">
-          {mostrarAdmin && !modoKiosk && (
-            <button
-              type="button"
-              className="btn btn--ghost app__kiosk-btn"
-              onClick={() => void entrarKiosk()}
-            >
-              Kiosk
-            </button>
-          )}
-          {mostrarAdmin && (
-            <Link className="btn btn--ghost app__admin-link" to="/admin/painel">
-              Painel admin
-            </Link>
-          )}
-        </div>
+        <CabecalhoAdmin slug={slug} modoKiosk={modoKiosk} />
       </header>
 
       <p className="app__live" aria-live="polite" aria-atomic="true">
@@ -338,16 +349,18 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
             </button>
           </div>
 
-          <PreVisualizacaoMesa
-            configuracao={configuracao}
-            categorias={categorias}
-            itens={itens}
-            aoComecarVazio={focarPicker}
-            aoAmpliarItem={setItemAmpliado}
-          />
+          {!previewExpandido && (
+            <PreVisualizacaoMesa
+              configuracao={configuracao}
+              categorias={categorias}
+              itens={itens}
+              aoComecarVazio={focarPicker}
+              aoAmpliarItem={setItemAmpliado}
+            />
+          )}
 
           {haSelecao && (
-            <div className="setting-summary--compact" aria-live="polite">
+            <div className="setting-summary" aria-live="polite">
               <p className="setting-summary--compact__count">
                 {resumoSelecionado.length}{' '}
                 {resumoSelecionado.length === 1 ? 'item' : 'itens'}
@@ -362,17 +375,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
                 ))}
               </ul>
             </div>
-          )}
-
-          {haSelecao && (
-            <ul className="setting-summary" aria-label="Itens selecionados">
-              {resumoSelecionado.map(({ categoria, item }) => (
-                <li key={categoria}>
-                  <span className="setting-summary__cat">{categoria}</span>
-                  <span className="setting-summary__item">{item}</span>
-                </li>
-              ))}
-            </ul>
           )}
         </section>
 
@@ -461,7 +463,7 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
           {categorias.length === 0 ? (
             <p className="app__sem-categorias">Este cliente ainda não possui categorias.</p>
           ) : (
-            <SeletorItens
+            <SeletorItensMemo
               categorias={categorias}
               itens={itens}
               categoriaAtiva={categoriaAtiva}
@@ -473,22 +475,26 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
         </section>
       </main>
 
-      <FormularioEnviarMontagem
-        aberto={enviarAberto && haSelecaoAlemToalha}
-        slug={slug}
-        whatsappAdmin={whatsappAdmin}
-        nomeEstabelecimento={nome}
-        itens={resumoSelecionado.map(({ categoria, item }) => ({
-          categoria,
-          nome: item,
-        }))}
-        linkMontagem={`${window.location.origin}${urlComMontagem(localizacao.pathname, configuracao)}`}
-        aoFechar={() => setEnviarAberto(false)}
-        aoSucesso={(mensagem) => {
-          setFeedbackAcao(mensagem)
-          setAnuncio(mensagem)
-        }}
-      />
+      {enviarAberto && haSelecaoAlemToalha && (
+        <Suspense fallback={null}>
+          <FormularioEnviarMontagem
+            aberto
+            slug={slug}
+            whatsappAdmin={whatsappAdmin}
+            nomeEstabelecimento={nome}
+            itens={resumoSelecionado.map(({ categoria, item }) => ({
+              categoria,
+              nome: item,
+            }))}
+            linkMontagem={`${window.location.origin}${urlComMontagem(localizacao.pathname, configuracao)}`}
+            aoFechar={() => setEnviarAberto(false)}
+            aoSucesso={(mensagem) => {
+              setFeedbackAcao(mensagem)
+              setAnuncio(mensagem)
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

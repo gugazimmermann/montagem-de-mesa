@@ -67,22 +67,33 @@ export interface Cliente {
   currentPeriodEnd: string | null
   stripeCustomerId: string | null
   stripeSubscriptionId: string | null
+  updatedAt?: string | null
 }
 
-/** Trial válido, assinatura active com período vigente, ou past_due. */
+const GRACA_PAST_DUE_MS = 7 * 24 * 60 * 60 * 1000
+
+/**
+ * Trial válido, assinatura active com período vigente, ou past_due
+ * com graça de 7 dias a partir de currentPeriodEnd (fail-closed se ausente).
+ */
 export function clienteTemAcesso(
-  cliente: Pick<Cliente, 'subscriptionStatus' | 'trialEndsAt' | 'currentPeriodEnd'>,
+  cliente: Pick<
+    Cliente,
+    'subscriptionStatus' | 'trialEndsAt' | 'currentPeriodEnd'
+  >,
 ): boolean {
+  const agora = Date.now()
   if (cliente.subscriptionStatus === 'past_due') {
-    return true
+    if (!cliente.currentPeriodEnd) return false
+    return new Date(cliente.currentPeriodEnd).getTime() + GRACA_PAST_DUE_MS > agora
   }
   if (cliente.subscriptionStatus === 'active') {
-    if (!cliente.currentPeriodEnd) return true
-    return new Date(cliente.currentPeriodEnd).getTime() > Date.now()
+    if (!cliente.currentPeriodEnd) return false
+    return new Date(cliente.currentPeriodEnd).getTime() > agora
   }
   if (cliente.subscriptionStatus === 'trialing') {
     if (!cliente.trialEndsAt) return false
-    return new Date(cliente.trialEndsAt).getTime() > Date.now()
+    return new Date(cliente.trialEndsAt).getTime() > agora
   }
   return false
 }

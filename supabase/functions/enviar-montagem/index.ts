@@ -1,4 +1,5 @@
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
+import { siteUrl } from '../_shared/stripe.ts'
 import { supabaseAdmin } from '../_shared/supabase.ts'
 
 type Visitante = {
@@ -20,10 +21,15 @@ type Body = {
   visitante?: Visitante
   itens?: unknown
   linkMontagem?: unknown
+  idempotencyKey?: unknown
 }
 
 const MAX_ITENS = 40
 const MAX_LINK = 2000
+const RATE_LIMIT = 5
+const RATE_JANELA_SEG = 60
+/** `m` = uuid:uuid|uuid:uuid… */
+const RE_PARAM_M = /^[0-9a-fA-F|:.-]{1,1500}$/
 
 function texto(valor: unknown, max: number): string | null {
   if (typeof valor !== 'string') return null
@@ -38,6 +44,40 @@ function escaparHtml(valor: string): string {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
+}
+
+function ipDoRequest(req: Request): string {
+  const cf = req.headers.get('cf-connecting-ip')
+  if (cf) return cf.trim()
+  const forwarded = req.headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0]?.trim() || 'unknown'
+  return 'unknown'
+}
+
+/** Sempre usa SITE_URL; só reaproveita `?m=` do cliente se for seguro. */
+function montarLinkMontagem(slug: string, linkCliente: string | null): string | null {
+  let base: string
+  try {
+    base = siteUrl()
+  } catch {
+    return null
+  }
+
+  let m: string | null = null
+  if (linkCliente) {
+    try {
+      const u = new URL(linkCliente)
+      const bruto = u.searchParams.get('m')
+      if (bruto && RE_PARAM_M.test(bruto)) m = bruto
+    } catch {
+      // ignora link inválido; ainda montamos o canônico sem m
+    }
+  }
+
+  const out = new URL(`/${slug}`, `${base}/`)
+  if (m) out.searchParams.set('m', m)
+  const href = out.toString()
+  return href.length <= MAX_LINK ? href : null
 }
 
 Deno.serve(async (req) => {
@@ -58,7 +98,8 @@ Deno.serve(async (req) => {
     }
 
     const slug = texto(body.slug, 80)?.toLowerCase()
-    const linkMontagem = texto(body.linkMontagem, MAX_LINK)
+    const linkCliente = texto(body.linkMontagem, MAX_LINK)
+    const idempotencyKey = texto(body.idempotencyKey, 80)
     const v = body.visitante ?? {}
 
     const nome = texto(v.nome, 120)
@@ -68,16 +109,17 @@ Deno.serve(async (req) => {
     const cidade = texto(v.cidade, 100)
     const estado = texto(v.estado, 2)?.toUpperCase()
 
-    if (!slug || !linkMontagem || !nome || !email || !whatsapp || !endereco || !cidade || !estado) {
+    if (!slug || !nome || !email || !whatsapp || !endereco || !cidade || !estado) {
       return jsonResponse({ error: 'Dados incompletos ou inválidos.' }, 400)
+    }
+
+    const linkMontagem = montarLinkMontagem(slug, linkCliente)
+    if (!linkMontagem) {
+      return jsonResponse({ error: 'Link da montagem inválido.' }, 400)
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return jsonResponse({ error: 'E-mail do visitante inválido.' }, 400)
-    }
-
-    if (!/^https?:\/\//i.test(linkMontagem)) {
-      return jsonResponse({ error: 'Link da montagem inválido.' }, 400)
     }
 
     if (!Array.isArray(body.itens) || body.itens.length === 0) {
@@ -99,6 +141,25 @@ Deno.serve(async (req) => {
     }
 
     const admin = supabaseAdmin()
+    const ip = ipDoRequest(req)
+
+    const { data: rateOk, error: rateError } = await admin.rpc('verificar_rate_limit', {
+      p_chave: `enviar-montagem:${slug}:${ip}`,
+      p_limite: RATE_LIMIT,
+      p_janela_segundos: RATE_JANELA_SEG,
+    })
+
+    if (rateError) {
+      console.error('enviar-montagem rate', rateError)
+      return jsonResponse({ error: 'Não foi possível processar o envio.' }, 500)
+    }
+
+    if (!rateOk) {
+      return jsonResponse(
+        { error: 'Muitas tentativas. Aguarde um minuto e tente novamente.' },
+        429,
+      )
+    }
 
     const { data: cliente, error: clienteError } = await admin
       .from('clientes')
@@ -128,95 +189,194 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Montagem indisponível para este endereço.' }, 404)
     }
 
-    const { error: insertError } = await admin.from('montagens_enviadas').insert({
-      cliente_id: cliente.id,
-      visitante_nome: nome,
-      visitante_email: email,
-      visitante_whatsapp: whatsapp,
-      visitante_endereco: endereco,
-      visitante_cidade: cidade,
-      visitante_estado: estado,
-      itens,
-      link_montagem: linkMontagem,
-    })
+    if (idempotencyKey) {
+      const { data: existente } = await admin
+        .from('montagens_enviadas')
+        .select(
+          'id, email_status, visitante_nome, visitante_email, visitante_whatsapp, visitante_endereco, visitante_cidade, visitante_estado, itens, link_montagem',
+        )
+        .eq('cliente_id', cliente.id)
+        .eq('idempotency_key', idempotencyKey)
+        .maybeSingle()
+
+      if (existente?.email_status === 'sent') {
+        return jsonResponse({ ok: true, deduplicated: true })
+      }
+
+      // Retry só com dados já persistidos — nunca com o body do request atual.
+      if (existente && existente.email_status !== 'sent') {
+        const itensDb = Array.isArray(existente.itens)
+          ? (existente.itens as { categoria: string; nome: string }[])
+          : []
+        const reenviado = await enviarEmailEAtualizar({
+          admin,
+          montagemId: existente.id,
+          clienteEmail: cliente.email,
+          clienteNome: cliente.nome,
+          nome: String(existente.visitante_nome ?? ''),
+          email: String(existente.visitante_email ?? ''),
+          whatsapp: String(existente.visitante_whatsapp ?? ''),
+          endereco: String(existente.visitante_endereco ?? ''),
+          cidade: String(existente.visitante_cidade ?? ''),
+          estado: String(existente.visitante_estado ?? ''),
+          itens: itensDb,
+          linkMontagem: String(existente.link_montagem ?? ''),
+        })
+        if (!reenviado) {
+          return jsonResponse({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
+        }
+        return jsonResponse({ ok: true })
+      }
+    }
+
+    const { data: inserida, error: insertError } = await admin
+      .from('montagens_enviadas')
+      .insert({
+        cliente_id: cliente.id,
+        visitante_nome: nome,
+        visitante_email: email,
+        visitante_whatsapp: whatsapp,
+        visitante_endereco: endereco,
+        visitante_cidade: cidade,
+        visitante_estado: estado,
+        itens,
+        link_montagem: linkMontagem,
+        email_status: 'pending',
+        idempotency_key: idempotencyKey ?? null,
+      })
+      .select('id')
+      .single()
 
     if (insertError) {
+      if (insertError.code === '23505' && idempotencyKey) {
+        return jsonResponse({ ok: true, deduplicated: true })
+      }
       console.error('enviar-montagem insert', insertError)
       return jsonResponse({ error: 'Não foi possível salvar a montagem.' }, 500)
     }
 
-    const resendKey = Deno.env.get('RESEND_API_KEY')
-    const resendFrom =
-      Deno.env.get('RESEND_FROM') ?? 'Montagem de Mesa <onboarding@resend.dev>'
-
-    if (!resendKey) {
-      console.error('RESEND_API_KEY ausente')
-      return jsonResponse({ error: 'Envio de e-mail não configurado.' }, 500)
-    }
-
-    const linhasItens = itens.map((i) => `- ${i.categoria}: ${i.nome}`).join('\n')
-    const textoPlano = [
-      `Nova montagem — ${cliente.nome}`,
-      '',
-      `Nome: ${nome}`,
-      `E-mail: ${email}`,
-      `WhatsApp: ${whatsapp}`,
-      `Endereço: ${endereco}`,
-      `Cidade: ${cidade}`,
-      `Estado: ${estado}`,
-      '',
-      'Itens:',
-      linhasItens,
-      '',
-      `Link: ${linkMontagem}`,
-    ].join('\n')
-
-    const itensHtml = itens
-      .map(
-        (i) =>
-          `<li><strong>${escaparHtml(i.categoria)}:</strong> ${escaparHtml(i.nome)}</li>`,
-      )
-      .join('')
-
-    const html = `
-      <h2>Nova montagem — ${escaparHtml(cliente.nome)}</h2>
-      <p><strong>Nome:</strong> ${escaparHtml(nome)}<br/>
-      <strong>E-mail:</strong> ${escaparHtml(email)}<br/>
-      <strong>WhatsApp:</strong> ${escaparHtml(whatsapp)}<br/>
-      <strong>Endereço:</strong> ${escaparHtml(endereco)}<br/>
-      <strong>Cidade:</strong> ${escaparHtml(cidade)}<br/>
-      <strong>Estado:</strong> ${escaparHtml(estado)}</p>
-      <h3>Itens</h3>
-      <ul>${itensHtml}</ul>
-      <p><strong>Link:</strong> <a href="${escaparHtml(linkMontagem)}">${escaparHtml(linkMontagem)}</a></p>
-    `
-
-    const resendRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: resendFrom,
-        to: [cliente.email],
-        subject: `Nova montagem — ${nome}`,
-        text: textoPlano,
-        html,
-        reply_to: email,
-      }),
+    const enviado = await enviarEmailEAtualizar({
+      admin,
+      montagemId: inserida.id,
+      clienteEmail: cliente.email,
+      clienteNome: cliente.nome,
+      nome,
+      email,
+      whatsapp,
+      endereco,
+      cidade,
+      estado,
+      itens,
+      linkMontagem,
     })
 
-    if (!resendRes.ok) {
-      const detalhe = await resendRes.text()
-      console.error('Resend falhou', resendRes.status, detalhe)
+    if (!enviado) {
       return jsonResponse({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
     }
 
     return jsonResponse({ ok: true })
   } catch (err) {
     console.error('enviar-montagem', err)
-    const message = err instanceof Error ? err.message : 'Erro interno'
-    return jsonResponse({ error: message }, 500)
+    return jsonResponse({ error: 'Erro interno' }, 500)
   }
 })
+
+type AdminClient = ReturnType<typeof supabaseAdmin>
+
+async function enviarEmailEAtualizar(args: {
+  admin: AdminClient
+  montagemId: string
+  clienteEmail: string
+  clienteNome: string
+  nome: string
+  email: string
+  whatsapp: string
+  endereco: string
+  cidade: string
+  estado: string
+  itens: { categoria: string; nome: string }[]
+  linkMontagem: string
+}): Promise<boolean> {
+  const resendKey = Deno.env.get('RESEND_API_KEY')
+  const resendFrom =
+    Deno.env.get('RESEND_FROM') ?? 'Montagem de Mesa <onboarding@resend.dev>'
+
+  if (!resendKey) {
+    console.error('RESEND_API_KEY ausente')
+    await args.admin
+      .from('montagens_enviadas')
+      .update({ email_status: 'failed' })
+      .eq('id', args.montagemId)
+    return false
+  }
+
+  const linhasItens = args.itens.map((i) => `- ${i.categoria}: ${i.nome}`).join('\n')
+  const textoPlano = [
+    `Nova montagem — ${args.clienteNome}`,
+    '',
+    `Nome: ${args.nome}`,
+    `E-mail: ${args.email}`,
+    `WhatsApp: ${args.whatsapp}`,
+    `Endereço: ${args.endereco}`,
+    `Cidade: ${args.cidade}`,
+    `Estado: ${args.estado}`,
+    '',
+    'Itens:',
+    linhasItens,
+    '',
+    `Link: ${args.linkMontagem}`,
+  ].join('\n')
+
+  const itensHtml = args.itens
+    .map(
+      (i) =>
+        `<li><strong>${escaparHtml(i.categoria)}:</strong> ${escaparHtml(i.nome)}</li>`,
+    )
+    .join('')
+
+  const html = `
+      <h2>Nova montagem — ${escaparHtml(args.clienteNome)}</h2>
+      <p><strong>Nome:</strong> ${escaparHtml(args.nome)}<br/>
+      <strong>E-mail:</strong> ${escaparHtml(args.email)}<br/>
+      <strong>WhatsApp:</strong> ${escaparHtml(args.whatsapp)}<br/>
+      <strong>Endereço:</strong> ${escaparHtml(args.endereco)}<br/>
+      <strong>Cidade:</strong> ${escaparHtml(args.cidade)}<br/>
+      <strong>Estado:</strong> ${escaparHtml(args.estado)}</p>
+      <h3>Itens</h3>
+      <ul>${itensHtml}</ul>
+      <p><strong>Link:</strong> <a href="${escaparHtml(args.linkMontagem)}">${escaparHtml(args.linkMontagem)}</a></p>
+    `
+
+  const resendRes = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: resendFrom,
+      to: [args.clienteEmail],
+      subject: `Nova montagem — ${args.nome}`,
+      text: textoPlano,
+      html,
+      reply_to: args.email,
+    }),
+  })
+
+  if (!resendRes.ok) {
+    const detalhe = await resendRes.text()
+    console.error('Resend falhou', resendRes.status, detalhe)
+    await args.admin
+      .from('montagens_enviadas')
+      .update({ email_status: 'failed' })
+      .eq('id', args.montagemId)
+    return false
+  }
+
+  await args.admin
+    .from('montagens_enviadas')
+    .update({ email_status: 'sent' })
+    .eq('id', args.montagemId)
+
+  return true
+}

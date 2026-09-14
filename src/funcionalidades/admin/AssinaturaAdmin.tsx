@@ -14,7 +14,6 @@ import {
   iniciarCheckoutAssinatura,
   listarFaturasPagas,
   statusEfetivoAssinatura,
-  sincronizarAssinatura,
   sincronizarAssinaturaComRetry,
   type AssinaturaStripeResumo,
   type FaturaPaga,
@@ -94,7 +93,6 @@ export function AssinaturaAdmin() {
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
   const [erroHistorico, setErroHistorico] = useState<string | null>(null)
   const checkoutProcessadoRef = useRef<string | null>(null)
-  const syncStaleFeitoRef = useRef(false)
   const carregarHistoricoRef = useRef<() => Promise<void>>(async () => {})
 
   const refrescarCliente = useCallback(async () => {
@@ -143,33 +141,6 @@ export function AssinaturaAdmin() {
   useEffect(() => {
     void carregarHistorico()
   }, [carregarHistorico])
-
-  // Conta já paga no Stripe mas DB ainda trialing → sync uma vez
-  useEffect(() => {
-    if (!cliente?.stripeCustomerId || syncStaleFeitoRef.current) return
-    const precisaSync =
-      cliente.subscriptionStatus === 'trialing' || !cliente.stripeSubscriptionId
-    if (!precisaSync) return
-
-    syncStaleFeitoRef.current = true
-    void (async () => {
-      try {
-        const sync = await sincronizarAssinatura()
-        if (sync.assinatura) setResumoStripe(sync.assinatura)
-        if (sync.synced) {
-          await refrescarCliente()
-          await carregarHistoricoRef.current()
-        }
-      } catch {
-        // silencioso: histórico / webhook podem cobrir depois
-      }
-    })()
-  }, [
-    cliente?.stripeCustomerId,
-    cliente?.subscriptionStatus,
-    cliente?.stripeSubscriptionId,
-    refrescarCliente,
-  ])
 
   useEffect(() => {
     const checkout = params.get('checkout')

@@ -62,7 +62,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     if (err instanceof Response) return err
     console.error('criar-checkout', err)
-    const message = err instanceof Error ? err.message : 'Erro interno'
-    return jsonResponse({ error: message }, 500)
+    return jsonResponse({ error: 'Erro interno' }, 500)
   }
 })

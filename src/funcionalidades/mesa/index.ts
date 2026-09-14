@@ -1,4 +1,4 @@
-export { SeletorItens } from './componentes/SeletorItens/SeletorItens'
+export { SeletorItens, SeletorItensMemo } from './componentes/SeletorItens/SeletorItens'
 export { PreVisualizacaoMesa } from './componentes/PreVisualizacaoMesa/PreVisualizacaoMesa'
 export {
   CODIGOS_CAMADA,

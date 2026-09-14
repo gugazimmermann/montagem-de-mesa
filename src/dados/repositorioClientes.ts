@@ -6,9 +6,9 @@ import type {
   PadraoTecido,
   StatusAssinatura,
 } from '../compartilhado/tipos'
-import { v4 as uuidv4 } from 'uuid'
 import { CadastroErro, CadastroPendenteConfirmacao, EntrarErro } from './erros'
 import { mesclarToalhasFixas } from './categoriasFixas'
+import { resolverUrlsAssinadasEmLote } from './storage'
 import { supabase } from './supabase'
 import {
   META_PRECISA_REDEFINIR_SENHA,
@@ -31,7 +31,7 @@ export {
 } from './repositorioCatalogo'
 
 const CAMPOS_CLIENTE =
-  'id, slug, email, nome, logo, whatsapp, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id'
+  'id, slug, email, nome, logo, whatsapp, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id, updated_at'
 
 type ClienteRow = {
   id: string
@@ -45,6 +45,7 @@ type ClienteRow = {
   current_period_end?: string | null
   stripe_customer_id?: string | null
   stripe_subscription_id?: string | null
+  updated_at?: string | null
 }
 
 type CategoriaRow = {
@@ -128,6 +129,7 @@ function mapCliente(row: ClienteRow): Cliente {
     currentPeriodEnd: row.current_period_end ?? null,
     stripeCustomerId: row.stripe_customer_id ?? null,
     stripeSubscriptionId: row.stripe_subscription_id ?? null,
+    updatedAt: row.updated_at ?? null,
   }
 }
 
@@ -291,7 +293,7 @@ async function garantirClienteParaUsuario(
     supabase
       .from('clientes')
       .insert({
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         auth_user_id: user.id,
         slug: slugCandidato,
         email,
@@ -650,14 +652,150 @@ export async function carregarDadosCliente(
   if (catsRes.error) throw catsRes.error
   if (itensRes.error) throw itensRes.error
 
-  const dados: DadosCliente = {
+  const itens = (itensRes.data ?? []).map(mapItem)
+  const dados = await assinarMidiasDadosCliente({
     nome: cliente.nome,
     logo: cliente.logo,
     categorias: (catsRes.data ?? []).map(mapCategoria),
-    itens: (itensRes.data ?? []).map(mapItem),
-  }
+    itens,
+  })
 
   return mesclarToalhasFixas(dados)
+}
+
+export type CatalogoPublicoCarregado = {
+  existe: boolean
+  temAcesso: boolean
+  nome: string | null
+  clienteId: string | null
+  whatsapp: string
+  dados: DadosCliente | null
+}
+
+type CatalogoPublicoRpc = {
+  existe?: boolean
+  tem_acesso?: boolean
+  nome?: string | null
+  cliente?: {
+    id?: string
+    slug?: string
+    nome?: string
+    logo?: string
+    whatsapp?: string
+  } | null
+  categorias?: Array<{
+    id: string
+    codigo?: string | null
+    rotulo: string
+    descricao: string
+    ordem?: number
+  }>
+  itens?: Array<{
+    id: string
+    categoria_id: string
+    nome: string
+    imagem?: string | null
+    cores: ItemMesa['cores']
+    largura?: number | null
+    comprimento?: number | null
+    padrao?: string | null
+    descricao?: string | null
+    ordem?: number
+  }>
+}
+
+/** Uma RPC: status + cliente público + catálogo (com URLs assinadas). */
+export async function carregarCatalogoPublico(
+  slug: string,
+): Promise<CatalogoPublicoCarregado> {
+  const { data, error } = await supabase.rpc('carregar_catalogo_publico', {
+    p_slug: slug,
+  })
+
+  if (error) throw error
+
+  const payload = (data ?? {}) as CatalogoPublicoRpc
+  if (!payload.existe) {
+    return {
+      existe: false,
+      temAcesso: false,
+      nome: null,
+      clienteId: null,
+      whatsapp: '',
+      dados: null,
+    }
+  }
+
+  if (!payload.tem_acesso || !payload.cliente?.id) {
+    return {
+      existe: true,
+      temAcesso: false,
+      nome: typeof payload.nome === 'string' ? payload.nome : null,
+      clienteId: null,
+      whatsapp: '',
+      dados: null,
+    }
+  }
+
+  const categorias = (payload.categorias ?? []).map((c) =>
+    mapCategoria({
+      id: c.id,
+      codigo: c.codigo ?? null,
+      rotulo: c.rotulo,
+      descricao: c.descricao,
+      ordem: c.ordem ?? 0,
+    }),
+  )
+  const itens = (payload.itens ?? []).map((i) =>
+    mapItem({
+      id: i.id,
+      categoria_id: i.categoria_id,
+      nome: i.nome,
+      imagem: i.imagem ?? null,
+      cores: i.cores,
+      largura: i.largura ?? null,
+      comprimento: i.comprimento ?? null,
+      padrao: i.padrao ?? null,
+      descricao: i.descricao ?? null,
+      ordem: i.ordem ?? 0,
+    }),
+  )
+
+  const dados = await assinarMidiasDadosCliente({
+    nome: payload.cliente.nome ?? payload.nome ?? '',
+    logo: payload.cliente.logo ?? '',
+    categorias,
+    itens,
+  })
+
+  return {
+    existe: true,
+    temAcesso: true,
+    nome: dados.nome,
+    clienteId: payload.cliente.id,
+    whatsapp: payload.cliente.whatsapp ?? '',
+    dados: mesclarToalhasFixas(dados),
+  }
+}
+
+async function assinarMidiasDadosCliente(
+  dados: DadosCliente,
+): Promise<DadosCliente> {
+  const entradas: { valor: string; bucket: 'logos' | 'itens' }[] = []
+  if (dados.logo) entradas.push({ valor: dados.logo, bucket: 'logos' })
+  for (const item of dados.itens) {
+    if (item.imagem) entradas.push({ valor: item.imagem, bucket: 'itens' })
+  }
+
+  const mapa = await resolverUrlsAssinadasEmLote(entradas)
+  const logo = dados.logo ? mapa.get(dados.logo) ?? dados.logo : ''
+  const itens = dados.itens.map((item) => {
+    if (!item.imagem) return item
+    const assinada = mapa.get(item.imagem)
+    return assinada ? { ...item, imagem: assinada } : item
+  })
+
+  return { ...dados, logo, itens }
 }
 
 /** True se outro cliente já usa este endereço da montagem. */
@@ -730,22 +868,12 @@ export async function atualizarCadastro(
 }
 
 export async function solicitarTrocaEmail(
-  clienteId: string,
+  _clienteId: string,
   novoEmail: string,
   opcoes?: { forcarReenvio?: boolean },
 ): Promise<void> {
   const email = novoEmail.trim().toLowerCase()
   if (!email) throw new CadastroErro('Informe o e-mail.')
-
-  const { data: emailEmUso, error: erroEmail } = await supabase.rpc(
-    'cliente_email_em_uso_exceto',
-    { p_email: email, p_cliente_id: clienteId },
-  )
-
-  if (erroEmail) throw erroEmail
-  if (emailEmUso) {
-    throw new CadastroErro('Já existe um cliente com este e-mail.')
-  }
 
   const { data: userData } = await supabase.auth.getUser()
   const pendente = (userData.user?.new_email ?? '').trim().toLowerCase()
@@ -761,19 +889,9 @@ export async function solicitarTrocaEmail(
 
   if (error) {
     lancarSeRateLimit(error)
-    const msg = error.message.toLowerCase()
-    if (
-      msg.includes('sending email') ||
-      msg.includes('email change') ||
-      error.code === 'unexpected_failure' ||
-      error.code === 'email_address_not_authorized'
-    ) {
-      throw new CadastroErro(
-        'Não foi possível enviar o e-mail de confirmação. Tente novamente mais tarde.',
-      )
-    }
+    // Mensagem genérica: evita enumeração de e-mails via RPC/Auth.
     throw new CadastroErro(
-      'Não foi possível solicitar a troca de e-mail. Tente novamente.',
+      'Não foi possível solicitar a troca de e-mail. Verifique o endereço ou tente mais tarde.',
     )
   }
 }
