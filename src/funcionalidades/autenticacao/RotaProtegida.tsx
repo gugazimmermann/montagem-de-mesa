@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { clienteTemAcesso } from '../../compartilhado/tipos'
+import { rastrear } from '../../compartilhado/observabilidade'
 import { AdminAuthCarregando } from '../admin/AdminAuthCard'
 import { useAuth } from './useAuth'
 
@@ -33,6 +34,11 @@ export function RotaProtegida({ children }: PropsRotaProtegida) {
 
   const rotaAssinatura = localizacao.pathname === '/admin/assinatura'
   if (!clienteTemAcesso(cliente) && !rotaAssinatura) {
+    rastrear('paywall_hit', {
+      slug: cliente.slug,
+      superficie: 'admin',
+      rota: localizacao.pathname,
+    })
     return <Navigate to="/admin/assinatura" replace />
   }
 

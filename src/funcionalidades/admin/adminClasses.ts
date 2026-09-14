@@ -255,3 +255,47 @@ export const historicoItemLi =
 export const historicoCat = 'font-medium text-muted after:content-[":"]'
 
 export const historicoRodape = 'mt-1.5 mb-0 text-[0.8125rem] [&_a]:text-accent'
+
+export const historicoFiltros =
+  'mb-3 grid gap-2 sm:grid-cols-[1fr_10rem_auto] sm:items-end'
+
+export const historicoFiltrosAcoes = 'flex gap-1.5'
+
+export const historicoBadgeNovo =
+  'ml-1 inline-block align-middle rounded px-1.5 py-[0.05rem] text-[0.65rem] font-semibold uppercase tracking-wide bg-accent/15 text-accent'
+
+export const historicoBadgeContatado =
+  'ml-1 inline-block align-middle rounded px-1.5 py-[0.05rem] text-[0.65rem] font-semibold uppercase tracking-wide bg-surface-elevated text-muted'
+
+export const historicoBadgeFechado =
+  'ml-1 inline-block align-middle rounded px-1.5 py-[0.05rem] text-[0.65rem] font-semibold uppercase tracking-wide bg-success/15 text-success'
+
+export const historicoBadgeArquivado =
+  'ml-1 inline-block align-middle rounded px-1.5 py-[0.05rem] text-[0.65rem] font-semibold uppercase tracking-wide bg-border text-muted'
+
+export const historicoEmailFalhou = 'font-medium text-danger'
+
+export const onboardingLista = 'm-0 flex list-none flex-col gap-2 p-0'
+
+export const onboardingItem =
+  'flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-surface-solid px-3 py-2.5 text-sm'
+
+export const onboardingFeito = 'text-success font-medium'
+
+export const landing =
+  'landing min-h-screen flex flex-col text-text'
+
+export const landingHero =
+  'relative flex flex-1 flex-col justify-center gap-6 px-6 py-16 max-w-3xl mx-auto w-full'
+
+export const landingBrand =
+  'font-display text-[clamp(2.4rem,8vw,3.75rem)] font-semibold leading-[1.05] m-0'
+
+export const landingLead =
+  'm-0 max-w-xl text-lg text-muted leading-relaxed'
+
+export const landingCtas =
+  'flex flex-wrap gap-3'
+
+export const landingFoot =
+  'px-6 py-4 text-sm text-muted border-t border-border'

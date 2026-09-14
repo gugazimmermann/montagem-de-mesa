@@ -81,6 +81,20 @@
   color: var(--danger, #b42318);
 }
 
+.enviar-montagem__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.enviar-montagem__check input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
 .enviar-montagem__acoes {
   display: flex;
   flex-wrap: wrap;

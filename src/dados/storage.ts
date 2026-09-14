@@ -98,8 +98,17 @@ export type OpcoesUrlStorage = {
 }
 
 const RE_PATH_LOGO = /^[0-9a-f-]{36}\.(jpe?g|png|webp|gif)$/i
+/** Path novo (`uuid/uuid/uuid.ext`) ou legado do seed (`uuid/codigo/arquivo.ext`). */
 const RE_PATH_ITEM =
-  /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpe?g|png|webp|gif)$/i
+  /^[0-9a-f-]{36}\/[^/]+\/[^/]+\.(jpe?g|png|webp|gif)$/i
+
+function decodificarPathStorage(path: string): string {
+  try {
+    return decodeURIComponent(path)
+  } catch {
+    return path
+  }
+}
 
 /** Extrai o object path a partir de path puro ou URL (public/sign). */
 export function extrairPathStorage(
@@ -123,7 +132,10 @@ export function extrairPathStorage(
     if (partes.length < 2) return null
     const bucketNaUrl = partes[1]
     if (bucketNaUrl !== bucket) return null
-    return partes.slice(2).join('/')
+    const path = decodificarPathStorage(partes.slice(2).join('/'))
+    if (bucket === 'logos' && !RE_PATH_LOGO.test(path)) return null
+    if (bucket === 'itens' && !RE_PATH_ITEM.test(path)) return null
+    return path
   } catch {
     return null
   }

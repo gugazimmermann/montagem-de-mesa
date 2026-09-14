@@ -6,14 +6,19 @@ import type {
   PadraoTecido,
   StatusAssinatura,
 } from '../compartilhado/tipos'
-import { CadastroErro, CadastroPendenteConfirmacao, EntrarErro } from './erros'
+import { CadastroErro } from './erros'
 import { mesclarToalhasFixas } from './categoriasFixas'
 import { resolverUrlsAssinadasEmLote } from './storage'
 import { supabase } from './supabase'
-import {
-  META_PRECISA_REDEFINIR_SENHA,
-  metadataMarcaRecovery,
-} from './authRecovery'
+import { gerarSlug, ehSlugReservado } from './slug'
+import { normalizarWhatsapp } from './whatsapp'
+
+export {
+  digitosWhatsappNacional,
+  formatarWhatsapp,
+  normalizarWhatsapp,
+} from './whatsapp'
+export { gerarSlug, ehSlugReservado } from './slug'
 
 export {
   CadastroErro,
@@ -28,12 +33,28 @@ export {
   criarItem,
   excluirCategoriaDb,
   excluirItemDb,
+  trocarOrdemCategoria,
+  trocarOrdemItem,
 } from './repositorioCatalogo'
 
-const CAMPOS_CLIENTE =
+export {
+  atualizarSenha,
+  cadastrar,
+  entrar,
+  obterSessaoAuthPresente,
+  obterSessaoCliente,
+  ouvirSessao,
+  ouvirSessaoAuth,
+  reenviarEmailConfirmacao,
+  sair,
+  sessaoExigeRedefinirSenha,
+  solicitarRedefinicaoSenha,
+} from './repositorioAuth'
+
+export const CAMPOS_CLIENTE =
   'id, slug, email, nome, logo, whatsapp, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id, updated_at'
 
-type ClienteRow = {
+export type ClienteRow = {
   id: string
   slug: string
   email: string
@@ -83,40 +104,7 @@ function mapStatus(status: string | null | undefined): StatusAssinatura {
   }
 }
 
-const DDI_BRASIL = '55'
-
-/** DDD + número (até 11 dígitos), sem o 55. */
-export function digitosWhatsappNacional(valor: string): string {
-  let digitos = valor.replace(/\D/g, '')
-  if (digitos.startsWith(DDI_BRASIL) && digitos.length > 11) {
-    digitos = digitos.slice(DDI_BRASIL.length)
-  }
-  return digitos.slice(0, 11)
-}
-
-/** Máscara amigável: (11) 99999-9999 */
-export function formatarWhatsapp(valor: string): string {
-  const digitos = digitosWhatsappNacional(valor)
-  if (!digitos) return ''
-  if (digitos.length <= 2) return `(${digitos}`
-  if (digitos.length <= 6) return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`
-  if (digitos.length <= 10) {
-    return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`
-  }
-  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7, 11)}`
-}
-
-/**
- * Normaliza para armazenamento (E.164 BR sem +): 55 + DDD + número.
- * Vazio se não houver dígitos.
- */
-export function normalizarWhatsapp(valor: string): string {
-  const nacional = digitosWhatsappNacional(valor)
-  if (!nacional) return ''
-  return `${DDI_BRASIL}${nacional}`
-}
-
-function mapCliente(row: ClienteRow): Cliente {
+export function mapCliente(row: ClienteRow): Cliente {
   return {
     id: row.id,
     slug: row.slug,
@@ -155,24 +143,6 @@ function mapItem(row: ItemRow): ItemMesa {
   if (row.padrao) item.padrao = row.padrao as PadraoTecido
   if (row.descricao) item.descricao = row.descricao
   return item
-}
-
-const SLUGS_RESERVADOS = new Set(['admin', 'entrar', 'cadastro', 'assets', 'c'])
-
-/** Slug URL: apenas a-z, 0-9, hífen e underscore. */
-export function gerarSlug(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9_-]/g, '')
-    .replace(/-{2,}/g, '-')
-    .replace(/_{2,}/g, '_')
-}
-
-export function ehSlugReservado(slug: string): boolean {
-  return SLUGS_RESERVADOS.has(slug)
 }
 
 export async function obterClientePorId(id: string): Promise<Cliente | null> {
@@ -256,126 +226,6 @@ export async function obterClientePorAuthUserId(
   return data ? mapCliente(data) : null
 }
 
-type AuthUser = {
-  id: string
-  email?: string | null
-  user_metadata?: Record<string, unknown>
-}
-
-async function garantirClienteParaUsuario(
-  user: AuthUser,
-): Promise<Cliente | null> {
-  const existente = await obterClientePorAuthUserId(user.id)
-  if (existente) {
-    const emailAuth = (user.email ?? '').trim().toLowerCase()
-    if (emailAuth && emailAuth !== existente.email) {
-      const { data: row, error } = await supabase.rpc(
-        'sincronizar_email_cliente_do_auth',
-      )
-      if (!error && row) {
-        const sincronizado = Array.isArray(row) ? row[0] : row
-        if (sincronizado) return mapCliente(sincronizado as ClienteRow)
-      }
-    }
-    return existente
-  }
-
-  const meta = user.user_metadata ?? {}
-  const email = (user.email ?? '').trim().toLowerCase()
-  const nomeMeta = typeof meta.nome === 'string' ? meta.nome.trim() : ''
-  const nome = nomeMeta || (email ? email.split('@')[0]! : '')
-  const slugMeta = typeof meta.slug === 'string' ? meta.slug.trim() : ''
-  const slug = gerarSlug(slugMeta || nome)
-
-  if (!nome || !slug || !email) return null
-
-  const tentarInserir = async (slugCandidato: string) =>
-    supabase
-      .from('clientes')
-      .insert({
-        id: crypto.randomUUID(),
-        auth_user_id: user.id,
-        slug: slugCandidato,
-        email,
-        nome,
-        logo: '',
-      })
-      .select(CAMPOS_CLIENTE)
-      .single()
-
-  let slugCandidato = slug
-  for (let tentativa = 0; tentativa < 5; tentativa += 1) {
-    if (ehSlugReservado(slugCandidato)) {
-      slugCandidato = `${slug}-${tentativa + 2}`
-      continue
-    }
-
-    const { data: row, error } = await tentarInserir(slugCandidato)
-    if (!error && row) return mapCliente(row)
-
-    if (error?.code === '23505') {
-      slugCandidato = `${slug}-${tentativa + 2}`
-      continue
-    }
-
-    break
-  }
-
-  // Concorrência / já criado no intervalo
-  return obterClientePorAuthUserId(user.id)
-}
-
-export async function entrar(email: string, senha: string): Promise<Cliente | null> {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.trim().toLowerCase(),
-    password: senha,
-  })
-
-  if (error || !data.user) {
-    const msg = (error?.message ?? '').toLowerCase()
-    if (
-      error?.code === 'email_not_confirmed' ||
-      msg.includes('email not confirmed')
-    ) {
-      throw new EntrarErro(
-        'Confirme seu e-mail pelo link enviado antes de entrar.',
-        'email_not_confirmed',
-      )
-    }
-    return null
-  }
-
-  const cliente = await garantirClienteParaUsuario(data.user)
-  if (!cliente) {
-    await supabase.auth.signOut()
-    throw new EntrarErro(
-      'Conta incompleta. Tente cadastrar de novo ou escolha outro nome.',
-      'conta_incompleta',
-    )
-  }
-
-  // Login com senha prova a conta — limpa marca residual de recovery.
-  if (metadataMarcaRecovery(data.user.user_metadata as Record<string, unknown>)) {
-    try {
-      await supabase.auth.updateUser({
-        data: { [META_PRECISA_REDEFINIR_SENHA]: false },
-      })
-    } catch {
-      // ignore
-    }
-  }
-
-  return cliente
-}
-
-const SENHA_MIN_REPO = 10
-
-function validarSenha(senha: string): void {
-  if (senha.length < SENHA_MIN_REPO) {
-    throw new CadastroErro(`A senha deve ter pelo menos ${SENHA_MIN_REPO} caracteres.`)
-  }
-}
-
 function validarSlugMontagem(
   slug: string,
   mensagens: { vazio?: string; invalido?: string; reservado?: string } = {},
@@ -404,230 +254,6 @@ function lancarSeRateLimit(error: { code?: string; message?: string }): void {
   }
 }
 
-export async function cadastrar(dados: {
-  nome: string
-  email: string
-  senha: string
-}): Promise<Cliente> {
-  const nome = dados.nome.trim()
-  const email = dados.email.trim().toLowerCase()
-  const slug = gerarSlug(nome)
-
-  if (!nome) throw new CadastroErro('Informe o nome do cliente.')
-  if (!email) throw new CadastroErro('Informe o e-mail.')
-  validarSlugMontagem(slug, {
-    vazio: 'Informe um nome válido para gerar o endereço da montagem.',
-    invalido: 'Informe um nome válido para gerar o endereço da montagem.',
-    reservado: 'Este nome gera um endereço reservado. Escolha outro.',
-  })
-  validarSenha(dados.senha)
-
-  const { data: slugEmUso, error: erroSlug } = await supabase.rpc(
-    'cliente_slug_em_uso',
-    { p_slug: slug },
-  )
-
-  if (erroSlug) throw erroSlug
-
-  if (slugEmUso) {
-    throw new CadastroErro('Este endereço da montagem já está em uso.')
-  }
-
-  const redirectAdmin = `${window.location.origin}/admin`
-
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password: dados.senha,
-    options: {
-      data: { nome, slug },
-      emailRedirectTo: redirectAdmin,
-    },
-  })
-
-  if (authError) {
-    // Mensagem genérica: evita oráculo de e-mail para visitantes anônimos.
-    throw new CadastroErro('Não foi possível criar a conta. Tente novamente.')
-  }
-
-  if (!authData.user) {
-    throw new CadastroErro('Não foi possível criar a conta. Tente novamente.')
-  }
-
-  // Confirmação de e-mail ativa: sem sessão agora; cliente será criado após o link.
-  if (!authData.session) {
-    throw new CadastroPendenteConfirmacao()
-  }
-
-  const cliente = await garantirClienteParaUsuario(authData.user)
-  if (!cliente) {
-    await supabase.auth.signOut()
-    throw new CadastroErro('Não foi possível salvar o cliente. Tente novamente.')
-  }
-
-  return cliente
-}
-
-export async function solicitarRedefinicaoSenha(email: string): Promise<void> {
-  const { error } = await supabase.auth.resetPasswordForEmail(
-    email.trim().toLowerCase(),
-    {
-      redirectTo: `${window.location.origin}/admin/redefinir-senha`,
-    },
-  )
-
-  if (error) {
-    lancarSeRateLimit(error)
-    const msg = error.message.toLowerCase()
-    if (msg.includes('redirect') || msg.includes('not allowed')) {
-      throw new CadastroErro(
-        'Não foi possível enviar o e-mail de redefinição. Tente novamente.',
-      )
-    }
-    throw new CadastroErro(
-      'Não foi possível enviar o e-mail de redefinição. Tente novamente.',
-    )
-  }
-}
-
-export async function reenviarEmailConfirmacao(email: string): Promise<void> {
-  const { error } = await supabase.auth.resend({
-    type: 'signup',
-    email: email.trim().toLowerCase(),
-    options: {
-      emailRedirectTo: `${window.location.origin}/admin`,
-    },
-  })
-
-  if (error) {
-    lancarSeRateLimit(error)
-    throw new CadastroErro('Não foi possível reenviar o e-mail. Tente novamente.')
-  }
-}
-
-export async function atualizarSenha(novaSenha: string): Promise<void> {
-  validarSenha(novaSenha)
-
-  const { error } = await supabase.auth.updateUser({
-    password: novaSenha,
-    data: { [META_PRECISA_REDEFINIR_SENHA]: false },
-  })
-  if (error) {
-    throw new CadastroErro('Não foi possível atualizar a senha. Tente novamente.')
-  }
-
-  // Encerra outras sessões (dispositivos) após trocar a senha.
-  await supabase.auth.signOut({ scope: 'others' })
-}
-
-/** Sessão Auth presente (ex.: após link de recovery), sem mapear cliente. */
-export async function obterSessaoAuthPresente(): Promise<boolean> {
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data.user) return false
-  return true
-}
-
-/** True se user_metadata indica que ainda falta redefinir senha pós-recovery. */
-export async function sessaoExigeRedefinirSenha(): Promise<boolean> {
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data.user) return false
-  return metadataMarcaRecovery(data.user.user_metadata as Record<string, unknown>)
-}
-
-export function ouvirSessaoAuth(
-  callback: (temSessao: boolean, evento?: string) => void,
-): () => void {
-  void obterSessaoAuthPresente().then((tem) => callback(tem))
-
-  const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange((evento, session) => {
-    callback(!!session, evento)
-  })
-
-  return () => subscription.unsubscribe()
-}
-
-export async function sair(): Promise<void> {
-  await supabase.auth.signOut()
-}
-
-export async function obterSessaoCliente(): Promise<Cliente | null> {
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data.user) return null
-  return garantirClienteParaUsuario(data.user)
-}
-
-export function ouvirSessao(
-  callback: (
-    cliente: Cliente | null,
-    meta?: {
-      evento?: string
-      sessaoValida?: boolean
-      precisaRedefinirSenha?: boolean
-    },
-  ) => void,
-): () => void {
-  let geracao = 0
-
-  const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange((evento, session) => {
-    const atual = ++geracao
-    void (async () => {
-      if (!session?.user) {
-        if (atual !== geracao) return
-        callback(null, { evento, sessaoValida: false })
-        return
-      }
-
-      const precisaRedefinir =
-        evento === 'PASSWORD_RECOVERY' ||
-        metadataMarcaRecovery(session.user.user_metadata as Record<string, unknown>)
-
-      if (evento === 'PASSWORD_RECOVERY' && !metadataMarcaRecovery(session.user.user_metadata as Record<string, unknown>)) {
-        // Persiste no user_metadata para sobreviver a limpeza de localStorage.
-        try {
-          await supabase.auth.updateUser({
-            data: { [META_PRECISA_REDEFINIR_SENHA]: true },
-          })
-        } catch {
-          // Continua com flag local mesmo se metadata falhar.
-        }
-      }
-
-      if (precisaRedefinir) {
-        if (atual !== geracao) return
-        callback(null, {
-          evento,
-          sessaoValida: true,
-          precisaRedefinirSenha: true,
-        })
-        return
-      }
-
-      try {
-        const cliente = await garantirClienteParaUsuario(session.user)
-        if (atual !== geracao) return
-        // Mantém sessaoValida mesmo se o mapeamento falhar (não “desloga” a UI por erro transitório).
-        callback(cliente, {
-          evento,
-          sessaoValida: true,
-          precisaRedefinirSenha: false,
-        })
-      } catch {
-        if (atual !== geracao) return
-        callback(null, {
-          evento,
-          sessaoValida: true,
-          precisaRedefinirSenha: false,
-        })
-      }
-    })()
-  })
-
-  return () => subscription.unsubscribe()
-}
-
 export async function carregarDadosCliente(
   id: string,
 ): Promise<DadosCliente | null> {
@@ -639,6 +265,7 @@ export async function carregarDadosCliente(
       .from('categorias')
       .select('id, codigo, rotulo, descricao, ordem')
       .eq('cliente_id', id)
+      .is('deleted_at', null)
       .order('ordem', { ascending: true }),
     supabase
       .from('itens')
@@ -646,6 +273,7 @@ export async function carregarDadosCliente(
         'id, categoria_id, nome, imagem, cores, largura, comprimento, padrao, descricao, ordem',
       )
       .eq('cliente_id', id)
+      .is('deleted_at', null)
       .order('ordem', { ascending: true }),
   ])
 
@@ -669,6 +297,7 @@ export type CatalogoPublicoCarregado = {
   nome: string | null
   clienteId: string | null
   whatsapp: string
+  email: string
   dados: DadosCliente | null
 }
 
@@ -682,6 +311,7 @@ type CatalogoPublicoRpc = {
     nome?: string
     logo?: string
     whatsapp?: string
+    email?: string
   } | null
   categorias?: Array<{
     id: string
@@ -722,17 +352,31 @@ export async function carregarCatalogoPublico(
       nome: null,
       clienteId: null,
       whatsapp: '',
+      email: '',
       dados: null,
     }
   }
 
-  if (!payload.tem_acesso || !payload.cliente?.id) {
+  if (!payload.tem_acesso) {
+    return {
+      existe: true,
+      temAcesso: false,
+      nome: typeof payload.nome === 'string' ? payload.nome : null,
+      clienteId: payload.cliente?.id ?? null,
+      whatsapp: payload.cliente?.whatsapp ?? '',
+      email: payload.cliente?.email ?? '',
+      dados: null,
+    }
+  }
+
+  if (!payload.cliente?.id) {
     return {
       existe: true,
       temAcesso: false,
       nome: typeof payload.nome === 'string' ? payload.nome : null,
       clienteId: null,
       whatsapp: '',
+      email: '',
       dados: null,
     }
   }
@@ -774,6 +418,7 @@ export async function carregarCatalogoPublico(
     nome: dados.nome,
     clienteId: payload.cliente.id,
     whatsapp: payload.cliente.whatsapp ?? '',
+    email: payload.cliente.email ?? '',
     dados: mesclarToalhasFixas(dados),
   }
 }

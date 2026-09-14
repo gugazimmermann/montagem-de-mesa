@@ -70,44 +70,68 @@ export interface Cliente {
   updatedAt?: string | null
 }
 
-const GRACA_PAST_DUE_MS = 7 * 24 * 60 * 60 * 1000
+/** Graça de past_due — manter alinhado a `cliente_tem_acesso` no SQL. */
+export const GRACA_PAST_DUE_MS = 7 * 24 * 60 * 60 * 1000
 
 /**
  * Trial válido, assinatura active com período vigente, ou past_due
  * com graça de 7 dias a partir de currentPeriodEnd (fail-closed se ausente).
+ * Espelha `public.cliente_tem_acesso` (migrations 150000–170000).
  */
 export function clienteTemAcesso(
   cliente: Pick<
     Cliente,
     'subscriptionStatus' | 'trialEndsAt' | 'currentPeriodEnd'
   >,
+  agoraMs: number = Date.now(),
 ): boolean {
-  const agora = Date.now()
   if (cliente.subscriptionStatus === 'past_due') {
     if (!cliente.currentPeriodEnd) return false
-    return new Date(cliente.currentPeriodEnd).getTime() + GRACA_PAST_DUE_MS > agora
+    return (
+      new Date(cliente.currentPeriodEnd).getTime() + GRACA_PAST_DUE_MS > agoraMs
+    )
   }
   if (cliente.subscriptionStatus === 'active') {
     if (!cliente.currentPeriodEnd) return false
-    return new Date(cliente.currentPeriodEnd).getTime() > agora
+    return new Date(cliente.currentPeriodEnd).getTime() > agoraMs
   }
   if (cliente.subscriptionStatus === 'trialing') {
     if (!cliente.trialEndsAt) return false
-    return new Date(cliente.trialEndsAt).getTime() > agora
+    return new Date(cliente.trialEndsAt).getTime() > agoraMs
   }
   return false
 }
 
 export function diasRestantesTrial(
   cliente: Pick<Cliente, 'subscriptionStatus' | 'trialEndsAt'>,
+  agoraMs: number = Date.now(),
 ): number | null {
   if (cliente.subscriptionStatus !== 'trialing' || !cliente.trialEndsAt) {
     return null
   }
-  const ms = new Date(cliente.trialEndsAt).getTime() - Date.now()
+  const ms = new Date(cliente.trialEndsAt).getTime() - agoraMs
   if (ms <= 0) return 0
   return Math.ceil(ms / (1000 * 60 * 60 * 24))
 }
+
+/** Dias restantes da graça past_due (null se não aplicável). */
+export function diasRestantesPastDue(
+  cliente: Pick<Cliente, 'subscriptionStatus' | 'currentPeriodEnd'>,
+  agoraMs: number = Date.now(),
+): number | null {
+  if (cliente.subscriptionStatus !== 'past_due' || !cliente.currentPeriodEnd) {
+    return null
+  }
+  const fim =
+    new Date(cliente.currentPeriodEnd).getTime() + GRACA_PAST_DUE_MS
+  const ms = fim - agoraMs
+  if (ms <= 0) return 0
+  return Math.ceil(ms / (1000 * 60 * 60 * 24))
+}
+
+export type StatusLeadMontagem = 'novo' | 'contatado' | 'fechado' | 'arquivado'
+
+export type StatusEmailMontagem = 'pending' | 'sent' | 'failed'
 
 export interface DadosCliente {
   nome: string
@@ -134,6 +158,9 @@ export interface MontagemEnviada {
   itens: ItemMontagemEnviada[]
   linkMontagem: string
   createdAt: string
+  emailStatus: StatusEmailMontagem
+  leadStatus: StatusLeadMontagem
+  notaInterna: string
 }
 
 export interface Credenciais {

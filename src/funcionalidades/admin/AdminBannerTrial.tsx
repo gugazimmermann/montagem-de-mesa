@@ -1,19 +1,46 @@
 import { Link } from 'react-router-dom'
-import { diasRestantesTrial } from '../../compartilhado/tipos'
+import {
+  diasRestantesPastDue,
+  diasRestantesTrial,
+} from '../../compartilhado/tipos'
 import { useAuth } from '../autenticacao'
 import * as ui from './adminClasses'
 
-function mensagemDias(dias: number): string {
+function mensagemTrial(dias: number): string {
   if (dias <= 0) return 'Avaliação encerrada — assine para liberar o painel.'
   if (dias === 1) return 'Último dia de avaliação.'
   return `Restam ${dias} dias de avaliação.`
 }
 
-/** Banner no topo do admin: dias de trial quando não há assinatura paga. */
+function mensagemPastDue(dias: number): string {
+  if (dias <= 0) {
+    return 'Prazo de regularização encerrado — atualize o pagamento para continuar.'
+  }
+  if (dias === 1) {
+    return 'Último dia da tolerância de pagamento. Atualize o cartão para não perder o acesso.'
+  }
+  return `Pagamento pendente — restam ${dias} dias de tolerância.`
+}
+
+/** Banner no topo do admin: trial ou grace past_due. */
 export function AdminBannerTrial() {
   const { cliente } = useAuth()
 
   if (!cliente) return null
+
+  if (cliente.subscriptionStatus === 'past_due') {
+    const dias = diasRestantesPastDue(cliente)
+    if (dias == null) return null
+    return (
+      <div className={ui.bannerTrial} role="status">
+        <p>{mensagemPastDue(dias)}</p>
+        <Link className="btn btn--ghost" to="/admin/assinatura">
+          Regularizar
+        </Link>
+      </div>
+    )
+  }
+
   if (cliente.subscriptionStatus !== 'trialing') return null
   if (cliente.stripeSubscriptionId) return null
 
@@ -22,7 +49,7 @@ export function AdminBannerTrial() {
 
   return (
     <div className={ui.bannerTrial} role="status">
-      <p>{mensagemDias(dias)}</p>
+      <p>{mensagemTrial(dias)}</p>
       <Link className="btn btn--ghost" to="/admin/assinatura">
         Assinar
       </Link>

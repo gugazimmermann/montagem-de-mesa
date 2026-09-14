@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
 import { siteUrl } from '../_shared/stripe.ts'
-import { supabaseAdmin } from '../_shared/supabase.ts'
+import { obterClienteDoUsuario, supabaseAdmin } from '../_shared/supabase.ts'
 
 type Visitante = {
   nome?: unknown
@@ -17,6 +17,8 @@ type Item = {
 }
 
 type Body = {
+  acao?: unknown
+  montagemId?: unknown
   slug?: unknown
   visitante?: Visitante
   itens?: unknown
@@ -28,8 +30,10 @@ const MAX_ITENS = 40
 const MAX_LINK = 2000
 const RATE_LIMIT = 5
 const RATE_JANELA_SEG = 60
-/** `m` = uuid:uuid|uuid:uuid… */
-const RE_PARAM_M = /^[0-9a-fA-F|:.-]{1,1500}$/
+/** `m` = id:id|id:id… (UUID ou slug, ex. toalha:toalha-marfim-classico) */
+const RE_PARAM_M =
+  /^[0-9a-zA-Z._-]+(?::[0-9a-zA-Z._-]+)(?:\|[0-9a-zA-Z._-]+:[0-9a-zA-Z._-]+)*$/
+const MAX_PARAM_M = 1500
 
 function texto(valor: unknown, max: number): string | null {
   if (typeof valor !== 'string') return null
@@ -68,7 +72,9 @@ function montarLinkMontagem(slug: string, linkCliente: string | null): string | 
     try {
       const u = new URL(linkCliente)
       const bruto = u.searchParams.get('m')
-      if (bruto && RE_PARAM_M.test(bruto)) m = bruto
+      if (bruto && bruto.length <= MAX_PARAM_M && RE_PARAM_M.test(bruto)) {
+        m = bruto
+      }
     } catch {
       // ignora link inválido; ainda montamos o canônico sem m
     }
@@ -95,6 +101,60 @@ Deno.serve(async (req) => {
       body = (await req.json()) as Body
     } catch {
       return jsonResponse({ error: 'JSON inválido' }, 400)
+    }
+
+    if (body.acao === 'reenviar') {
+      const montagemId = texto(body.montagemId, 80)
+      if (!montagemId) {
+        return jsonResponse({ error: 'montagemId obrigatório.' }, 400)
+      }
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        return jsonResponse({ error: 'Não autenticado' }, 401)
+      }
+      let dono: Awaited<ReturnType<typeof obterClienteDoUsuario>>
+      try {
+        dono = await obterClienteDoUsuario(authHeader)
+      } catch (e) {
+        if (e instanceof Response) return e
+        throw e
+      }
+      const admin = supabaseAdmin()
+      const { data: montagem, error: erroMontagem } = await admin
+        .from('montagens_enviadas')
+        .select(
+          'id, cliente_id, visitante_nome, visitante_email, visitante_whatsapp, visitante_endereco, visitante_cidade, visitante_estado, itens, link_montagem',
+        )
+        .eq('id', montagemId)
+        .eq('cliente_id', dono.cliente.id)
+        .maybeSingle()
+
+      if (erroMontagem || !montagem) {
+        return jsonResponse({ error: 'Montagem não encontrada.' }, 404)
+      }
+
+      const itensDb = Array.isArray(montagem.itens)
+        ? (montagem.itens as { categoria: string; nome: string }[])
+        : []
+
+      const reenviado = await enviarEmailEAtualizar({
+        admin,
+        montagemId: montagem.id,
+        clienteEmail: dono.cliente.email,
+        clienteNome: dono.cliente.nome,
+        nome: String(montagem.visitante_nome ?? ''),
+        email: String(montagem.visitante_email ?? ''),
+        whatsapp: String(montagem.visitante_whatsapp ?? ''),
+        endereco: String(montagem.visitante_endereco ?? ''),
+        cidade: String(montagem.visitante_cidade ?? ''),
+        estado: String(montagem.visitante_estado ?? ''),
+        itens: itensDb,
+        linkMontagem: String(montagem.link_montagem ?? ''),
+      })
+      if (!reenviado) {
+        return jsonResponse({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
+      }
+      return jsonResponse({ ok: true })
     }
 
     const slug = texto(body.slug, 80)?.toLowerCase()

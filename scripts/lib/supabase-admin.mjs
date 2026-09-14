@@ -45,7 +45,8 @@ export async function resolverClienteId(admin, { envId, slugPadrao = 'raffiner' 
   return data.id
 }
 
-export async function garantirBucketPublico(
+/** Cria bucket privado (leitura via signed URL + RLS), se ainda não existir. */
+export async function garantirBucketPrivado(
   admin,
   { id, fileSizeLimit, mimeTypes = MIME_TYPES_LISTA },
 ) {
@@ -56,22 +57,27 @@ export async function garantirBucketPublico(
   if (existe) return
 
   const { error } = await admin.storage.createBucket(id, {
-    public: true,
+    public: false,
     fileSizeLimit,
     allowedMimeTypes: mimeTypes,
   })
   if (error && !/already exists/i.test(error.message)) throw error
 }
 
+/** @deprecated use garantirBucketPrivado */
+export async function garantirBucketPublico(admin, opts) {
+  return garantirBucketPrivado(admin, opts)
+}
+
 export async function garantirBucketLogos(admin) {
-  return garantirBucketPublico(admin, {
+  return garantirBucketPrivado(admin, {
     id: BUCKET_LOGOS,
     fileSizeLimit: TAMANHO_MAX_LOGO,
   })
 }
 
 export async function garantirBucketItens(admin) {
-  return garantirBucketPublico(admin, {
+  return garantirBucketPrivado(admin, {
     id: BUCKET_ITENS,
     fileSizeLimit: TAMANHO_MAX_ITEM,
   })

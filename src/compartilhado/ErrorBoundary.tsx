@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { capturarErro } from './observabilidade'
 
 interface Props {
   children: ReactNode
@@ -16,7 +17,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(erro: Error, info: ErrorInfo): void {
-    console.error('Erro na interface:', erro, info.componentStack)
+    capturarErro(erro, `ErrorBoundary:${info.componentStack?.slice(0, 120) ?? ''}`)
   }
 
   private recarregar = () => {

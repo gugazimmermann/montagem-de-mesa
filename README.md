@@ -16,7 +16,7 @@ npm run seed:supabase         # Auth + cliente + catálogo + imagens/
 npm run dev
 ```
 
-Abra a URL do Vite (em geral `http://localhost:5173`). Detalhes de Auth, SMTP e SQL estão abaixo.
+Abra a URL do Vite (em geral `http://localhost:5173`). A raiz `/` é a landing; a demo fica em `/raffiner`. Detalhes de Auth, SMTP e SQL estão abaixo.
 
 ## Pré-requisitos
 
@@ -74,7 +74,7 @@ No dashboard Supabase:
 2. **Authentication → URL Configuration** — só Redirect URLs do seu domínio (ver acima).
 3. **Bot protection** / rate limits no Auth quando disponível.
 4. Catálogo e Storage de itens/logos são **leitura pública** quando o cliente tem assinatura/trial ativos (`cliente_tem_acesso`). Sem acesso, a montagem pública some da view `clientes_publicos` e das policies.
-5. `npm run db:migrate` usa `ssl: { rejectUnauthorized: false }`; prefira CA válida em `DATABASE_URL` quando possível.
+5. `npm run db:migrate` verifica o certificado SSL por padrão; use `DATABASE_SSL_REJECT_UNAUTHORIZED=false` só se necessário em ambiente local.
 
 ### Schema e RLS
 
@@ -86,8 +86,13 @@ Aplica o schema em [`supabase/migrations/`](supabase/migrations/) (ordem lexicog
 
 1. [`20260914140000_schema.sql`](supabase/migrations/20260914140000_schema.sql) — schema completo (tabelas, trial/assinatura, RLS, storage)
 2. [`20260914150000_acesso_periodo.sql`](supabase/migrations/20260914150000_acesso_periodo.sql) — `current_period_end` no acesso, RPC `status_cliente_publico`, RLS de montagens com acesso
+3. [`20260914160000_otimizacoes.sql`](supabase/migrations/20260914160000_otimizacoes.sql) — rate limit, catálogo público em RPC, storage privado, `email_status`/idempotência
+4. [`20260914170000_proteger_insert_e_urls.sql`](supabase/migrations/20260914170000_proteger_insert_e_urls.sql) — proteção de colunas sensíveis no INSERT e URLs de storage
+5. [`20260914180000_crm_soft_delete.sql`](supabase/migrations/20260914180000_crm_soft_delete.sql) — CRM de leads (`lead_status`/`nota_interna`), soft-delete de catálogo, reordenação
 
 **Não** reseta o Database do projeto. Tabelas de outros apps (ex.: `leads`) permanecem intactas. Alternativa sem `DATABASE_URL`: `supabase db query --linked -f supabase/migrations/ARQUIVO.sql`.
+
+`npm run db:migrate` usa SSL com verificação de certificado por padrão. Em ambientes locais sem CA, defina `DATABASE_SSL_REJECT_UNAUTHORIZED=false`.
 
 ### Assinatura Stripe (trial + bloqueio total)
 
@@ -105,7 +110,7 @@ Edge Functions em [`supabase/functions/`](supabase/functions/):
 | `listar-faturas` | Histórico de faturas pagas (+ sync se DB defasado) |
 | `sincronizar-assinatura` | Stripe → `clientes` (status, subscription id, período) |
 | `stripe-webhook` | Eventos Stripe → atualiza `clientes` (`verify_jwt` desligado) |
-| `enviar-montagem` | Visitante envia montagem → salva em `montagens_enviadas` + e-mail ao admin via Resend (`verify_jwt` desligado) |
+| `enviar-montagem` | Visitante envia montagem → salva em `montagens_enviadas` + e-mail ao admin via Resend (`verify_jwt` desligado); admin autenticado pode `acao: reenviar` |
 
 #### Criar conta Stripe e obter os dados
 

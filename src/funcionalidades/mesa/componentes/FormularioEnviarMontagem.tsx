@@ -8,6 +8,7 @@ import {
   type DadosVisitanteMontagem,
   type ItemMontagemEnviado,
 } from '../../../dados/enviarMontagem'
+import { rastrear } from '../../../compartilhado/observabilidade'
 import { montarTextoMontagem, urlWhatsAppMontagem } from '../mensagemMontagem'
 import './FormularioEnviarMontagem.css'
 
@@ -78,6 +79,10 @@ export function FormularioEnviarMontagem({
   const [whatsappExibicao, setWhatsappExibicao] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [lgpdAceito, setLgpdAceito] = useState(false)
+
+  const adminDigitos = whatsappAdmin.replace(/\D/g, '')
+  const temWhatsappAdmin = adminDigitos.length >= 12
 
   useEffect(() => {
     if (!aberto) return
@@ -85,8 +90,10 @@ export function FormularioEnviarMontagem({
     setWhatsappExibicao('')
     setErro(null)
     setEnviando(false)
+    setLgpdAceito(false)
+    rastrear('send_opened', { slug })
     window.setTimeout(() => primeiroCampoRef.current?.focus(), 0)
-  }, [aberto])
+  }, [aberto, slug])
 
   useEffect(() => {
     if (!aberto) return
@@ -131,8 +138,7 @@ export function FormularioEnviarMontagem({
     setForm((anterior) => ({ ...anterior, [campo]: valor }))
   }
 
-  async function aoEnviar(evento: FormEvent) {
-    evento.preventDefault()
+  async function concluirEnvio() {
     setErro(null)
 
     const visitante: DadosVisitanteMontagem = {
@@ -166,6 +172,11 @@ export function FormularioEnviarMontagem({
       return
     }
 
+    if (!lgpdAceito) {
+      setErro('Confirme o uso dos seus dados para contato sobre esta montagem.')
+      return
+    }
+
     if (itens.length === 0) {
       setErro('Selecione ao menos um item na montagem.')
       return
@@ -179,28 +190,43 @@ export function FormularioEnviarMontagem({
         itens,
         linkMontagem,
       })
+      rastrear('send_ok', { slug, abrirWhatsApp: temWhatsappAdmin })
 
-      const texto = montarTextoMontagem({
-        visitante: {
-          ...visitante,
-          whatsapp: formatarWhatsapp(visitante.whatsapp) || visitante.whatsapp,
-        },
-        itens,
-        linkMontagem,
-        nomeEstabelecimento,
-      })
-
-      const adminDigitos = whatsappAdmin.replace(/\D/g, '')
-      if (adminDigitos.length >= 12) {
-        window.open(urlWhatsAppMontagem(adminDigitos, texto), '_blank', 'noopener,noreferrer')
-        aoSucesso('Montagem enviada por e-mail. Abra o WhatsApp para concluir o envio.')
-      } else {
-        aoSucesso(
-          'Montagem enviada por e-mail. O estabelecimento ainda não cadastrou WhatsApp.',
+      if (temWhatsappAdmin) {
+        const texto = montarTextoMontagem({
+          visitante: {
+            ...visitante,
+            whatsapp: formatarWhatsapp(visitante.whatsapp) || visitante.whatsapp,
+          },
+          itens,
+          linkMontagem,
+          nomeEstabelecimento,
+        })
+        const janela = window.open(
+          urlWhatsAppMontagem(adminDigitos, texto),
+          '_blank',
+          'noopener,noreferrer',
         )
+        if (!janela) {
+          rastrear('wa_blocked', { slug })
+          aoSucesso(
+            'Montagem registrada. Permita pop-ups para abrir o WhatsApp.',
+          )
+        } else {
+          rastrear('wa_opened', { slug })
+          aoSucesso(
+            'WhatsApp aberto. Toque em Enviar na conversa para concluir.',
+          )
+        }
+      } else {
+        aoSucesso('Montagem enviada ao estabelecimento.')
       }
       aoFechar()
     } catch (e) {
+      rastrear('send_fail', {
+        slug,
+        motivo: e instanceof Error ? e.message : 'unknown',
+      })
       setErro(
         e instanceof Error && e.message
           ? e.message
@@ -209,6 +235,11 @@ export function FormularioEnviarMontagem({
     } finally {
       setEnviando(false)
     }
+  }
+
+  async function aoEnviar(evento: FormEvent) {
+    evento.preventDefault()
+    await concluirEnvio()
   }
 
   return (
@@ -228,8 +259,9 @@ export function FormularioEnviarMontagem({
       >
         <h2 id={tituloId}>Enviar montagem</h2>
         <p className="enviar-montagem__intro">
-          Informe seus dados. O estabelecimento recebe por e-mail e, em seguida,
-          você pode enviar a mesma mensagem pelo WhatsApp.
+          {temWhatsappAdmin
+            ? 'Preencha seus dados. Em seguida abrimos o WhatsApp com a montagem pronta — é só tocar em Enviar.'
+            : 'Preencha seus dados. A montagem será enviada ao estabelecimento.'}
         </p>
 
         <form className="enviar-montagem__form" onSubmit={(e) => void aoEnviar(e)}>
@@ -262,7 +294,7 @@ export function FormularioEnviarMontagem({
           </label>
 
           <label className="enviar-montagem__campo">
-            <span>WhatsApp</span>
+            <span>Seu WhatsApp</span>
             <input
               name="whatsapp"
               inputMode="numeric"
@@ -322,6 +354,20 @@ export function FormularioEnviarMontagem({
             </label>
           </div>
 
+          <label className="enviar-montagem__check">
+            <input
+              type="checkbox"
+              checked={lgpdAceito}
+              onChange={(e) => setLgpdAceito(e.target.checked)}
+              disabled={enviando}
+              required
+            />
+            <span>
+              Autorizo o uso dos meus dados de contato apenas para que o
+              estabelecimento responda sobre esta montagem.
+            </span>
+          </label>
+
           {erro && (
             <p className="enviar-montagem__erro" role="alert">
               {erro}
@@ -338,7 +384,13 @@ export function FormularioEnviarMontagem({
               Cancelar
             </button>
             <button type="submit" className="btn btn--primary" disabled={enviando}>
-              {enviando ? 'Enviando…' : 'Enviar montagem'}
+              {enviando
+                ? temWhatsappAdmin
+                  ? 'Abrindo WhatsApp…'
+                  : 'Enviando…'
+                : temWhatsappAdmin
+                  ? 'Enviar pelo WhatsApp'
+                  : 'Enviar montagem'}
             </button>
           </div>
         </form>

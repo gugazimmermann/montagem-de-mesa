@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   clienteTemAcesso,
+  diasRestantesPastDue,
   diasRestantesTrial,
   type StatusAssinatura,
 } from '../../compartilhado/tipos'
@@ -19,6 +20,7 @@ import {
   type FaturaPaga,
 } from '../../dados/assinaturaStripe'
 import { obterSessaoCliente } from '../../dados/repositorioClientes'
+import { rastrear } from '../../compartilhado/observabilidade'
 import { useAuth } from '../autenticacao'
 import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
 import { AdminConfirmacao } from './AdminConfirmacao'
@@ -175,7 +177,16 @@ export function AssinaturaAdmin() {
         try {
           const sync = await sincronizarAssinaturaComRetry(3, 1500)
           if (sync.assinatura) setResumoStripe(sync.assinatura)
-          await refrescarCliente()
+          const sessao = await refrescarCliente()
+          rastrear('checkout_success', {})
+          if (sessao && clienteTemAcesso(sessao)) {
+            setOk('Assinatura atualizada. Redirecionando ao painel…')
+            navegar('/admin/painel', {
+              replace: true,
+              state: { flash: 'Assinatura ativa. Bem-vindo de volta ao painel.' },
+            })
+            return
+          }
           setOk('Assinatura atualizada. Você já pode usar o painel.')
         } catch {
           setOk(
@@ -193,7 +204,7 @@ export function AssinaturaAdmin() {
       setOk(null)
       setErro('Checkout cancelado. Você pode tentar novamente quando quiser.')
     }
-  }, [params, setParams, refrescarCliente])
+  }, [params, setParams, refrescarCliente, navegar])
 
   async function aoAssinar() {
     setErro(null)
@@ -304,6 +315,10 @@ export function AssinaturaAdmin() {
     subscriptionStatus: statusEfetivoLocal,
     trialEndsAt: cliente.trialEndsAt,
   })
+  const diasPastDue = diasRestantesPastDue({
+    subscriptionStatus: statusEfetivoLocal,
+    currentPeriodEnd: periodoFim ?? cliente.currentPeriodEnd,
+  })
   const mostrarTrial = statusEfetivo === 'trialing' && !pagaAtiva
   const mostrarAssinar = !temAcesso || mostrarTrial
   const podeCancelar =
@@ -316,7 +331,8 @@ export function AssinaturaAdmin() {
     Boolean(ok) ||
     Boolean(erro) ||
     !temAcesso ||
-    Boolean(cancelamentoAgendado && periodoFim)
+    Boolean(cancelamentoAgendado && periodoFim) ||
+    (statusEfetivoLocal === 'past_due' && diasPastDue != null)
 
   const alerta = temAlerta ? (
     <>
@@ -328,6 +344,13 @@ export function AssinaturaAdmin() {
       {erro ? (
         <AdminAlerta tipo="error" titulo="Atenção">
           {erro}
+        </AdminAlerta>
+      ) : null}
+      {statusEfetivoLocal === 'past_due' && diasPastDue != null ? (
+        <AdminAlerta tipo="warning" titulo="Pagamento pendente">
+          {diasPastDue <= 0
+            ? 'A tolerância de 7 dias encerrou. Atualize o pagamento no portal para recuperar o acesso.'
+            : `Você tem ${diasPastDue} dia${diasPastDue === 1 ? '' : 's'} de tolerância. Regularize o pagamento para não perder o painel e a página pública.`}
         </AdminAlerta>
       ) : null}
       {!temAcesso ? (

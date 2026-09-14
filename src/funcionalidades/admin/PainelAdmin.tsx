@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import { excluirCategoriaDb } from '../../dados/repositorioClientes'
+import { contarMontagensNovas } from '../../dados/repositorioMontagens'
+import { trocarOrdemCategoria } from '../../dados/repositorioCatalogo'
 import { useAuth } from '../autenticacao'
 import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
 import { AdminBannerTrial } from './AdminBannerTrial'
 import { AdminConfirmacao, AdminMenuMais } from './AdminConfirmacao'
+import { AdminOnboarding } from './AdminOnboarding'
 import {
   AdminPainelCarregando,
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
-import { useDadosCliente } from './useDadosCliente'
+import { montagensQueryKey, useDadosCliente } from './useDadosCliente'
 import { useFlashLocation } from './useFlashLocation'
 import * as ui from './adminClasses'
 
@@ -28,6 +32,17 @@ export function PainelAdmin() {
   const [menuAberto, setMenuAberto] = useState(false)
   const [excluirId, setExcluirId] = useState<string | null>(null)
   const [excluindo, setExcluindo] = useState(false)
+  const [reordenando, setReordenando] = useState(false)
+
+  const queryNovos = useQuery({
+    queryKey: clienteId
+      ? [...montagensQueryKey(clienteId), 'count-novos']
+      : ['montagens', 'none', 'count'],
+    queryFn: () => contarMontagensNovas(clienteId!),
+    enabled: Boolean(clienteId),
+    staleTime: 30_000,
+  })
+  const qtdNovos = queryNovos.data ?? 0
 
   useEffect(() => {
     if (flash) setFeedback({ tipo: 'success', texto: flash })
@@ -107,6 +122,11 @@ export function PainelAdmin() {
   return (
     <div className={ui.painel}>
       <AdminBannerTrial />
+      <AdminOnboarding
+        cliente={cliente}
+        dados={dados}
+        linkPublico={linkPublico}
+      />
       <header className={ui.painelHeader}>
         <div>
           <p className={ui.painelEyebrow}>Painel do cliente</p>
@@ -119,6 +139,7 @@ export function PainelAdmin() {
             </Link>
             <Link className="btn btn--ghost" to="/admin/painel/montagens">
               Montagens enviadas
+              {qtdNovos > 0 ? ` (${qtdNovos})` : ''}
             </Link>
             <Link className="btn btn--ghost" to="/admin/painel/cadastro">
               Atualizar cadastro
@@ -151,6 +172,7 @@ export function PainelAdmin() {
                 onClick={() => setMenuAberto(false)}
               >
                 Montagens enviadas
+                {qtdNovos > 0 ? ` (${qtdNovos})` : ''}
               </Link>
               <Link
                 className="btn btn--ghost"
@@ -210,9 +232,11 @@ export function PainelAdmin() {
           />
         ) : (
           <ul className={ui.list}>
-            {dados.categorias.map((categoria) => {
+            {dados.categorias.map((categoria, indice) => {
               const qtdItens = dados.itens.filter((i) => i.categoria === categoria.id).length
               const fixa = ehCategoriaFixa(categoria.id)
+              const anterior = dados.categorias[indice - 1]
+              const proxima = dados.categorias[indice + 1]
               return (
                 <li key={categoria.id} className={ui.listItem}>
                   <div>
@@ -226,6 +250,78 @@ export function PainelAdmin() {
                     {categoria.descricao && <p>{categoria.descricao}</p>}
                   </div>
                   <div className={ui.listAcoes}>
+                    {!fixa && (
+                      <>
+                        <button
+                          type="button"
+                          className="btn btn--ghost"
+                          disabled={!anterior || reordenando}
+                          aria-label="Mover categoria para cima"
+                          onClick={() => {
+                            if (!anterior || !clienteId) return
+                            setReordenando(true)
+                            void (async () => {
+                              try {
+                                await trocarOrdemCategoria(
+                                  clienteId,
+                                  categoria.id,
+                                  anterior.id,
+                                )
+                                const cats = [...dados.categorias]
+                                ;[cats[indice - 1], cats[indice]] = [
+                                  cats[indice]!,
+                                  cats[indice - 1]!,
+                                ]
+                                setDados({ ...dados, categorias: cats })
+                              } catch {
+                                setFeedback({
+                                  tipo: 'error',
+                                  texto: 'Não foi possível reordenar.',
+                                })
+                              } finally {
+                                setReordenando(false)
+                              }
+                            })()
+                          }}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--ghost"
+                          disabled={!proxima || reordenando || ehCategoriaFixa(proxima.id)}
+                          aria-label="Mover categoria para baixo"
+                          onClick={() => {
+                            if (!proxima || !clienteId) return
+                            setReordenando(true)
+                            void (async () => {
+                              try {
+                                await trocarOrdemCategoria(
+                                  clienteId,
+                                  categoria.id,
+                                  proxima.id,
+                                )
+                                const cats = [...dados.categorias]
+                                ;[cats[indice], cats[indice + 1]] = [
+                                  cats[indice + 1]!,
+                                  cats[indice]!,
+                                ]
+                                setDados({ ...dados, categorias: cats })
+                              } catch {
+                                setFeedback({
+                                  tipo: 'error',
+                                  texto: 'Não foi possível reordenar.',
+                                })
+                              } finally {
+                                setReordenando(false)
+                              }
+                            })()
+                          }}
+                        >
+                          ↓
+                        </button>
+                      </>
+                    )}
                     {fixa ? (
                       <Link
                         className="btn btn--ghost"
@@ -261,7 +357,7 @@ export function PainelAdmin() {
       <AdminConfirmacao
         aberto={excluirId !== null}
         titulo="Excluir categoria?"
-        descricao="Os itens vinculados também serão removidos. Esta ação não pode ser desfeita."
+        descricao="A categoria e os itens vinculados saem do catálogo público (podem ser recuperados no banco). Confirme para continuar."
         confirmarRotulo="Excluir"
         processando={excluindo}
         processandoRotulo="Excluindo…"

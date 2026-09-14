@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "seed:supabase": "node scripts/seed-supabase.mjs",
-    "db:migrate": "node scripts/apply-migration.mjs"
+    "db:migrate": "node scripts/apply-migration.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.111.0",
@@ -29,6 +31,7 @@
     "slugify": "^1.6.9",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vitest": "^3.2.7"
   }
 }

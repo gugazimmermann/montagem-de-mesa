@@ -187,6 +187,9 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
         setPulsoPreview(false)
         pulsoTimeoutRef.current = null
       }, 450)
+      void import('../compartilhado/observabilidade').then(({ rastrear }) => {
+        rastrear('item_selected', { slug, categoria })
+      })
     } else if (cat) {
       setAnuncio(`${cat.rotulo}: seleção removida`)
     }
@@ -421,7 +424,7 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
           aria-label="Seleção de itens"
         >
           <div className="app__picker-toolbar">
-            {haSelecaoAlemToalha && (
+            {haSelecaoAlemToalha ? (
               <button
                 type="button"
                 className="btn btn--primary"
@@ -429,6 +432,12 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
               >
                 Enviar montagem
               </button>
+            ) : (
+              <p className="app__dica-envio" role="status">
+                {haSelecao
+                  ? 'Escolha ao menos uma peça além da toalha para enviar a montagem.'
+                  : 'Monte a mesa (além da toalha) para liberar o envio.'}
+              </p>
             )}
             {configAnterior && (
               <button type="button" className="btn btn--ghost" onClick={desfazerLimpar}>

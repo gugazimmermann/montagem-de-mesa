@@ -70,10 +70,6 @@ function semAcentos(texto) {
   return texto.normalize('NFD').replace(/\p{M}/gu, '')
 }
 
-function sanitizarSegmento(segmento) {
-  return semAcentos(segmento)
-}
-
 async function buscarUsuarioPorEmail() {
   const alvo = email.toLowerCase()
   let page = 1
@@ -129,7 +125,7 @@ async function upsertCliente(authUserId) {
   }
 
   const clienteId = randomUUID()
-  const logoUrl = `${url.replace(/\/$/, '')}/storage/v1/object/public/logos/${clienteId}.webp`
+  const logoPath = `${clienteId}.webp`
 
   const { error } = await admin.from('clientes').insert({
     id: clienteId,
@@ -137,7 +133,7 @@ async function upsertCliente(authUserId) {
     slug: slugify(SLUG, { lower: true, strict: true }),
     email,
     nome: NOME,
-    logo: logoUrl,
+    logo: logoPath,
     subscription_status: 'trialing',
     trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
     current_period_end: null,
@@ -303,15 +299,14 @@ async function uploadLogo(clienteId) {
   })
   if (upErr) throw upErr
 
-  const { data: pub } = admin.storage.from(BUCKET_LOGOS).getPublicUrl(objectKey)
   const { error: updErr } = await admin
     .from('clientes')
-    .update({ logo: pub.publicUrl, updated_at: new Date().toISOString() })
+    .update({ logo: objectKey, updated_at: new Date().toISOString() })
     .eq('id', clienteId)
   if (updErr) throw updErr
 
-  console.log('Logo enviada:', pub.publicUrl)
-  return pub.publicUrl
+  console.log('Logo enviada (path):', objectKey)
+  return objectKey
 }
 
 async function uploadItens(clienteId) {
@@ -328,15 +323,13 @@ async function uploadItens(clienteId) {
     .eq('cliente_id', clienteId)
   if (catsErr) throw catsErr
 
-  const codigoParaId = new Map(
-    (catsDb ?? []).filter((c) => c.codigo).map((c) => [c.codigo, c.id]),
+  const idParaCodigo = new Map(
+    (catsDb ?? []).filter((c) => c.codigo).map((c) => [c.id, c.codigo]),
   )
 
-  /** chave: codigo|nomeSemAcento → url pública */
-  const urlPorItem = new Map()
+  /** chave: codigo|nomeSemAcento → caminho local do arquivo */
+  const arquivoPorItem = new Map()
   const arquivos = listarImagens(imgsRoot).sort()
-  let ok = 0
-  let falhas = 0
   let semPasta = 0
 
   for (const arquivo of arquivos) {
@@ -350,12 +343,43 @@ async function uploadItens(clienteId) {
     }
 
     const nomeArquivo = basename(arquivo, extname(arquivo))
-    const pathStorage = `${clienteId}/${codigo}/${sanitizarSegmento(basename(arquivo))}`
-    const ext = extname(arquivo).toLowerCase()
+    arquivoPorItem.set(
+      `${codigo}|${semAcentos(nomeArquivo).toLowerCase()}`,
+      arquivo,
+    )
+  }
+
+  const { data: itensDb, error: itensErr } = await admin
+    .from('itens')
+    .select('id, categoria_id, nome')
+    .eq('cliente_id', clienteId)
+  if (itensErr) throw itensErr
+
+  let ok = 0
+  let falhas = 0
+  let semMatch = 0
+
+  for (const row of itensDb ?? []) {
+    const codigo = idParaCodigo.get(row.categoria_id)
+    if (!codigo) {
+      console.warn('Item sem codigo de categoria:', row.nome)
+      continue
+    }
+
+    const chave = `${codigo}|${semAcentos(row.nome).toLowerCase()}`
+    const arquivo = arquivoPorItem.get(chave)
+    if (!arquivo) {
+      console.warn('Sem imagem para:', codigo, row.nome)
+      semMatch += 1
+      continue
+    }
+
+    const extComPonto = extname(arquivo).toLowerCase()
+    const pathStorage = `${clienteId}/${row.categoria_id}/${row.id}${extComPonto}`
     const body = readFileSync(arquivo)
 
     const { error } = await admin.storage.from(BUCKET_ITENS).upload(pathStorage, body, {
-      contentType: MIME_POR_EXT[ext] || 'application/octet-stream',
+      contentType: MIME_POR_EXT[extComPonto] || 'application/octet-stream',
       upsert: true,
     })
     if (error) {
@@ -364,52 +388,26 @@ async function uploadItens(clienteId) {
       continue
     }
 
-    const { data: pub } = admin.storage.from(BUCKET_ITENS).getPublicUrl(pathStorage)
-    urlPorItem.set(`${codigo}|${semAcentos(nomeArquivo).toLowerCase()}`, pub.publicUrl)
+    const { error: updErr } = await admin
+      .from('itens')
+      .update({ imagem: pathStorage })
+      .eq('cliente_id', clienteId)
+      .eq('id', row.id)
+    if (updErr) {
+      console.error('Falha update imagem:', row.nome, updErr.message)
+      falhas += 1
+      continue
+    }
+
     ok += 1
-    if (ok % 25 === 0) console.log(`  ${ok}/${arquivos.length} enviados...`)
+    if (ok % 25 === 0) console.log(`  ${ok} enviados...`)
   }
 
   console.log(
-    `Upload itens: ${ok} ok, ${falhas} falhas, ${semPasta} pasta(s) ignorada(s)`,
+    `Upload itens: ${ok} ok, ${falhas} falhas, ${semPasta} pasta(s) ignorada(s), ${semMatch} sem match`,
   )
   if (falhas > 0) throw new Error(`${falhas} upload(s) falharam`)
-
-  let atualizadosDb = 0
-  let semMatch = 0
-
-  for (const item of catalogo.itens) {
-    const chave = `${item.categoria}|${semAcentos(item.nome).toLowerCase()}`
-    const novaUrl = urlPorItem.get(chave)
-    if (!novaUrl) {
-      console.warn('Sem imagem para:', item.categoria, item.nome)
-      semMatch += 1
-      continue
-    }
-
-    const categoriaId = codigoParaId.get(item.categoria)
-    if (!categoriaId) {
-      console.error('Categoria não encontrada no banco:', item.categoria)
-      continue
-    }
-
-    const { data, error } = await admin
-      .from('itens')
-      .update({ imagem: novaUrl })
-      .eq('cliente_id', clienteId)
-      .eq('categoria_id', categoriaId)
-      .eq('nome', item.nome)
-      .select('id')
-
-    if (error) throw error
-    if (!data?.length) {
-      console.warn('Item sem match no banco:', item.categoria, item.nome)
-      continue
-    }
-    atualizadosDb += 1
-  }
-
-  console.log(`URLs no banco: ${atualizadosDb}; sem imagem: ${semMatch}`)
+  console.log(`Paths no banco: ${ok}`)
 }
 
 try {

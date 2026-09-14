@@ -36,6 +36,7 @@ export async function atualizarCategoria(
     })
     .eq('cliente_id', clienteId)
     .eq('id', categoria.id)
+    .is('deleted_at', null)
     .select('id')
     .maybeSingle()
 
@@ -51,11 +52,13 @@ export async function excluirCategoriaDb(
   clienteId: string,
   categoriaId: string,
 ): Promise<void> {
+  const agora = new Date().toISOString()
   const { data, error } = await supabase
     .from('categorias')
-    .delete()
+    .update({ deleted_at: agora })
     .eq('cliente_id', clienteId)
     .eq('id', categoriaId)
+    .is('deleted_at', null)
     .select('id')
     .maybeSingle()
 
@@ -65,6 +68,13 @@ export async function excluirCategoriaDb(
       'Não foi possível excluir a categoria. Verifique sua assinatura ou tente novamente.',
     )
   }
+
+  await supabase
+    .from('itens')
+    .update({ deleted_at: agora })
+    .eq('cliente_id', clienteId)
+    .eq('categoria_id', categoriaId)
+    .is('deleted_at', null)
 }
 
 export async function criarItem(clienteId: string, item: ItemMesa): Promise<void> {
@@ -106,6 +116,7 @@ export async function atualizarItem(clienteId: string, item: ItemMesa): Promise<
     })
     .eq('cliente_id', clienteId)
     .eq('id', item.id)
+    .is('deleted_at', null)
     .select('id')
     .maybeSingle()
 
@@ -120,9 +131,10 @@ export async function atualizarItem(clienteId: string, item: ItemMesa): Promise<
 export async function excluirItemDb(clienteId: string, itemId: string): Promise<void> {
   const { data, error } = await supabase
     .from('itens')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('cliente_id', clienteId)
     .eq('id', itemId)
+    .is('deleted_at', null)
     .select('id')
     .maybeSingle()
 
@@ -132,4 +144,32 @@ export async function excluirItemDb(clienteId: string, itemId: string): Promise<
       'Não foi possível excluir o item. Verifique sua assinatura ou tente novamente.',
     )
   }
+}
+
+export async function trocarOrdemCategoria(
+  clienteId: string,
+  idA: string,
+  idB: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('trocar_ordem_categoria', {
+    p_cliente_id: clienteId,
+    p_id_a: idA,
+    p_id_b: idB,
+  })
+  if (error) throw error
+}
+
+export async function trocarOrdemItem(
+  clienteId: string,
+  categoriaId: string,
+  idA: string,
+  idB: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('trocar_ordem_item', {
+    p_cliente_id: clienteId,
+    p_categoria_id: categoriaId,
+    p_id_a: idA,
+    p_id_b: idB,
+  })
+  if (error) throw error
 }

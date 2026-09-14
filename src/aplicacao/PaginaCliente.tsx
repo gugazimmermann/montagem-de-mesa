@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
+import { rastrear } from '../compartilhado/observabilidade'
 import { carregarCatalogoPublico } from '../dados/repositorioClientes'
 import App from './App'
 import './App.css'
@@ -14,11 +16,20 @@ export function PaginaCliente() {
     staleTime: 45_000,
   })
 
+  useEffect(() => {
+    if (query.data?.temAcesso && query.data.dados) {
+      rastrear('catalog_loaded', { slug: slug ?? '' })
+    }
+    if (query.data && !query.data.temAcesso && query.data.existe) {
+      rastrear('paywall_hit', { slug: slug ?? '', superficie: 'publica' })
+    }
+  }, [query.data, slug])
+
   if (!slug) {
     return (
       <div className="app-shell app-shell--status">
         <p>Montagem não encontrada.</p>
-        <Link to="/admin">Área do estabelecimento</Link>
+        <Link to="/">Início</Link>
       </div>
     )
   }
@@ -47,19 +58,41 @@ export function PaginaCliente() {
     return (
       <div className="app-shell app-shell--status">
         <p>Montagem não encontrada.</p>
-        <Link to="/admin">Área do estabelecimento</Link>
+        <Link to="/">Início</Link>
       </div>
     )
   }
 
   if (!resultado.temAcesso) {
+    const email = resultado.email.trim()
+    const wa = resultado.whatsapp.replace(/\D/g, '')
     return (
       <div className="app-shell app-shell--status">
         <p>
           A montagem de {resultado.nome ?? 'este estabelecimento'} está temporariamente
           indisponível.
         </p>
-        <Link to="/admin">Área do estabelecimento</Link>
+        <p>Fale com o estabelecimento para mais informações.</p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {email ? (
+            <a className="btn btn--primary" href={`mailto:${email}`}>
+              Enviar e-mail
+            </a>
+          ) : null}
+          {wa.length >= 12 ? (
+            <a
+              className="btn btn--ghost"
+              href={`https://wa.me/${wa}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp
+            </a>
+          ) : null}
+          <Link className="btn btn--ghost" to="/">
+            Início
+          </Link>
+        </div>
       </div>
     )
   }
@@ -68,7 +101,7 @@ export function PaginaCliente() {
     return (
       <div className="app-shell app-shell--status">
         <p>Montagem não encontrada.</p>
-        <Link to="/admin">Área do estabelecimento</Link>
+        <Link to="/">Início</Link>
       </div>
     )
   }

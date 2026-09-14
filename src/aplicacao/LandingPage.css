@@ -1,0 +1,101 @@
+.landing {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 20%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 50%),
+    linear-gradient(165deg, var(--surface) 0%, var(--bg, var(--surface-solid)) 45%, var(--surface) 100%);
+  overflow: clip;
+}
+
+.landing__atmosphere {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent 70%);
+  opacity: 0.45;
+}
+
+.landing__hero {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25rem;
+  width: min(40rem, 100%);
+  margin: 0 auto;
+  padding: clamp(2rem, 8vw, 5rem) 1.5rem;
+  animation: landing-in 0.7s ease-out both;
+}
+
+.landing__eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, var(--text-muted));
+}
+
+.landing__brand {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(2.5rem, 9vw, 3.85rem);
+  font-weight: 650;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.landing__lead {
+  margin: 0;
+  max-width: 32rem;
+  font-size: clamp(1.05rem, 2.5vw, 1.2rem);
+  line-height: 1.5;
+  color: var(--text-muted);
+  animation: landing-in 0.7s ease-out 0.12s both;
+}
+
+.landing__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+  animation: landing-in 0.7s ease-out 0.22s both;
+}
+
+.landing__foot {
+  position: relative;
+  z-index: 1;
+  padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+@keyframes landing-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing__hero,
+  .landing__lead,
+  .landing__ctas {
+    animation: none;
+  }
+}

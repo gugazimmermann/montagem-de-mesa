@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { atualizarCategoria, excluirItemDb } from '../../dados/repositorioClientes'
+import { atualizarCategoria, excluirItemDb, trocarOrdemItem } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import { AmpliarImagem } from './AmpliarImagem'
 import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
@@ -30,6 +30,7 @@ export function EditarCategoria() {
   const [salvando, setSalvando] = useState(false)
   const [excluirItemId, setExcluirItemId] = useState<string | null>(null)
   const [excluindo, setExcluindo] = useState(false)
+  const [reordenando, setReordenando] = useState(false)
 
   useEffect(() => {
     if (flash) setMensagem(flash)
@@ -215,7 +216,10 @@ export function EditarCategoria() {
           />
         ) : (
           <ul className={ui.list}>
-            {itensCategoria.map((item) => (
+            {itensCategoria.map((item, indice) => {
+              const anterior = itensCategoria[indice - 1]
+              const proximo = itensCategoria[indice + 1]
+              return (
               <li key={item.id} className={ui.itensItem}>
                 {item.imagem ? (
                   <AmpliarImagem src={item.imagem} alt={item.nome} />
@@ -229,6 +233,83 @@ export function EditarCategoria() {
                   {item.descricao && <p>{item.descricao}</p>}
                 </div>
                 <div className={ui.listAcoes}>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    disabled={!anterior || reordenando}
+                    aria-label="Mover item para cima"
+                    onClick={() => {
+                      if (!anterior) return
+                      setReordenando(true)
+                      void (async () => {
+                        try {
+                          await trocarOrdemItem(
+                            idCliente,
+                            idCategoria,
+                            item.id,
+                            anterior.id,
+                          )
+                          const ids = itensCategoria.map((i) => i.id)
+                          const i = ids.indexOf(item.id)
+                          const j = ids.indexOf(anterior.id)
+                          const reordenados = [...dadosAtuais.itens]
+                          const posI = reordenados.findIndex((x) => x.id === item.id)
+                          const posJ = reordenados.findIndex((x) => x.id === anterior.id)
+                          if (posI >= 0 && posJ >= 0) {
+                            ;[reordenados[posI], reordenados[posJ]] = [
+                              reordenados[posJ]!,
+                              reordenados[posI]!,
+                            ]
+                            setDados({ ...dadosAtuais, itens: reordenados })
+                          }
+                          void i
+                          void j
+                        } catch {
+                          setErro('Não foi possível reordenar.')
+                        } finally {
+                          setReordenando(false)
+                        }
+                      })()
+                    }}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    disabled={!proximo || reordenando}
+                    aria-label="Mover item para baixo"
+                    onClick={() => {
+                      if (!proximo) return
+                      setReordenando(true)
+                      void (async () => {
+                        try {
+                          await trocarOrdemItem(
+                            idCliente,
+                            idCategoria,
+                            item.id,
+                            proximo.id,
+                          )
+                          const reordenados = [...dadosAtuais.itens]
+                          const posI = reordenados.findIndex((x) => x.id === item.id)
+                          const posJ = reordenados.findIndex((x) => x.id === proximo.id)
+                          if (posI >= 0 && posJ >= 0) {
+                            ;[reordenados[posI], reordenados[posJ]] = [
+                              reordenados[posJ]!,
+                              reordenados[posI]!,
+                            ]
+                            setDados({ ...dadosAtuais, itens: reordenados })
+                          }
+                        } catch {
+                          setErro('Não foi possível reordenar.')
+                        } finally {
+                          setReordenando(false)
+                        }
+                      })()
+                    }}
+                  >
+                    ↓
+                  </button>
                   <Link
                     className="btn btn--ghost"
                     to={`/admin/painel/categorias/${categoriaId}/itens/${item.id}`}
@@ -244,7 +325,8 @@ export function EditarCategoria() {
                   </button>
                 </div>
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
       </section>
@@ -252,7 +334,7 @@ export function EditarCategoria() {
       <AdminConfirmacao
         aberto={excluirItemId !== null}
         titulo="Excluir item?"
-        descricao="Esta ação não pode ser desfeita."
+        descricao="O item sai do catálogo público. Confirme para continuar."
         confirmarRotulo="Excluir"
         processando={excluindo}
         processandoRotulo="Excluindo…"

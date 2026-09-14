@@ -1,4 +1,9 @@
-import type { Categoria, ConfiguracaoMesa, ItemMesa } from '../../compartilhado/tipos'
+import type {
+  Categoria,
+  ConfiguracaoMesa,
+  ItemMesa,
+  ItemMontagemEnviada,
+} from '../../compartilhado/tipos'
 import { criarConfiguracaoVazia } from '../catalogo'
 
 const PARAM_MONTAGEM = 'm'
@@ -69,4 +74,86 @@ export function temSelecao(configuracao: ConfiguracaoMesa): boolean {
 /** Compara duas configurações pela serialização canônica. */
 export function mesmaMontagem(a: ConfiguracaoMesa, b: ConfiguracaoMesa): boolean {
   return serializarMontagem(a) === serializarMontagem(b)
+}
+
+function normalizarRotulo(valor: string): string {
+  return valor.trim().toLocaleLowerCase('pt-BR')
+}
+
+/** Reconstrói configuração a partir de rótulos/nomes salvos no histórico. */
+export function configuracaoDeItensEnviados(
+  itensEnviados: ItemMontagemEnviada[],
+  categorias: Categoria[],
+  itensCatalogo: ItemMesa[],
+): ConfiguracaoMesa {
+  const base = criarConfiguracaoVazia(categorias)
+  for (const enviado of itensEnviados) {
+    const rotulo = normalizarRotulo(enviado.categoria)
+    const nome = normalizarRotulo(enviado.nome)
+    if (!rotulo || !nome) continue
+    const categoria = categorias.find(
+      (c) => normalizarRotulo(c.rotulo) === rotulo,
+    )
+    if (!categoria) continue
+    const item = itensCatalogo.find(
+      (i) =>
+        i.categoria === categoria.id && normalizarRotulo(i.nome) === nome,
+    )
+    if (!item) continue
+    base[categoria.id] = item.id
+  }
+  return base
+}
+
+function extrairParamM(linkSalvo: string): string | null {
+  try {
+    const u = new URL(linkSalvo)
+    const m = u.searchParams.get(PARAM_MONTAGEM)?.trim()
+    return m || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Link absoluto para abrir a montagem no admin.
+ * Prefere `?m=` do link salvo; senão resolve itens (rótulo+nome) no catálogo.
+ * Sempre usa `window.location.origin` para abrir no host atual.
+ */
+export function linkAbrirMontagemAdmin(params: {
+  slug: string
+  linkSalvo: string
+  itensEnviados: ItemMontagemEnviada[]
+  categorias: Categoria[]
+  itensCatalogo: ItemMesa[]
+}): string {
+  const { slug, linkSalvo, itensEnviados, categorias, itensCatalogo } = params
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : ''
+  const pathname = `/${slug}`
+
+  const mSalvo = extrairParamM(linkSalvo)
+  if (mSalvo) {
+    const paramsM = new URLSearchParams()
+    paramsM.set(PARAM_MONTAGEM, mSalvo)
+    const daUrl = lerMontagemDaUrl(
+      paramsM.toString(),
+      categorias,
+      itensCatalogo,
+    )
+    if (daUrl && temSelecao(daUrl)) {
+      return `${origin}${urlComMontagem(pathname, daUrl)}`
+    }
+  }
+
+  const reconstruida = configuracaoDeItensEnviados(
+    itensEnviados,
+    categorias,
+    itensCatalogo,
+  )
+  if (temSelecao(reconstruida)) {
+    return `${origin}${urlComMontagem(pathname, reconstruida)}`
+  }
+
+  return `${origin}${pathname}`
 }

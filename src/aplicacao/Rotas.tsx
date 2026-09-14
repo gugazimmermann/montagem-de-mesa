@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { RotaProtegida } from '../funcionalidades/autenticacao'
+import { LandingPage } from './LandingPage'
 import { PaginaCliente } from './PaginaCliente'
 
 const LoginAdmin = lazy(() =>
@@ -61,7 +62,7 @@ const FormularioItem = lazy(() =>
 
 function RedirectCSlug() {
   const { slug } = useParams<{ slug: string }>()
-  return <Navigate to={slug ? `/${slug}` : '/raffiner'} replace />
+  return <Navigate to={slug ? `/${slug}` : '/'} replace />
 }
 
 function AdminFallback() {
@@ -79,7 +80,7 @@ function comSuspense(elemento: ReactNode) {
 export function Rotas() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/raffiner" replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/admin" element={comSuspense(<LoginAdmin />)} />
       <Route path="/entrar" element={comSuspense(<LoginAdmin />)} />
       <Route path="/cadastro" element={comSuspense(<CadastroAdmin />)} />
@@ -157,7 +158,7 @@ export function Rotas() {
       />
       <Route path="/c/:slug" element={<RedirectCSlug />} />
       <Route path="/:slug" element={<PaginaCliente />} />
-      <Route path="*" element={<Navigate to="/raffiner" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

@@ -61,7 +61,11 @@ for (const migrationPath of arquivos) {
 
 const client = new pg.Client({
   connectionString: dbUrl,
-  ssl: { rejectUnauthorized: false },
+  // Prefer CA válida: defina DATABASE_SSL_REJECT_UNAUTHORIZED=true (padrão) com
+  // certificado confiável. Só use false em ambientes locais/legacy.
+  ssl: {
+    rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false',
+  },
 })
 
 try {
