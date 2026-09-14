@@ -1,44 +1,67 @@
 # Montagem de Mesa
 
-Aplicação web para **montar uma composição de mesa**: o visitante escolhe peças por categoria e vê a **pré-visualização** em tempo real.
+**Português** | [English](README.en.md)
 
-Multi-cliente: cada conta tem login no admin, nome, logo, endereço público e catálogo editável. Auth, dados e imagens no **Supabase** (Auth + PostgreSQL + Storage + RLS). Toalhas fixas vêm de JSON local (não editáveis no painel).
+![Exemplo de pré-visualização de mesa posta](public/readme/readme.png)
 
-**Stack:** React 19 · Vite · TypeScript · React Router · `@supabase/supabase-js`
+Aplicação web multi-tenant para lojas de mesa posta: o visitante escolhe peças por categoria, vê a pré-visualização em tempo real e envia a composição; o estabelecimento gerencia catálogo, leads e assinatura.
 
-## Quick start
+Cada conta tem login no admin, nome, logo, endereço público (`/:slug`) e catálogo editável. Auth, dados e imagens no **Supabase** (Auth + PostgreSQL + Storage + RLS). Toalhas fixas vêm de JSON local (não editáveis no painel). Trial de **14 dias**; sem acesso ativo, o painel e a página pública ficam bloqueados.
 
-```bash
-npm install
-cp .env.example .env          # preencha as chaves (veja Configuração)
-npm run db:migrate            # schema deste app (não reseta o Database)
-npm run seed:supabase         # Auth + cliente + catálogo + imagens/
-npm run dev
-```
+## Stack
 
-Abra a URL do Vite (em geral `http://localhost:5173`). A raiz `/` é a landing; a demo fica em `/raffiner`. Detalhes de Auth, SMTP e SQL estão abaixo.
+| Camada | Tecnologia |
+|--------|------------|
+| Frontend | React 19 · Vite 8 · TypeScript · Tailwind 4 · React Router 7 · TanStack Query |
+| Backend | Supabase (Auth, Postgres, Storage, Edge Functions) |
+| Cobrança | Stripe (Checkout, Customer Portal, webhooks) |
+| E-mail | Resend (notificação ao enviar montagem) |
+| Host | Render (Static Site) |
 
 ## Pré-requisitos
 
 - Node.js + npm
 - Projeto no [Supabase](https://supabase.com)
-- SMTP próprio recomendado (ex.: [Resend](https://resend.com)) — o e-mail padrão do Supabase é só para testes e tem limite baixo
+- SMTP próprio recomendado (ex.: [Resend](https://resend.com)) — o e-mail padrão do Supabase é só para testes
+- Conta [Stripe](https://stripe.com) (modo teste para desenvolvimento)
 
-## Configuração
+## Quick start
 
-### Variáveis de ambiente
+```bash
+npm install
+cp .env.example .env          # preencha as chaves (veja abaixo)
+npm run db:migrate            # schema deste app (não reseta o Database)
+npm run seed:supabase         # Auth + cliente demo + catálogo + imagens/
+npm run dev
+```
+
+Abra a URL do Vite (em geral `http://localhost:5173`). A raiz `/` é a landing; a demo fica em `/raffiner`.
+
+## Variáveis de ambiente
+
+Copie [`.env.example`](.env.example) e preencha. Separe bem o que vai no frontend, nos scripts locais e nas Edge Functions.
+
+### Frontend (Vite / Render)
 
 | Variável | Uso |
 |----------|-----|
 | `VITE_SUPABASE_URL` | Project URL (`https://….supabase.co`) |
-| `VITE_SUPABASE_ANON_KEY` | Chave `anon` `public` (frontend) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role — **só** scripts locais (seed); nunca no Vite/Render |
-| `DATABASE_URL` | URI do Postgres — necessário para `npm run db:migrate` (e seed transacional) |
-| `SEED_EMAIL` | Opcional; padrão `financeiroraffiner@gmail.com` |
-| `SEED_PASSWORD` | Obrigatório para o seed (mín. 10 caracteres, igual ao app) |
+| `VITE_SUPABASE_ANON_KEY` | Chave `anon` `public` |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Opcional (`pk_test_…`); Checkout por redirect não exige |
 
-**Secrets das Edge Functions** (Supabase Dashboard → Edge Functions → Secrets; nunca no Vite):
+### Scripts locais (nunca no Vite / Render)
+
+| Variável | Uso |
+|----------|-----|
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role — só `npm run seed:supabase` |
+| `DATABASE_URL` | URI do Postgres — `npm run db:migrate` (e seed transacional) |
+| `SEED_EMAIL` | Opcional; padrão `financeiroraffiner@gmail.com` |
+| `SEED_PASSWORD` | Obrigatório no seed (mín. 10 caracteres) |
+| `DATABASE_SSL_REJECT_UNAUTHORIZED` | `false` só se o SSL local falhar a verificação de CA |
+
+### Secrets das Edge Functions
+
+Dashboard Supabase → Edge Functions → Secrets (ou `supabase secrets set`):
 
 | Secret | Uso |
 |--------|-----|
@@ -46,8 +69,10 @@ Abra a URL do Vite (em geral `http://localhost:5173`). A raiz `/` é a landing; 
 | `STRIPE_WEBHOOK_SECRET` | `whsec_…` do endpoint de webhook |
 | `STRIPE_PRICE_ID` | `price_…` do plano mensal |
 | `SITE_URL` | Origem do app (`http://localhost:5173` ou domínio de produção) |
-| `RESEND_API_KEY` | API key do [Resend](https://resend.com) — e-mail ao admin ao enviar montagem |
-| `RESEND_FROM` | Remetente (ex.: `Montagem de Mesa <onboarding@resend.dev>` em testes; domínio verificado em produção) |
+| `RESEND_API_KEY` | API key do Resend |
+| `RESEND_FROM` | Remetente (ex.: `Montagem de Mesa <onboarding@resend.dev>` em testes) |
+
+## Supabase
 
 ### Auth (URL Configuration)
 
@@ -59,66 +84,38 @@ Em **Authentication → URL Configuration**:
   - `http://localhost:5173/admin/redefinir-senha`
   - `http://localhost:5173/admin/painel/cadastro`
 
-(confirmação de cadastro → `/admin`; reset de senha → `/admin/redefinir-senha`; troca de e-mail → `/admin/painel/cadastro`)
+Confirmação de cadastro → `/admin`; reset de senha → `/admin/redefinir-senha`; troca de e-mail → `/admin/painel/cadastro`.
 
-Com **Secure email change** desativado (**Auth → Providers → Email**), a troca de e-mail exige só confirmar o link no endereço **novo** (comportamento esperado pelo app). Se ativar Secure email change, o Supabase passa a exigir também o link no e-mail atual.
+### Checklist de segurança
 
-### Checklist de segurança (Auth / projeto)
+1. **Authentication → Providers → Email** — confirmação de e-mail obrigatória; senha mínima **10** caracteres; preferir Secure password change.
+2. Redirect URLs apenas do seu domínio.
+3. Bot protection / rate limits no Auth quando disponível.
+4. Catálogo e Storage são leitura pública só com assinatura/trial ativos (`cliente_tem_acesso`).
 
-No dashboard Supabase:
-
-1. **Authentication → Providers → Email**
-   - Confirmação de e-mail **obrigatória** (signup aberto multi-tenant).
-   - Política de senha: mínimo **10** caracteres (alinhar com o app).
-   - Preferir **Secure password change**. O app bloqueia o painel após recovery com flag em `localStorage` **e** `user_metadata.precisa_redefinir_senha` (sobrevive se a flag local for limpa) até `updateUser({ password })`.
-2. **Authentication → URL Configuration** — só Redirect URLs do seu domínio (ver acima).
-3. **Bot protection** / rate limits no Auth quando disponível.
-4. Catálogo e Storage de itens/logos são **leitura pública** quando o cliente tem assinatura/trial ativos (`cliente_tem_acesso`). Sem acesso, a montagem pública some da view `clientes_publicos` e das policies.
-5. `npm run db:migrate` verifica o certificado SSL por padrão; use `DATABASE_SSL_REJECT_UNAUTHORIZED=false` só se necessário em ambiente local.
-
-### Schema e RLS
+### Schema e migrations
 
 ```bash
 npm run db:migrate
 ```
 
-Aplica o schema em [`supabase/migrations/`](supabase/migrations/) (ordem lexicográfica), incluindo:
+Aplica os arquivos em [`supabase/migrations/`](supabase/migrations/) (ordem lexicográfica): schema, trial/assinatura, otimizações, proteção de inserts/URLs e CRM com soft-delete.
 
-1. [`20260914140000_schema.sql`](supabase/migrations/20260914140000_schema.sql) — schema completo (tabelas, trial/assinatura, RLS, storage)
-2. [`20260914150000_acesso_periodo.sql`](supabase/migrations/20260914150000_acesso_periodo.sql) — `current_period_end` no acesso, RPC `status_cliente_publico`, RLS de montagens com acesso
-3. [`20260914160000_otimizacoes.sql`](supabase/migrations/20260914160000_otimizacoes.sql) — rate limit, catálogo público em RPC, storage privado, `email_status`/idempotência
-4. [`20260914170000_proteger_insert_e_urls.sql`](supabase/migrations/20260914170000_proteger_insert_e_urls.sql) — proteção de colunas sensíveis no INSERT e URLs de storage
-5. [`20260914180000_crm_soft_delete.sql`](supabase/migrations/20260914180000_crm_soft_delete.sql) — CRM de leads (`lead_status`/`nota_interna`), soft-delete de catálogo, reordenação
+Não reseta o Database do projeto. Alternativa sem `DATABASE_URL`: `supabase db query --linked -f supabase/migrations/ARQUIVO.sql`.
 
-**Não** reseta o Database do projeto. Tabelas de outros apps (ex.: `leads`) permanecem intactas. Alternativa sem `DATABASE_URL`: `supabase db query --linked -f supabase/migrations/ARQUIVO.sql`.
-
-`npm run db:migrate` usa SSL com verificação de certificado por padrão. Em ambientes locais sem CA, defina `DATABASE_SSL_REJECT_UNAUTHORIZED=false`.
-
-### Assinatura Stripe (trial + bloqueio total)
-
-Cada loja (`clientes`) ganha **14 dias de trial** no cadastro. Sem acesso ativo, o painel e a página pública `/:slug` ficam bloqueados.
-
-Cobrança via **Stripe Checkout** + **Customer Portal**. O estado no Postgres é atualizado pelo webhook e, se o webhook atrasar, pela function `sincronizar-assinatura` (chamada ao voltar do checkout e ao abrir `/admin/assinatura`).
-
-Edge Functions em [`supabase/functions/`](supabase/functions/):
+### Edge Functions
 
 | Function | Papel |
 |----------|--------|
 | `criar-checkout` | Checkout Session de assinatura |
 | `criar-portal` | Customer Portal (cartão / faturas) |
-| `cancelar-assinatura` | Cancela no fim do período (`cancel_at_period_end`) |
-| `listar-faturas` | Histórico de faturas pagas (+ sync se DB defasado) |
-| `sincronizar-assinatura` | Stripe → `clientes` (status, subscription id, período) |
-| `stripe-webhook` | Eventos Stripe → atualiza `clientes` (`verify_jwt` desligado) |
-| `enviar-montagem` | Visitante envia montagem → salva em `montagens_enviadas` + e-mail ao admin via Resend (`verify_jwt` desligado); admin autenticado pode `acao: reenviar` |
+| `cancelar-assinatura` | Cancela no fim do período |
+| `listar-faturas` | Histórico de faturas (+ sync se necessário) |
+| `sincronizar-assinatura` | Stripe → `clientes` |
+| `stripe-webhook` | Eventos Stripe → `clientes` (`verify_jwt` desligado) |
+| `enviar-montagem` | Visitante envia montagem + e-mail via Resend (`verify_jwt` desligado) |
 
-#### Criar conta Stripe e obter os dados
-
-1. **Conta + Test mode** — registre-se em [dashboard.stripe.com/register](https://dashboard.stripe.com/register). Deixe **Test mode** ligado (cobrança com cartões de teste; KYC só é obrigatório no Live).
-2. **Product + Price** — Product catalog → Products → Add product. Nome ex. `Montagem de Mesa`. Pricing: **Recurring**, **Monthly**, moeda (ex. BRL) e valor. Copie o **Price ID** (`price_…`) → secret `STRIPE_PRICE_ID`.
-3. **API keys** — Developers → API keys. Copie **Secret key** (`sk_test_…`) → `STRIPE_SECRET_KEY`. Publishable (`pk_test_…`) é opcional no app.
-4. **Customer Portal** — Settings → Billing → Customer portal: ative atualizar cartão, cancelar e ver faturas.
-5. **Secrets + deploy das functions** (com [Supabase CLI](https://supabase.com/docs/guides/cli) linkado ao projeto):
+Deploy (CLI linkada ao projeto):
 
 ```bash
 supabase secrets set \
@@ -138,43 +135,45 @@ supabase functions deploy stripe-webhook --no-verify-jwt
 supabase functions deploy enviar-montagem --no-verify-jwt
 ```
 
-`supabase/config.toml` define `verify_jwt` por function (webhook e enviar-montagem = `false`).
+`supabase/config.toml` define `verify_jwt` por function.
 
-6. **Webhook** — Developers → Webhooks → Add endpoint  
-   `https://<PROJECT_REF>.supabase.co/functions/v1/stripe-webhook`  
+## Stripe
+
+1. Conta em [dashboard.stripe.com](https://dashboard.stripe.com) com **Test mode**.
+2. Product + Price recorrente mensal → `STRIPE_PRICE_ID`.
+3. API keys → `STRIPE_SECRET_KEY` (publishable opcional no frontend).
+4. Customer Portal: ativar cartão, cancelar e faturas.
+5. Webhook → `https://<PROJECT_REF>.supabase.co/functions/v1/stripe-webhook`  
    Eventos: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.  
-   Copie o **Signing secret** (`whsec_…`) → `STRIPE_WEBHOOK_SECRET` (rode `supabase secrets set` de novo se precisar).
-7. **Cartão de teste** — `4242 4242 4242 4242`, validade futura, CVC qualquer ([docs](https://docs.stripe.com/testing)).
+   Signing secret → `STRIPE_WEBHOOK_SECRET`.
+6. Cartão de teste: `4242 4242 4242 4242` ([docs](https://docs.stripe.com/testing)).
 
-UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — status (trial ou ativa), Assinar, Gerenciar cobrança, Cancelar no fim do período, histórico de faturas em pt-BR. No painel, o menu fica: Ver montagem → Atualizar cadastro → Assinatura → Sair.
+UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/ativa, Assinar, Gerenciar cobrança, Cancelar no fim do período, faturas.
 
-O seed Raffiner entra com `subscription_status=trialing` (14 dias).
+## Resend (enviar montagem)
 
-#### Enviar montagem (visitante → admin)
+Na montagem pública (`/:slug`), o visitante envia nome, e-mail, WhatsApp e endereço. A function `enviar-montagem` notifica o admin por e-mail e o app abre o WhatsApp do estabelecimento.
 
-Na montagem pública (`/:slug`), o visitante escolhe peças e usa **Enviar montagem**: preenche nome, e-mail, WhatsApp, endereço, cidade e estado. A Edge Function `enviar-montagem` localiza o e-mail do estabelecimento (sem expor no frontend) e envia via Resend; em seguida o app abre `wa.me` com a mensagem pronta para o WhatsApp cadastrado em **Atualizar cadastro**.
+1. API key em [resend.com](https://resend.com) → `RESEND_API_KEY`.
+2. Em testes, `RESEND_FROM` pode usar `onboarding@resend.dev`. Em produção, use domínio verificado.
+3. Cadastre o WhatsApp em `/admin/painel/cadastro`.
+4. Histórico e CRM de leads: `/admin/painel/montagens`.
 
-1. Crie API key em [resend.com](https://resend.com) → secret `RESEND_API_KEY`.
-2. Em testes, `RESEND_FROM` pode ser `Montagem de Mesa <onboarding@resend.dev>` (só entrega para o e-mail da conta Resend). Em produção, verifique um domínio e use-o no `from`.
-3. Deploy: `supabase functions deploy enviar-montagem --no-verify-jwt` (e `supabase secrets set` com as chaves Resend).
-4. Cadastre o WhatsApp do estabelecimento em `/admin/painel/cadastro`.
-5. Histórico no painel: `/admin/painel/montagens`.
-
-### Seed e imagens
+## Seed e imagens
 
 ```bash
 npm run seed:supabase
 ```
 
-Precisa de `VITE_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` + `SEED_PASSWORD`:
+Requer `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `SEED_PASSWORD`:
 
 - cria/atualiza o usuário Auth
-- recria o cliente **Raffiner** (`slug=raffiner`) em **trial** (14 dias)
+- recria o cliente **Raffiner** (`slug=raffiner`) em trial (14 dias)
 - importa [`src/dados/catalogo.json`](src/dados/catalogo.json)
-- envia logo e fotos de [`imagens/`](imagens/) para o Storage (`logos` / `itens`)
+- envia logo e fotos de [`imagens/`](imagens/) para o Storage
 - atualiza as URLs no banco (não reescreve o JSON local)
 
-**Não apaga** os arquivos locais em `imagens/`. Layout esperado:
+Layout esperado:
 
 ```
 imagens/logos/raffiner.webp
@@ -187,36 +186,34 @@ imagens/itens/raffiner/
   Tacas/
 ```
 
-Default de e-mail: `financeiroraffiner@gmail.com` (`SEED_EMAIL` sobrescreve). Com `DATABASE_URL`, o catálogo é gravado em transação SQL.
-
 ## Rotas
 
 | Rota | Descrição |
 |------|-----------|
-| `/` | Redireciona para `/raffiner` |
-| `/:slug` | Montagem pública; visitante pode enviar montagem (e-mail + WhatsApp) |
+| `/` | Landing |
+| `/:slug` | Montagem pública (enviar composição) |
+| `/c/:slug` | Redirect legado → `/:slug` |
 | `/admin`, `/entrar` | Login |
 | `/cadastro` | Criar conta |
 | `/admin/recuperar-senha` | Pedir reset de senha |
 | `/admin/redefinir-senha` | Nova senha (após o link do e-mail) |
-| `/admin/painel` | Painel (categorias e itens) — exige trial/assinatura ativos |
-| `/admin/painel/cadastro` | Atualizar nome, endereço, e-mail, logo e WhatsApp |
-| `/admin/painel/montagens` | Histórico de montagens enviadas por visitantes |
-| `/admin/assinatura` | Status do trial/assinatura, Checkout, Portal, cancelamento e histórico de faturas |
+| `/admin/assinatura` | Trial, Checkout, Portal, faturas |
+| `/admin/painel` | Catálogo (categorias e itens) + onboarding/ajuda |
+| `/admin/painel/cadastro` | Nome, endereço, e-mail, logo e WhatsApp |
+| `/admin/painel/montagens` | Histórico e CRM de leads |
+| `/admin/painel/categorias/...` | CRUD de categorias e itens |
 
-## Dados
+## Modelo de dados
 
 | Recurso | Onde |
 |---------|------|
 | Usuários / senhas | Supabase Auth |
-| Cliente (`clientes`) | Postgres — `id` UUID; endereço público único (`slug`); `auth_user_id`; campos Stripe/trial |
-| Montagens enviadas | Postgres — `montagens_enviadas`; insert via Edge Function; SELECT só do dono |
-| Categorias e itens | Postgres — IDs UUID; RLS: leitura/escrita só com `cliente_tem_acesso` + dono na escrita |
+| Cliente (`clientes`) | Postgres — UUID, `slug`, `auth_user_id`, Stripe/trial |
+| Montagens enviadas | `montagens_enviadas` — insert via Edge Function; CRM (`lead_status`, `nota_interna`) |
+| Categorias e itens | Postgres — UUID; RLS com `cliente_tem_acesso` |
 | Logos / fotos | Storage (`logos`, `itens`); fonte local em `imagens/` |
-| Toalhas fixas | [`src/dados/toalhas.json`](src/dados/toalhas.json) (merge no cliente) |
-| Assinatura | Stripe via Edge Functions (`criar-checkout`, `criar-portal`, `cancelar-assinatura`, `listar-faturas`, `sincronizar-assinatura`, `stripe-webhook`) |
-
-Novo cliente: cadastro em `/cadastro` (ou Auth + linha em `clientes` com `auth_user_id`) e catálogo no painel. Toalhas entram automaticamente.
+| Toalhas fixas | [`src/dados/toalhas.json`](src/dados/toalhas.json) |
+| Assinatura | Stripe via Edge Functions |
 
 ## Scripts
 
@@ -226,29 +223,31 @@ Novo cliente: cadastro em `/cadastro` (ou Auth + linha em `clientes` com `auth_u
 | `npm run build` | Build de produção (`dist/`) |
 | `npm run preview` | Preview do build |
 | `npm run lint` | oxlint |
-| `npm run db:migrate` | Aplica todas as migrations via `DATABASE_URL` |
+| `npm run test` | Vitest (uma vez) |
+| `npm run test:watch` | Vitest em watch |
+| `npm run db:migrate` | Aplica migrations via `DATABASE_URL` |
 | `npm run seed:supabase` | Auth + cliente + catálogo + upload de `imagens/` |
 
-## Estrutura
+## Estrutura do repositório
 
 ```
-src/aplicacao/              # rotas e página pública
-src/dados/                  # cliente Supabase, repositório, JSON
-src/compartilhado/          # tipos, utils, ErrorBoundary, ImagemAmpliada
+src/aplicacao/              # rotas, landing, página pública
+src/dados/                  # cliente Supabase, repositórios, JSON
+src/compartilhado/          # tipos, utils, ErrorBoundary
 src/funcionalidades/
-  admin/                    # login, painel, cadastro, formulários
+  admin/                    # login, painel, cadastro, assinatura, ajuda
   autenticacao/             # AuthProvider, rota protegida
   catalogo/                 # helpers do catálogo
-  mesa/                     # seletor e pré-visualização
-imagens/                    # logo e fotos locais (seed → Storage)
-supabase/migrations/        # schema único (tabelas, RLS, storage, trial)
-supabase/functions/         # Edge Functions Stripe (checkout, portal, sync, webhook)
-supabase/config.toml        # verify_jwt das functions
-scripts/                    # migrate, seed
-scripts/lib/                # env, mime, cliente admin compartilhados
+  mesa/                     # seletor, preview, enviar montagem
+imagens/                    # assets locais (seed → Storage)
+public/ajuda/               # exemplos da ajuda do painel
+supabase/migrations/        # schema, RLS, storage, trial, CRM
+supabase/functions/         # Stripe + enviar-montagem
+scripts/                    # migrate, seed, spa-fallback
+render.yaml                 # deploy Static Site
 ```
 
-## Deploy (Render — Static Site)
+## Deploy (Render)
 
 | Campo | Valor |
 |-------|--------|
@@ -259,9 +258,10 @@ Env no **build:** apenas `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Não us
 
 SPA: rewrite `/*` → `/index.html` (já em [`render.yaml`](render.yaml)).
 
-No Auth do Supabase, atualize **Site URL** e **Redirect URLs** para o domínio de produção (mesmo padrão das URLs de localhost).
+Após o deploy: atualize Site URL e Redirect URLs no Auth; publique as Edge Functions e secrets; aponte o webhook Stripe para o projeto de produção.
 
-## Regras do app
+## Convenções do app
 
 - Categorias do seed usam `codigo` estável (`sousplat`, `pratoRaso`, …) para o preview; o PK é UUID.
 - Categorias criadas no admin sem `codigo` aparecem no preview como camada genérica (se tiverem imagem).
+- Pastas e rotas do código estão em português; UI do admin também.
