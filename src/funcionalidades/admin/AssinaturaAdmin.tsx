@@ -94,6 +94,7 @@ export function AssinaturaAdmin() {
   const [erroHistorico, setErroHistorico] = useState<string | null>(null)
   const checkoutProcessadoRef = useRef<string | null>(null)
   const carregarHistoricoRef = useRef<() => Promise<void>>(async () => {})
+  const checkoutTimeoutRef = useRef<number | null>(null)
 
   const refrescarCliente = useCallback(async () => {
     const sessao = await obterSessaoCliente()
@@ -142,6 +143,21 @@ export function AssinaturaAdmin() {
     void carregarHistorico()
   }, [carregarHistorico])
 
+  // Voltar do Stripe (bfcache / back) deixa acaoOcupada preso em "checkout".
+  useEffect(() => {
+    function aoPageShow() {
+      setAcaoOcupada((atual) => (atual === 'checkout' ? null : atual))
+    }
+    window.addEventListener('pageshow', aoPageShow)
+    return () => {
+      window.removeEventListener('pageshow', aoPageShow)
+      if (checkoutTimeoutRef.current != null) {
+        window.clearTimeout(checkoutTimeoutRef.current)
+        checkoutTimeoutRef.current = null
+      }
+    }
+  }, [])
+
   useEffect(() => {
     const checkout = params.get('checkout')
     if (!checkout) return
@@ -149,6 +165,7 @@ export function AssinaturaAdmin() {
     checkoutProcessadoRef.current = checkout
 
     setParams({}, { replace: true })
+    setAcaoOcupada(null)
 
     if (checkout === 'sucesso') {
       setErro(null)
@@ -185,6 +202,14 @@ export function AssinaturaAdmin() {
     try {
       const url = await iniciarCheckoutAssinatura()
       window.location.assign(url)
+      // Se a navegação não descarregar a página (bloqueio / bfcache), libera os botões.
+      if (checkoutTimeoutRef.current != null) {
+        window.clearTimeout(checkoutTimeoutRef.current)
+      }
+      checkoutTimeoutRef.current = window.setTimeout(() => {
+        checkoutTimeoutRef.current = null
+        setAcaoOcupada((atual) => (atual === 'checkout' ? null : atual))
+      }, 2500)
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível abrir o checkout.')
       setAcaoOcupada(null)

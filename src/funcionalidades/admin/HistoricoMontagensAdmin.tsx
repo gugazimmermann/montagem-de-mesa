@@ -1,6 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import type { MontagemEnviada } from '../../compartilhado/tipos'
 import { formatarWhatsapp } from '../../dados/repositorioClientes'
 import {
@@ -191,10 +190,6 @@ export function HistoricoMontagensAdmin() {
           )}
         </>
       )}
-
-      <p className={ui.historicoRodape}>
-        <Link to="/admin/painel">Voltar ao painel</Link>
-      </p>
     </AdminPaginaPainel>
   )
 }
