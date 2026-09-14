@@ -158,11 +158,17 @@ export function HistoricoMontagensAdmin() {
   }
 
   async function aoSalvarNota(m: MontagemEnviada) {
-    const nota = notasLocais[m.id] ?? m.notaInterna
+    const nota = (notasLocais[m.id] ?? m.notaInterna).trim()
     setSalvandoId(m.id)
     setErroAcao(null)
+    setFeedback(null)
     try {
       await atualizarLeadMontagem(clienteId!, m.id, { notaInterna: nota })
+      setNotasLocais((prev) => {
+        const next = { ...prev }
+        delete next[m.id]
+        return next
+      })
       setFeedback('Nota salva.')
       await invalidar()
     } catch (e) {
@@ -287,6 +293,10 @@ export function HistoricoMontagensAdmin() {
             {lista.map((m) => {
               const aberto = expandidoId === m.id
               const nota = notasLocais[m.id] ?? m.notaInterna
+              const notaSuja = nota !== m.notaInterna
+              const notaSalva = m.notaInterna.trim()
+              const salvandoNota = salvandoId === m.id
+              const notaId = `nota-interna-${m.id}`
               return (
                 <li key={m.id} className={ui.historicoCard}>
                   <div className={ui.historicoTopo}>
@@ -304,6 +314,12 @@ export function HistoricoMontagensAdmin() {
                         {m.visitanteCidade}/{m.visitanteEstado} ·{' '}
                         {resumoItens(m.itens)}
                       </p>
+                      {!aberto && notaSalva ? (
+                        <p className={ui.historicoNotaPreview} title={notaSalva}>
+                          <span className="font-medium text-text">Nota · </span>
+                          {notaSalva}
+                        </p>
+                      ) : null}
                     </div>
                     <div className={ui.historicoAcoes}>
                       <a
@@ -380,32 +396,65 @@ export function HistoricoMontagensAdmin() {
                             </select>
                           </dd>
                         </div>
-                        <div className={ui.historicoDlItem}>
-                          <dt className={ui.historicoDt}>Nota interna</dt>
-                          <dd className={ui.historicoDd}>
-                            <textarea
-                              className={ui.fieldInput}
-                              rows={3}
-                              maxLength={2000}
-                              value={nota}
-                              onChange={(e) =>
-                                setNotasLocais((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                            />
-                            <button
-                              type="button"
-                              className="btn btn--ghost"
-                              disabled={salvandoId === m.id}
-                              onClick={() => void aoSalvarNota(m)}
-                            >
-                              Salvar nota
-                            </button>
-                          </dd>
-                        </div>
                       </dl>
+
+                      <div className={ui.historicoNota}>
+                        <div className={ui.historicoNotaCabecalho}>
+                          <label
+                            htmlFor={notaId}
+                            className={ui.historicoNotaTitulo}
+                          >
+                            Nota interna
+                          </label>
+                          <p className={ui.historicoNotaDica}>
+                            Visível só no painel — o cliente não vê.
+                          </p>
+                        </div>
+                        <textarea
+                          id={notaId}
+                          className={ui.historicoNotaTextarea}
+                          rows={4}
+                          maxLength={2000}
+                          placeholder="Ex.: ligar amanhã, preferência de toalha, orçamento combinado…"
+                          value={nota}
+                          disabled={salvandoNota}
+                          aria-describedby={`${notaId}-dica ${notaId}-contador`}
+                          onChange={(e) =>
+                            setNotasLocais((prev) => ({
+                              ...prev,
+                              [m.id]: e.target.value,
+                            }))
+                          }
+                          onKeyDown={(e) => {
+                            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                              e.preventDefault()
+                              if (notaSuja && !salvandoNota) void aoSalvarNota(m)
+                            }
+                          }}
+                        />
+                        <span id={`${notaId}-dica`} className="sr-only">
+                          Visível só no painel. O cliente não recebe esta nota.
+                        </span>
+                        <div className={ui.historicoNotaRodape}>
+                          <p
+                            id={`${notaId}-contador`}
+                            className={ui.historicoNotaContador}
+                          >
+                            {notaSuja ? 'Alterações não salvas · ' : null}
+                            {nota.length}/2000
+                          </p>
+                          <button
+                            type="button"
+                            className={
+                              notaSuja ? 'btn btn--primary' : 'btn btn--ghost'
+                            }
+                            disabled={!notaSuja || salvandoNota}
+                            onClick={() => void aoSalvarNota(m)}
+                          >
+                            {salvandoNota ? 'Salvando…' : 'Salvar nota'}
+                          </button>
+                        </div>
+                      </div>
                       {(m.emailStatus === 'failed' ||
                         m.emailStatus === 'pending') && (
                         <p className={ui.historicoRodape}>

@@ -8,6 +8,7 @@ import { trocarOrdemCategoria } from '../../dados/repositorioCatalogo'
 import { useAuth } from '../autenticacao'
 import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
 import { AdminBannerTrial } from './AdminBannerTrial'
+import { AdminAjuda } from './AdminAjuda'
 import { AdminConfirmacao, AdminMenuMais } from './AdminConfirmacao'
 import { AdminOnboarding } from './AdminOnboarding'
 import {
@@ -30,6 +31,7 @@ export function PainelAdmin() {
 
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [menuAberto, setMenuAberto] = useState(false)
+  const [ajudaAberta, setAjudaAberta] = useState(false)
   const [excluirId, setExcluirId] = useState<string | null>(null)
   const [excluindo, setExcluindo] = useState(false)
   const [reordenando, setReordenando] = useState(false)
@@ -126,6 +128,7 @@ export function PainelAdmin() {
         cliente={cliente}
         dados={dados}
         linkPublico={linkPublico}
+        aoAbrirAjuda={() => setAjudaAberta(true)}
       />
       <header className={ui.painelHeader}>
         <div>
@@ -134,6 +137,13 @@ export function PainelAdmin() {
         </div>
         <div className={ui.painelAcoes}>
           <div className={ui.acoesDesktop}>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => setAjudaAberta(true)}
+            >
+              Ajuda
+            </button>
             <Link className="btn btn--ghost" to={linkPublico}>
               Ver montagem
             </Link>
@@ -157,6 +167,17 @@ export function PainelAdmin() {
               aoAlternar={() => setMenuAberto((v) => !v)}
               aoFechar={() => setMenuAberto(false)}
             >
+              <button
+                type="button"
+                className="btn btn--ghost"
+                role="menuitem"
+                onClick={() => {
+                  setMenuAberto(false)
+                  setAjudaAberta(true)
+                }}
+              >
+                Ajuda
+              </button>
               <Link
                 className="btn btn--ghost"
                 role="menuitem"
@@ -353,6 +374,8 @@ export function PainelAdmin() {
           </ul>
         )}
       </section>
+
+      <AdminAjuda aberto={ajudaAberta} aoFechar={() => setAjudaAberta(false)} />
 
       <AdminConfirmacao
         aberto={excluirId !== null}

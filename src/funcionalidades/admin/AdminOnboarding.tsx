@@ -8,13 +8,14 @@ type Props = {
   cliente: Cliente | null | undefined
   dados: DadosCliente
   linkPublico: string
+  aoAbrirAjuda?: () => void
 }
 
 function chaveDismiss(clienteId: string) {
   return `onboarding-dismiss:${clienteId}`
 }
 
-export function AdminOnboarding({ cliente, dados, linkPublico }: Props) {
+export function AdminOnboarding({ cliente, dados, linkPublico, aoAbrirAjuda }: Props) {
   const clienteId = cliente?.id
   const [dismissed, setDismissed] = useState(() => {
     if (!clienteId) return true
@@ -84,9 +85,16 @@ export function AdminOnboarding({ cliente, dados, linkPublico }: Props) {
     <section className={ui.painelSecao} aria-label="Primeiros passos">
       <div className={ui.itensCabecalho}>
         <h2>Primeiros passos</h2>
-        <button type="button" className="btn btn--ghost" onClick={dispensar}>
-          Dispensar
-        </button>
+        <div className="flex flex-wrap gap-1.5">
+          {aoAbrirAjuda ? (
+            <button type="button" className="btn btn--ghost" onClick={aoAbrirAjuda}>
+              Saiba mais
+            </button>
+          ) : null}
+          <button type="button" className="btn btn--ghost" onClick={dispensar}>
+            Dispensar
+          </button>
+        </div>
       </div>
       <p className="m-0 mb-2 text-sm text-muted">
         Complete o checklist para deixar a montagem pronta durante o período de avaliação.

@@ -12,6 +12,7 @@ import {
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
 import { AmpliarImagem } from './AmpliarImagem'
+import { AdminAjuda } from './AdminAjuda'
 import * as ui from './adminClasses'
 import { mapearErroUpload } from './adminUtils'
 import { useDadosCliente } from './useDadosCliente'
@@ -152,6 +153,7 @@ export function FormularioItem() {
   const [erro, setErro] = useState<string | null>(null)
   const [erroNome, setErroNome] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [ajudaAberta, setAjudaAberta] = useState(false)
 
   useEffect(() => {
     if (!dados || !itemId) return
@@ -365,19 +367,33 @@ export function FormularioItem() {
             </>
           )}
 
-          <label className={ui.field}>
-            <span className={ui.fieldLabel}>{ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}</span>
-            <input
-              className={ui.fieldInput}
-              type="file"
-              accept={accept}
-              onChange={(e) => {
-                escolher(e)
-                setErro(null)
-              }}
-              disabled={enviando}
-            />
-          </label>
+          <div className={ui.field}>
+            <div className={`${ui.fieldLabel} flex flex-wrap items-center justify-between gap-2`}>
+              <span>{ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}</span>
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => setAjudaAberta(true)}
+              >
+                Como tratar imagens
+              </button>
+            </div>
+            <label className="block">
+              <span className="sr-only">
+                {ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}
+              </span>
+              <input
+                className={ui.fieldInput}
+                type="file"
+                accept={accept}
+                onChange={(e) => {
+                  escolher(e)
+                  setErro(null)
+                }}
+                disabled={enviando}
+              />
+            </label>
+          </div>
 
           {imagemExibida && (
             <div className={ui.painelLogoPreview}>
@@ -398,6 +414,12 @@ export function FormularioItem() {
           </div>
         </form>
       </section>
+
+      <AdminAjuda
+        aberto={ajudaAberta}
+        secaoInicial="imagens"
+        aoFechar={() => setAjudaAberta(false)}
+      />
     </AdminPaginaPainel>
   )
 }
