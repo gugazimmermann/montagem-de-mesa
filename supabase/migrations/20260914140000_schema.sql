@@ -141,6 +141,7 @@ create or replace function public.eh_hex_cor(valor text)
 returns boolean
 language sql
 immutable
+set search_path = public
 as $$
   select valor is not null
     and valor ~ '^#[0-9A-Fa-f]{6}$';
@@ -153,6 +154,7 @@ create or replace function public.eh_cores_item_validas(cores jsonb)
 returns boolean
 language sql
 immutable
+set search_path = public
 as $$
   select cores is not null
     and jsonb_typeof(cores) = 'object'
@@ -498,6 +500,7 @@ create or replace function public.storage_cliente_id_do_logo(object_name text)
 returns text
 language sql
 immutable
+set search_path = public
 as $$
   select regexp_replace(object_name, '\.[^.]+$', '');
 $$;

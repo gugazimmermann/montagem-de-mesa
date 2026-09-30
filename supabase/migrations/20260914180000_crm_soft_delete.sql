@@ -34,6 +34,7 @@ grant select, update on public.montagens_enviadas to authenticated;
 create or replace function public.proteger_montagens_update()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   -- Service role (Edge Functions) pode atualizar email_status / demais campos.

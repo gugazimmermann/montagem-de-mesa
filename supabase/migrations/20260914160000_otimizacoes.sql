@@ -219,6 +219,7 @@ grant execute on function public.carregar_catalogo_publico(text) to anon, authen
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
@@ -349,6 +350,7 @@ create or replace function public.eh_logo_cliente_valida(p_cliente_id uuid, p_lo
 returns boolean
 language sql
 immutable
+set search_path = public
 as $$
   select p_logo is null
     or p_logo = ''
@@ -366,6 +368,7 @@ create or replace function public.eh_imagem_item_valida(p_cliente_id uuid, p_ima
 returns boolean
 language sql
 immutable
+set search_path = public
 as $$
   select p_imagem is null
     or p_imagem = ''

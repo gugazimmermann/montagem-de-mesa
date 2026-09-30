@@ -82,6 +82,7 @@ create or replace function public.eh_url_storage_publica_ou_vazia(valor text)
 returns boolean
 language sql
 immutable
+set search_path = public
 as $$
   select valor is null
     or valor = ''
