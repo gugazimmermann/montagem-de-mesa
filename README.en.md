@@ -218,6 +218,10 @@ On `/:slug`, visitors build a place setting with a live preview and PNG export:
 - **Napkin** uses folded-PNG visual scale; **napkin ring** covers the wooden ring baked into napkin photos.
 - With a **placemat** (`lugar americano`), the place setting is recentered and lifted so the mat stays on the table; **charger** (`sousplat`) keeps the compact layout.
 
+## Admin help
+
+The help modal in [`AdminAjuda.tsx`](src/funcionalidades/admin/AdminAjuda.tsx) uses page navigation (side on desktop, top on mobile): overview, profile, catalog, images, table layout, cutlery, napkin/glasses, public page, and subscription. It covers multi-select, name-based cutlery sides, napkin ring under the holder, and sousplat vs placemat. Examples live in `public/ajuda/`. The item form opens on **Images** (`secaoInicial`).
+
 ## Routes
 
 | Route | Description |
@@ -230,7 +234,7 @@ On `/:slug`, visitors build a place setting with a live preview and PNG export:
 | `/admin/recuperar-senha` | Request password reset |
 | `/admin/redefinir-senha` | New password (after email link) |
 | `/admin/assinatura` | Trial, Checkout, Portal, invoices |
-| `/admin/painel` | Catalog (categories and items) + onboarding/help |
+| `/admin/painel` | Catalog (categories and items) + onboarding; multi-page help modal |
 | `/admin/painel/nome-exibicao` | Display name + slug (first step if the account has no name yet) |
 | `/admin/painel/cadastro` | Display name, address, email, logo (~512px WebP optimized) and WhatsApp |
 | `/admin/painel/montagens` | History and lead CRM |

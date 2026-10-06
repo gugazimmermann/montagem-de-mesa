@@ -218,6 +218,10 @@ Na página `/:slug`, o visitante monta o lugar à mesa com pré-visualização e
 - **Guardanapo** usa escala visual do PNG dobrado; **porta-guardanapo** cobre o anel de madeira embutido na foto do guardanapo.
 - Com **lugar americano**, o lugar é recentrado e elevado para o jogo não sair da mesa; com **sousplat** o layout compacto permanece.
 
+## Ajuda do painel
+
+O modal de ajuda em [`AdminAjuda.tsx`](src/funcionalidades/admin/AdminAjuda.tsx) usa navegação por páginas (lateral no desktop, topo no mobile): visão geral, cadastro, catálogo, imagens, layout da mesa, talheres, guardanapo/taças, página pública e assinatura. Explica multi-seleção, nomes que definem o lado dos talheres, porta sobre o anel e diferenças sousplat vs lugar americano. Exemplos em `public/ajuda/`. O formulário de item abre direto em **Imagens** (`secaoInicial`).
+
 ## Rotas
 
 | Rota | Descrição |
@@ -230,7 +234,7 @@ Na página `/:slug`, o visitante monta o lugar à mesa com pré-visualização e
 | `/admin/recuperar-senha` | Pedir reset de senha |
 | `/admin/redefinir-senha` | Nova senha (após o link do e-mail) |
 | `/admin/assinatura` | Trial, Checkout, Portal, faturas |
-| `/admin/painel` | Catálogo (categorias e itens) + onboarding/ajuda |
+| `/admin/painel` | Catálogo (categorias e itens) + onboarding; ajuda multi-página no modal |
 | `/admin/painel/nome-exibicao` | Nome de exibição + slug (primeiro passo se a conta veio sem nome) |
 | `/admin/painel/cadastro` | Nome de exibição, endereço, e-mail, logo (otimizada ~512px WebP) e WhatsApp |
 | `/admin/painel/montagens` | Histórico e CRM de leads |

@@ -152,16 +152,28 @@ export const modalAcoes =
   'flex flex-wrap justify-end gap-1.5 max-[720px]:flex-col-reverse max-[720px]:justify-stretch [&_.btn]:max-[720px]:w-full [&_.btn]:max-[720px]:justify-center'
 
 export const modalAjuda =
-  'flex w-[min(640px,100%)] max-h-[min(90dvh,40rem)] flex-col rounded-lg border border-border bg-surface p-0 shadow-md max-[720px]:w-full max-[720px]:max-h-[min(92dvh,100%)] max-[720px]:rounded-b-none'
+  'flex w-[min(720px,100%)] max-h-[min(90dvh,44rem)] flex-col rounded-lg border border-border bg-surface p-0 shadow-md max-[720px]:w-full max-[720px]:max-h-[min(92dvh,100%)] max-[720px]:rounded-b-none'
 
 export const modalAjudaCabecalho =
   'flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3 [&_h2]:m-0 [&_h2]:text-base'
 
 export const modalAjudaCorpo =
-  'min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3'
+  'flex min-h-0 flex-1 flex-row overflow-hidden max-[640px]:flex-col'
+
+export const modalAjudaNav =
+  'flex w-[11.5rem] shrink-0 flex-col gap-0.5 overflow-y-auto overscroll-contain border-r border-border px-2 py-3 max-[640px]:w-full max-[640px]:flex-row max-[640px]:flex-wrap max-[640px]:border-r-0 max-[640px]:border-b max-[640px]:px-3 max-[640px]:py-2'
+
+export const modalAjudaNavItem =
+  'rounded-md border border-transparent px-2.5 py-1.5 text-left text-xs font-medium text-muted transition-colors hover:bg-surface-solid hover:text-text max-[640px]:shrink-0'
+
+export const modalAjudaNavItemAtivo =
+  'border-border bg-surface-solid text-text'
+
+export const modalAjudaPainel =
+  'min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3'
 
 export const modalAjudaSecao =
-  'mb-5 scroll-mt-3 last:mb-0 [&_h3]:mb-1.5 [&_h3]:mt-0 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-text [&_p]:mb-2 [&_p]:mt-0 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-muted [&_ul]:mb-2 [&_ul]:mt-0 [&_ul]:pl-4 [&_ul]:text-sm [&_ul]:leading-relaxed [&_ul]:text-muted [&_li]:mb-1'
+  'mb-0 [&_h3]:mb-1.5 [&_h3]:mt-0 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-text [&_h4]:mb-1 [&_h4]:mt-3 [&_h4]:text-xs [&_h4]:font-semibold [&_h4]:text-text [&_p]:mb-2 [&_p]:mt-0 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:text-muted [&_ul]:mb-2 [&_ul]:mt-0 [&_ul]:pl-4 [&_ul]:text-sm [&_ul]:leading-relaxed [&_ul]:text-muted [&_li]:mb-1 [&_code]:rounded [&_code]:bg-surface-solid [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[0.8em]'
 
 export const modalAjudaSecaoDestaque =
   `${modalAjudaSecao} rounded-md border border-border bg-surface-solid px-3 py-3`
