@@ -9,7 +9,7 @@
 
 .table-surface {
   position: relative;
-  width: min(100%, 520px);
+  width: min(100%, 560px);
   aspect-ratio: 4 / 3;
   border-radius: var(--radius-md);
   background:
@@ -59,13 +59,20 @@
 
 .place-setting {
   position: relative;
-  width: min(360px, 78vw);
-  height: min(360px, 78vw);
+  width: 69%;
+  aspect-ratio: 1;
+  height: auto;
   z-index: 2;
   margin-right: clamp(0px, 5vw, 50px);
   /* Empurra o lugar à mesa para baixo, liberando espaço superior para a taça */
   align-self: flex-end;
   margin-bottom: 6%;
+}
+
+/* Com lugar americano, centra o retângulo e sobe para o inferior não sair da mesa. */
+.place-setting--lugar-americano {
+  margin-right: 0;
+  margin-bottom: 16%;
 }
 
 .table-preview__empty {
@@ -274,7 +281,6 @@ button.layer--clicavel:focus-visible {
 }
 
 .talher {
-  left: 108%;
   z-index: 7;
   background: none;
   overflow: visible;
@@ -284,12 +290,9 @@ button.layer--clicavel:focus-visible {
 
 /* —— Taça —— */
 .taca {
-  left: 75%;
-  top: -15%;
   z-index: 8;
   background: none;
   overflow: visible;
-  transform: none;
   box-shadow: none;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
 }
@@ -308,6 +311,18 @@ button.layer--clicavel:focus-visible {
   }
   to {
     opacity: 1;
+  }
+}
+
+@media (min-width: 1200px) {
+  .table-surface {
+    width: min(100%, 640px);
+  }
+}
+
+@media (min-width: 1600px) {
+  .table-surface {
+    width: min(100%, 740px);
   }
 }
 

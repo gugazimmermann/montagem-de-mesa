@@ -2,7 +2,12 @@ import { type CSSProperties, type KeyboardEvent, memo } from 'react'
 import type { Categoria, ConfiguracaoMesa, IdCategoria, ItemMesa } from '../../../../compartilhado/tipos'
 import { imagemCatalogoItem } from '../../../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../../../dados/categoriasFixas'
-import { obterItensPorCategoria } from '../../../catalogo'
+import {
+  ehCategoriaMulti,
+  idsSelecionados,
+  obterItensPorCategoria,
+  temSelecaoNaCategoria,
+} from '../../../catalogo'
 import './SeletorItens.css'
 import '../../padroes-tecido.css'
 
@@ -53,7 +58,10 @@ export function SeletorItens({
 }: PropsSeletorItens) {
   const itensCategoria = obterItensPorCategoria(itens, categoriaAtiva)
   const metaAtiva = categorias.find((c) => c.id === categoriaAtiva)
-  const idSelecionado = configuracao[categoriaAtiva]
+  const selecaoAtiva = configuracao[categoriaAtiva]
+  const idsAtivos = idsSelecionados(selecaoAtiva)
+  const temSelecaoAtiva = temSelecaoNaCategoria(selecaoAtiva)
+  const multiAtiva = metaAtiva ? ehCategoriaMulti(metaAtiva) : false
   const painelId = 'item-picker-panel'
 
   function aoTeclaTab(evento: KeyboardEvent<HTMLDivElement>) {
@@ -94,8 +102,10 @@ export function SeletorItens({
       >
         {categorias.map((categoria) => {
           const ativa = categoria.id === categoriaAtiva
-          const temSelecao = Boolean(configuracao[categoria.id])
+          const temSelecao = temSelecaoNaCategoria(configuracao[categoria.id])
           const ilustrativa = ehCategoriaFixa(categoria.id)
+          const multi = ehCategoriaMulti(categoria)
+          const qtd = idsSelecionados(configuracao[categoria.id]).length
 
           return (
             <button
@@ -111,7 +121,7 @@ export function SeletorItens({
               title={ilustrativa ? 'Somente ilustrativo — ambientação' : undefined}
               aria-label={
                 temSelecao
-                  ? `${categoria.rotulo}, com seleção${ilustrativa ? ', ambientação' : ''}`
+                  ? `${categoria.rotulo}, ${multi ? `${qtd} selecionados` : 'com seleção'}${ilustrativa ? ', ambientação' : ''}`
                   : ilustrativa
                     ? `${categoria.rotulo}, ambientação`
                     : undefined
@@ -120,7 +130,9 @@ export function SeletorItens({
               {categoria.rotulo}
               {ilustrativa && <span className="item-picker__tab-hint">ambientação</span>}
               {temSelecao && (
-                <span className="visually-hidden"> (selecionado)</span>
+                <span className="visually-hidden">
+                  {multi ? ` (${qtd} selecionados)` : ' (selecionado)'}
+                </span>
               )}
             </button>
           )
@@ -136,9 +148,12 @@ export function SeletorItens({
         <header className="item-picker__header">
           <div>
             <h2>{metaAtiva?.rotulo}</h2>
-            <p>{metaAtiva?.descricao}</p>
+            <p>
+              {metaAtiva?.descricao}
+              {multiAtiva ? ' — selecione um ou mais.' : ''}
+            </p>
           </div>
-          {idSelecionado && (
+          {temSelecaoAtiva && (
             <button
               type="button"
               className="item-picker__clear"
@@ -154,7 +169,7 @@ export function SeletorItens({
         ) : (
           <ul className="item-picker__grid">
             {itensCategoria.map((item) => {
-              const selecionado = idSelecionado === item.id
+              const selecionado = idsAtivos.includes(item.id)
 
               return (
                 <li key={item.id}>

@@ -18,9 +18,10 @@ const PADROES_CATEGORIA: Record<CategoriaMedida, DimensoesItem> = {
   pratoRaso: { largura: 27, comprimento: 27 },
   pratoFundo: { largura: 27, comprimento: 27 },
   pratoSobremesa: { largura: 20, comprimento: 20 },
+  /** Tecido aberto — footprint na mesa usa dimensoesVisuaisGuardanapo. */
   guardanapo: { largura: 45, comprimento: 45 },
-  portaGuardanapo: { largura: 8, comprimento: 8 },
-  talher: { largura: 3, comprimento: 20 },
+  portaGuardanapo: { largura: 5, comprimento: 5 },
+  talher: { largura: 3, comprimento: 24 },
   taca: { largura: 9, comprimento: 20 },
 }
 
@@ -29,10 +30,16 @@ const PADROES_REDONDO: Partial<Record<CategoriaMedida, number>> = {
   pratoRaso: 27,
   pratoFundo: 27,
   pratoSobremesa: 20,
-  portaGuardanapo: 8,
+  portaGuardanapo: 5,
 }
 
 const FALLBACK_MEDIDA: DimensoesItem = { largura: 30, comprimento: 30 }
+
+/** Altura visual do guardanapo dobrado ≈ Ø do prato âncora. */
+export const GUARDANAPO_ALTURA_VISUAL_CM = 28
+
+/** Largura/altura do PNG dobrado (faixa estreita nas fotos de referência). */
+export const GUARDANAPO_ASPECT_LARGURA = 0.42
 
 function ehCategoriaMedida(categoria: string): categoria is CategoriaMedida {
   return categoria in PADROES_CATEGORIA
@@ -50,8 +57,27 @@ export const PREVIEW_SCALE_PRATO = PREVIEW_SCALE * 1.1
 /** Leve aumento só nas taças */
 export const PREVIEW_SCALE_TACA = PREVIEW_SCALE * 1.155
 
+/** Guardanapo dobrado: não usa cm do tecido aberto 1:1 */
+export const PREVIEW_SCALE_GUARDANAPO = PREVIEW_SCALE
+
 function numeroCm(texto: string): number {
   return parseFloat(texto.replace(',', '.'))
+}
+
+export function ehTalherSobremesa(nome: string): boolean {
+  return /sobremesa|doce|cafe|café/i.test(nome)
+}
+
+/** Footprint visual do guardanapo dobrado (independente do cm do tecido). */
+export function dimensoesVisuaisGuardanapo(
+  _item: ItemMesa,
+  alturaAncoraCm: number = GUARDANAPO_ALTURA_VISUAL_CM,
+): DimensoesItem {
+  const comprimento = alturaAncoraCm
+  return {
+    largura: comprimento * GUARDANAPO_ASPECT_LARGURA,
+    comprimento,
+  }
 }
 
 export function inferirDimensoes(nome: string, categoria: string): DimensoesItem {
@@ -71,7 +97,14 @@ export function inferirDimensoes(nome: string, categoria: string): DimensoesItem
   if (matchRet) {
     const a = numeroCm(matchRet[1])
     const b = numeroCm(matchRet[2])
-    if (categoria === 'talher') return { largura: b, comprimento: a }
+    if (categoria === 'talher') {
+      const comprimento = Math.max(a, b)
+      const largura = Math.min(a, b)
+      if (ehTalherSobremesa(nome)) {
+        return { largura: Math.min(largura, 2.5), comprimento: Math.min(comprimento, 16) }
+      }
+      return { largura, comprimento }
+    }
     return { largura: a, comprimento: b }
   }
 
@@ -84,6 +117,10 @@ export function inferirDimensoes(nome: string, categoria: string): DimensoesItem
   const padraoCategoria = ehCategoriaMedida(categoria)
     ? PADROES_CATEGORIA[categoria]
     : FALLBACK_MEDIDA
+
+  if (categoria === 'talher' && ehTalherSobremesa(nome)) {
+    return { largura: 2.5, comprimento: 16 }
+  }
 
   if (/redondo/i.test(nome)) {
     const diametro = ehCategoriaMedida(categoria)

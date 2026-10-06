@@ -54,7 +54,10 @@ export interface ItemMesa {
   descricao?: string
 }
 
-export type ConfiguracaoMesa = Record<string, string | null>
+/** Uma peça, várias (talher/taça) ou nenhuma. */
+export type SelecaoCategoria = string | string[] | null
+
+export type ConfiguracaoMesa = Record<string, SelecaoCategoria>
 
 export interface Categoria {
   id: IdCategoria

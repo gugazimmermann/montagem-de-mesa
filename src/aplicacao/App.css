@@ -147,6 +147,22 @@
   align-items: start;
 }
 
+@media (min-width: 1200px) {
+  .app {
+    max-width: 1360px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .app {
+    max-width: 1560px;
+  }
+
+  .app__main {
+    grid-template-columns: 1.15fr 1fr;
+  }
+}
+
 .app__preview {
   position: sticky;
   top: 1rem;

@@ -209,6 +209,15 @@ node scripts/seed-itens-raffiner.mjs        # upsert items + WebP upload
 node scripts/gerar-catalogo-raffiner.mjs    # regenerate catalogo.json only
 ```
 
+## Public composition (preview)
+
+On `/:slug`, visitors build a place setting with a live preview and PNG export:
+
+- **Cutlery and glassware** support **multiple items** at once (`?m=` URL with comma-separated ids).
+- Etiquette layout in [`layoutEtiqueta.ts`](src/funcionalidades/mesa/layoutEtiqueta.ts): forks/table spoons on the left, knives on the right, dessert utensils above (horizontal), glasses upper-right.
+- **Napkin** uses folded-PNG visual scale; **napkin ring** covers the wooden ring baked into napkin photos.
+- With a **placemat** (`lugar americano`), the place setting is recentered and lifted so the mat stays on the table; **charger** (`sousplat`) keeps the compact layout.
+
 ## Routes
 
 | Route | Description |
@@ -265,7 +274,7 @@ src/funcionalidades/
   admin/                    # login, panel, profile, subscription, help
   autenticacao/             # AuthProvider, protected route
   catalogo/                 # catalog helpers
-  mesa/                     # selector, preview, submit composition
+  mesa/                     # selector, preview, etiquette layout, submit composition
 imagens/                    # local seed assets (gitignored; seed → Storage)
 public/ajuda/               # admin help examples
 supabase/migrations/        # schema, RLS, storage, trial, CRM

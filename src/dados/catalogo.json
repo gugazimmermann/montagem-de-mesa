@@ -38,12 +38,12 @@
     {
       "id": "talher",
       "rotulo": "Talheres",
-      "descricao": "Talheres de mesa e sobremesa"
+      "descricao": "Garfos, facas e colheres — selecione vários; cada tipo tem seu lugar"
     },
     {
       "id": "taca",
       "rotulo": "Taças",
-      "descricao": "Taças de vidro e cristal"
+      "descricao": "Taças de vidro e cristal — selecione uma ou mais"
     }
   ],
   "itens": [

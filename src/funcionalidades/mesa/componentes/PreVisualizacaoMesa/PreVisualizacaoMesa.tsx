@@ -1,12 +1,19 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { Categoria, ConfiguracaoMesa, ItemMesa } from '../../../../compartilhado/tipos'
 import { imagemMesaItem } from '../../../../compartilhado/tipos'
-import { obterItemPorId } from '../../../catalogo'
 import {
+  idsSelecionados,
+  obterItemPorId,
+  obterItensPorIds,
+} from '../../../catalogo'
+import {
+  dimensoesVisuaisGuardanapo,
   estiloCamadaDimensionada,
+  GUARDANAPO_ALTURA_VISUAL_CM,
   inferirDimensoes,
   itemRedondo,
   PREVIEW_SCALE,
+  PREVIEW_SCALE_GUARDANAPO,
   PREVIEW_SCALE_PRATO,
   PREVIEW_SCALE_TACA,
   REFERENCIA_PREVIEW_CM,
@@ -17,6 +24,13 @@ import {
   ehCodigoCamadaConhecido,
   chaveCamada,
 } from '../../ordemCamadas'
+import {
+  type PosicaoCamada,
+  posicionarPortaGuardanapo,
+  posicionarTacas,
+  posicionarTalheres,
+  raioPratoVisualPct,
+} from '../../layoutEtiqueta'
 import './PreVisualizacaoMesa.css'
 import '../../padroes-tecido.css'
 
@@ -28,15 +42,34 @@ interface PropsPreVisualizacaoMesa {
   aoAmpliarItem?: (item: ItemMesa) => void
 }
 
+function obterCategoriaPorCodigo(
+  categorias: Categoria[],
+  codigo: CodigoCamada,
+): Categoria | null {
+  return categorias.find((c) => chaveCamada(c) === codigo) ?? null
+}
+
 function obterItemPorCodigo(
   categorias: Categoria[],
   configuracao: ConfiguracaoMesa,
   itens: ItemMesa[],
   codigo: CodigoCamada,
 ): ItemMesa | null {
-  const categoria = categorias.find((c) => chaveCamada(c) === codigo)
+  const categoria = obterCategoriaPorCodigo(categorias, codigo)
   if (!categoria) return null
-  return obterItemPorId(itens, configuracao[categoria.id] ?? null)
+  const ids = idsSelecionados(configuracao[categoria.id])
+  return obterItemPorId(itens, ids[0] ?? null)
+}
+
+function obterItensPorCodigo(
+  categorias: Categoria[],
+  configuracao: ConfiguracaoMesa,
+  itens: ItemMesa[],
+  codigo: CodigoCamada,
+): ItemMesa[] {
+  const categoria = obterCategoriaPorCodigo(categorias, codigo)
+  if (!categoria) return []
+  return obterItensPorIds(itens, idsSelecionados(configuracao[categoria.id]))
 }
 
 function varsCores(item: ItemMesa): CSSProperties {
@@ -62,6 +95,28 @@ function estiloDimensionado(
   item: ItemMesa & { largura: number; comprimento: number },
 ): CSSProperties {
   return estiloCamadaDimensionada(item)
+}
+
+function estiloPosicao(posicao: PosicaoCamada): CSSProperties {
+  const base: CSSProperties = {
+    left: `${posicao.leftPct}%`,
+    top: `${posicao.topPct}%`,
+    zIndex: posicao.zIndex,
+  }
+  if (posicao.ancora === 'topoEsquerdo') {
+    return {
+      ...base,
+      transform: posicao.rotateDeg
+        ? `rotate(${posicao.rotateDeg}deg)`
+        : 'none',
+    }
+  }
+  return {
+    ...base,
+    transform: posicao.rotateDeg
+      ? `translate(-50%, -50%) rotate(${posicao.rotateDeg}deg)`
+      : 'translate(-50%, -50%)',
+  }
 }
 
 function CamadaToalha({ item }: { item: ItemMesa }) {
@@ -190,13 +245,21 @@ function CamadaFoto({
   codigo,
   classe,
   aoAmpliarItem,
+  dimsOverride,
+  scaleOverride,
+  posicao,
 }: {
   item: ItemMesa
   codigo: string
   classe: string
   aoAmpliarItem?: (item: ItemMesa) => void
+  dimsOverride?: { largura: number; comprimento: number }
+  scaleOverride?: number
+  posicao?: PosicaoCamada
 }) {
-  const comDim = itemComDimensoes(item, codigo)
+  const comDim = dimsOverride
+    ? { ...item, ...dimsOverride }
+    : itemComDimensoes(item, codigo)
   const srcImagem = imagemMesaItem(item)
   const comImagem = Boolean(srcImagem)
 
@@ -205,36 +268,16 @@ function CamadaFoto({
       item={item}
       aoAmpliarItem={aoAmpliarItem}
       className={`layer layer--sized ${classe} ${!comImagem ? 'layer--round' : ''}`}
-      style={{
-        ...estiloDimensionado(comDim),
-        ...(!comImagem ? varsCores(item) : {}),
-      }}
-    >
-      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
-    </CamadaClicavel>
-  )
-}
-
-function CamadaPortaGuardanapo({
-  item,
-  aoAmpliarItem,
-}: {
-  item: ItemMesa
-  aoAmpliarItem?: (item: ItemMesa) => void
-}) {
-  const comDim = itemComDimensoes(item, 'portaGuardanapo')
-  const srcImagem = imagemMesaItem(item)
-  const comImagem = Boolean(srcImagem)
-
-  return (
-    <CamadaClicavel
-      item={item}
-      aoAmpliarItem={aoAmpliarItem}
-      className={`layer layer--sized porta-guardanapo ${!comImagem ? 'layer--round' : ''}`}
-      style={{
-        ...estiloDimensionado(comDim),
-        ...(!comImagem ? varsCores(item) : {}),
-      }}
+      style={
+        {
+          ...estiloDimensionado(comDim),
+          ...(scaleOverride != null
+            ? { '--preview-scale': scaleOverride }
+            : {}),
+          ...(posicao ? estiloPosicao(posicao) : {}),
+          ...(!comImagem ? varsCores(item) : {}),
+        } as CSSProperties
+      }
     >
       {comImagem && <img src={srcImagem} alt="" draggable={false} />}
     </CamadaClicavel>
@@ -244,11 +287,16 @@ function CamadaPortaGuardanapo({
 function CamadaTaca({
   item,
   aoAmpliarItem,
+  posicao,
+  larguraCm,
+  comprimentoCm,
 }: {
   item: ItemMesa
   aoAmpliarItem?: (item: ItemMesa) => void
+  posicao: PosicaoCamada
+  larguraCm: number
+  comprimentoCm: number
 }) {
-  const comDim = itemComDimensoes(item, 'taca')
   const srcImagem = imagemMesaItem(item)
   const comImagem = Boolean(srcImagem)
 
@@ -259,8 +307,13 @@ function CamadaTaca({
       className={`layer layer--sized taca ${!comImagem ? 'layer--round' : ''}`}
       style={
         {
-          ...estiloDimensionado(comDim),
+          ...estiloCamadaDimensionada({
+            ...item,
+            largura: larguraCm,
+            comprimento: comprimentoCm,
+          }),
           '--preview-scale': PREVIEW_SCALE_TACA,
+          ...estiloPosicao(posicao),
           ...(!comImagem ? varsCores(item) : {}),
         } as CSSProperties
       }
@@ -327,13 +380,36 @@ export function PreVisualizacaoMesa({
     itens,
     'portaGuardanapo',
   )
-  const talher = obterItemPorCodigo(categorias, configuracao, itens, 'talher')
-  const taca = obterItemPorCodigo(categorias, configuracao, itens, 'taca')
+  const talheres = obterItensPorCodigo(categorias, configuracao, itens, 'talher')
+  const tacas = obterItensPorCodigo(categorias, configuracao, itens, 'taca')
 
   const genericas = categorias
     .filter((c) => !ehCodigoCamadaConhecido(chaveCamada(c)))
-    .map((c) => obterItemPorId(itens, configuracao[c.id] ?? null))
-    .filter((item): item is ItemMesa => Boolean(item))
+    .flatMap((c) =>
+      obterItensPorIds(itens, idsSelecionados(configuracao[c.id])),
+    )
+
+  const ancoraCm = sousplat
+    ? itemComDimensoes(sousplat, 'sousplat').largura
+    : pratoRaso
+      ? itemComDimensoes(pratoRaso, 'pratoRaso').largura
+      : GUARDANAPO_ALTURA_VISUAL_CM
+
+  const dimsGuardanapo = dimensoesVisuaisGuardanapo(
+    guardanapo ?? ({ nome: '' } as ItemMesa),
+    Math.min(ancoraCm, GUARDANAPO_ALTURA_VISUAL_CM + 2),
+  )
+
+  const raioPratoPct = raioPratoVisualPct(ancoraCm, PREVIEW_SCALE_PRATO)
+
+  const talheresPos = posicionarTalheres(talheres, raioPratoPct)
+  const tacasPos = posicionarTacas(tacas, raioPratoPct, {
+    comLugarAmericano: Boolean(lugarAmericano),
+  })
+  const portaPos =
+    guardanapo && portaGuardanapo
+      ? posicionarPortaGuardanapo(portaGuardanapo, dimsGuardanapo.comprimento)
+      : null
 
   const resumo = [
     toalha,
@@ -343,9 +419,9 @@ export function PreVisualizacaoMesa({
     pratoFundo,
     pratoSobremesa,
     guardanapo,
-    portaGuardanapo,
-    talher,
-    taca,
+    portaPos?.item,
+    ...talheresPos.map((t) => t.item),
+    ...tacasPos.map((t) => t.item),
     ...genericas,
   ]
     .filter(Boolean)
@@ -360,9 +436,9 @@ export function PreVisualizacaoMesa({
     !pratoFundo &&
     !pratoSobremesa &&
     !guardanapo &&
-    !portaGuardanapo &&
-    !talher &&
-    !taca &&
+    !portaPos &&
+    talheresPos.length === 0 &&
+    tacasPos.length === 0 &&
     genericas.length === 0
 
   return (
@@ -375,7 +451,7 @@ export function PreVisualizacaoMesa({
         {toalha && <CamadaToalha item={toalha} />}
         <div className="table-edge" />
         <div
-          className="place-setting"
+          className={`place-setting${lugarAmericano ? ' place-setting--lugar-americano' : ''}`}
           style={
             {
               '--preview-reference-cm': REFERENCIA_PREVIEW_CM,
@@ -421,23 +497,44 @@ export function PreVisualizacaoMesa({
               codigo="guardanapo"
               classe="guardanapo"
               aoAmpliarItem={aoAmpliarItem}
+              dimsOverride={dimsGuardanapo}
+              scaleOverride={PREVIEW_SCALE_GUARDANAPO}
             />
           )}
-          {portaGuardanapo && (
-            <CamadaPortaGuardanapo
-              item={portaGuardanapo}
-              aoAmpliarItem={aoAmpliarItem}
-            />
-          )}
-          {talher && (
+          {portaPos && (
             <CamadaFoto
-              item={talher}
+              item={portaPos.item}
+              codigo="portaGuardanapo"
+              classe="porta-guardanapo"
+              aoAmpliarItem={aoAmpliarItem}
+              dimsOverride={{
+                largura: portaPos.larguraCm,
+                comprimento: portaPos.comprimentoCm,
+              }}
+              posicao={portaPos.posicao}
+            />
+          )}
+          {talheresPos.map(({ item, posicao, larguraCm, comprimentoCm }) => (
+            <CamadaFoto
+              key={`talher-${item.id}`}
+              item={item}
               codigo="talher"
               classe="talher"
               aoAmpliarItem={aoAmpliarItem}
+              dimsOverride={{ largura: larguraCm, comprimento: comprimentoCm }}
+              posicao={posicao}
             />
-          )}
-          {taca && <CamadaTaca item={taca} aoAmpliarItem={aoAmpliarItem} />}
+          ))}
+          {tacasPos.map(({ item, posicao, larguraCm, comprimentoCm }) => (
+            <CamadaTaca
+              key={`taca-${item.id}`}
+              item={item}
+              aoAmpliarItem={aoAmpliarItem}
+              posicao={posicao}
+              larguraCm={larguraCm}
+              comprimentoCm={comprimentoCm}
+            />
+          ))}
           {genericas.map((item) => (
             <CamadaGenerica
               key={item.id}

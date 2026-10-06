@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { PreVisualizacaoMesa, SeletorItensMemo } from '../funcionalidades/mesa'
-import { criarConfiguracaoVazia, obterItemPorId } from '../funcionalidades/catalogo'
+import { criarConfiguracaoVazia, obterItemPorId, aplicarSelecao, ehCategoriaMulti, idsSelecionados, temSelecaoNaCategoria } from '../funcionalidades/catalogo'
 import {
   temSelecao,
   urlComMontagem,
@@ -28,10 +28,8 @@ interface PropsApp {
 
 function CabecalhoAdmin({
   slug,
-  modoKiosk,
 }: {
   slug: string
-  modoKiosk: boolean
 }) {
   const { cliente, carregando } = useAuth()
   const { slug: slugRota } = useParams<{ slug: string }>()
@@ -39,25 +37,8 @@ function CabecalhoAdmin({
 
   if (!mostrarAdmin) return null
 
-  async function entrarKiosk() {
-    try {
-      await document.documentElement.requestFullscreen()
-    } catch {
-      // Sem suporte ou bloqueado.
-    }
-  }
-
   return (
     <div className="app__header-actions">
-      {!modoKiosk && (
-        <button
-          type="button"
-          className="btn btn--ghost app__kiosk-btn"
-          onClick={() => void entrarKiosk()}
-        >
-          Kiosk
-        </button>
-      )}
       <Link className="btn btn--ghost app__admin-link" to="/admin/painel">
         Painel admin
       </Link>
@@ -84,9 +65,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
   const [exportando, setExportando] = useState(false)
   const [feedbackAcao, setFeedbackAcao] = useState<string | null>(null)
   const [enviarAberto, setEnviarAberto] = useState(false)
-  const [modoKiosk, setModoKiosk] = useState(
-    () => typeof document !== 'undefined' && Boolean(document.fullscreenElement),
-  )
 
   const pulsoTimeoutRef = useRef<number | null>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -99,14 +77,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     for (const item of itens) mapa.set(item.id, item)
     return mapa
   }, [itens])
-
-  useEffect(() => {
-    function aoFullscreenChange() {
-      setModoKiosk(Boolean(document.fullscreenElement))
-    }
-    document.addEventListener('fullscreenchange', aoFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', aoFullscreenChange)
-  }, [])
 
   useEffect(() => {
     setCategoriaAtiva((ativa) =>
@@ -175,11 +145,26 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
 
   function selecionar(categoria: IdCategoria, idItem: string | null) {
     setConfigAnterior(null)
-    setConfiguracao((anterior) => ({ ...anterior, [categoria]: idItem }))
     const cat = categorias.find((c) => c.id === categoria)
+    const multi = cat ? ehCategoriaMulti(cat) : false
+    const antes = idsSelecionados(configuracao[categoria])
+    const proxima = aplicarSelecao(configuracao[categoria] ?? null, idItem, multi)
+    const depois = idsSelecionados(proxima)
+    setConfiguracao((anterior) => ({
+      ...anterior,
+      [categoria]: proxima,
+    }))
     const item = itemPorId(idItem)
-    if (item && cat) {
-      setAnuncio(`${cat.rotulo}: ${item.nome}`)
+    if (item && cat && idItem) {
+      const adicionou = depois.includes(idItem) && !antes.includes(idItem)
+      const removeu = antes.includes(idItem) && !depois.includes(idItem)
+      setAnuncio(
+        removeu
+          ? `${cat.rotulo}: ${item.nome} removido`
+          : adicionou
+            ? `${cat.rotulo}: ${item.nome}`
+            : `${cat.rotulo}: ${item.nome}`,
+      )
       setPulsoPreview(true)
       if (pulsoTimeoutRef.current != null) {
         window.clearTimeout(pulsoTimeoutRef.current)
@@ -293,12 +278,13 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
 
   const resumoSelecionado = useMemo(
     () =>
-      categorias
-        .map((categoria) => {
-          const item = itemPorId(configuracao[categoria.id] ?? null)
-          return item ? { categoria: categoria.rotulo, item: item.nome } : null
-        })
-        .filter(Boolean) as { categoria: string; item: string }[],
+      categorias.flatMap((categoria) => {
+        const ids = idsSelecionados(configuracao[categoria.id])
+        return ids
+          .map((id) => itemPorId(id))
+          .filter((item): item is ItemMesa => Boolean(item))
+          .map((item) => ({ categoria: categoria.rotulo, item: item.nome }))
+      }),
     // itemPorId depends on itensPorId/itens; configuracao drives selection
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [categorias, configuracao, itensPorId],
@@ -306,12 +292,14 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
 
   const haSelecao = resumoSelecionado.length > 0
   const haSelecaoAlemToalha = categorias.some(
-    (cat) => cat.id !== ID_CATEGORIA_TOALHA && Boolean(configuracao[cat.id]),
+    (cat) =>
+      cat.id !== ID_CATEGORIA_TOALHA &&
+      temSelecaoNaCategoria(configuracao[cat.id]),
   )
   const ultimoItem = resumoSelecionado[resumoSelecionado.length - 1]
 
   return (
-    <div className={modoKiosk ? 'app app--kiosk' : 'app'}>
+    <div className="app">
       <a className="app__skip" href="#conteudo-principal">
         Ir para o conteúdo
       </a>
@@ -323,7 +311,7 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
           <h1>{nome}</h1>
           <p className="app__subtitle">Escolha as peças — a mesa atualiza na hora.</p>
         </div>
-        <CabecalhoAdmin slug={slug} modoKiosk={modoKiosk} />
+        <CabecalhoAdmin slug={slug} />
       </header>
 
       <p className="app__live" aria-live="polite" aria-atomic="true">

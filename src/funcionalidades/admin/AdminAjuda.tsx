@@ -209,7 +209,7 @@ export function AdminAjuda({ aberto, secaoInicial = 'visao-geral', aoFechar }: P
           >
             <h3 id="ajuda-montagens">Página pública e montagens</h3>
             <p>
-              Use Ver montagem para abrir a página que seus clientes veem. Em
+              Use Página pública para abrir a página que seus clientes veem. Em
               Montagens enviadas você encontra os pedidos, altera o status
               (novo, contatado, fechado, arquivado), anota observações e abre
               WhatsApp ou e-mail do visitante.

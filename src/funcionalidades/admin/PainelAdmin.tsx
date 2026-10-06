@@ -136,15 +136,8 @@ export function PainelAdmin() {
         </div>
         <div className={ui.painelAcoes}>
           <div className={ui.acoesDesktop}>
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => setAjudaAberta(true)}
-            >
-              Ajuda
-            </button>
             <Link className="btn btn--ghost" to={linkPublico}>
-              Ver montagem
+              Página pública
             </Link>
             <Link className="btn btn--ghost" to="/admin/painel/montagens">
               Montagens enviadas
@@ -156,6 +149,13 @@ export function PainelAdmin() {
             <Link className="btn btn--ghost" to="/admin/assinatura">
               Assinatura
             </Link>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => setAjudaAberta(true)}
+            >
+              Ajuda
+            </button>
             <button type="button" className="btn btn--ghost" onClick={() => void aoSair()}>
               Sair
             </button>
@@ -166,24 +166,13 @@ export function PainelAdmin() {
               aoAlternar={() => setMenuAberto((v) => !v)}
               aoFechar={() => setMenuAberto(false)}
             >
-              <button
-                type="button"
-                className="btn btn--ghost"
-                role="menuitem"
-                onClick={() => {
-                  setMenuAberto(false)
-                  setAjudaAberta(true)
-                }}
-              >
-                Ajuda
-              </button>
               <Link
                 className="btn btn--ghost"
                 role="menuitem"
                 to={linkPublico}
                 onClick={() => setMenuAberto(false)}
               >
-                Ver montagem
+                Página pública
               </Link>
               <Link
                 className="btn btn--ghost"
@@ -210,6 +199,17 @@ export function PainelAdmin() {
               >
                 Assinatura
               </Link>
+              <button
+                type="button"
+                className="btn btn--ghost"
+                role="menuitem"
+                onClick={() => {
+                  setMenuAberto(false)
+                  setAjudaAberta(true)
+                }}
+              >
+                Ajuda
+              </button>
               <button
                 type="button"
                 className="btn btn--ghost"

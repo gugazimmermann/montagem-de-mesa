@@ -1,14 +1,28 @@
 import type { ConfiguracaoMesa, Categoria, ItemMesa, PadraoTecido } from '../../compartilhado/tipos'
 import { imagemMesaItem } from '../../compartilhado/tipos'
 import {
+  dimensoesVisuaisGuardanapo,
+  GUARDANAPO_ALTURA_VISUAL_CM,
   inferirDimensoes,
   PREVIEW_SCALE,
+  PREVIEW_SCALE_GUARDANAPO,
   PREVIEW_SCALE_PRATO,
   PREVIEW_SCALE_TACA,
   REFERENCIA_PREVIEW_CM,
   temDimensoes,
 } from '../../compartilhado/utils/dimensoes'
-import { obterItemPorId } from '../catalogo'
+import {
+  idsSelecionados,
+  obterItensPorIds,
+} from '../catalogo'
+import {
+  origemPxDePosicao,
+  posicionarPortaGuardanapo,
+  posicionarTacas,
+  posicionarTalheres,
+  raioPratoVisualPct,
+  type PosicaoCamada,
+} from './layoutEtiqueta'
 import { chaveCamada, ordenarCategoriasPorCamada } from './ordemCamadas'
 
 const LARGURA = 800
@@ -17,12 +31,38 @@ const TIMEOUT_IMAGEM_MS = 8000
 
 /** Caixa do lugar à mesa (espelha `.place-setting` no preview). */
 const PLACE_SIZE = Math.min(360, LARGURA * 0.45)
-const PLACE_X = (LARGURA - PLACE_SIZE) / 2 - PLACE_SIZE * 0.06
-const PLACE_Y = ALTURA - PLACE_SIZE - ALTURA * 0.08
+/** Viés à esquerda espelhando `margin-right` do preview (só sem lugar americano). */
+const PLACE_BIAS_X = PLACE_SIZE * 0.06
 
-/** Centro das peças empilhadas (`left: 50%; top: 66%` + translate). */
-const LAYER_CX = PLACE_X + PLACE_SIZE * 0.5
-const LAYER_CY = PLACE_Y + PLACE_SIZE * 0.66
+type GeometriaLugar = {
+  placeX: number
+  placeY: number
+  placeSize: number
+  layerCx: number
+  layerCy: number
+}
+
+function geometriaLugar(comLugarAmericano: boolean): GeometriaLugar {
+  const placeX =
+    (LARGURA - PLACE_SIZE) / 2 - (comLugarAmericano ? 0 : PLACE_BIAS_X)
+  const bottomClear = comLugarAmericano ? 0.14 : 0.08
+  const placeY = ALTURA - PLACE_SIZE - ALTURA * bottomClear
+  return {
+    placeX,
+    placeY,
+    placeSize: PLACE_SIZE,
+    layerCx: placeX + PLACE_SIZE * 0.5,
+    layerCy: placeY + PLACE_SIZE * 0.66,
+  }
+}
+
+type CamadaExport = {
+  item: ItemMesa
+  codigo: string
+  larguraCm: number
+  comprimentoCm: number
+  posicao?: PosicaoCamada
+}
 
 function carregarImagem(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -68,6 +108,7 @@ function dimensoesParaExport(item: ItemMesa, codigo: string): { largura: number;
 
 function escalaPreview(codigo: string): number {
   if (codigo === 'taca') return PREVIEW_SCALE_TACA
+  if (codigo === 'guardanapo') return PREVIEW_SCALE_GUARDANAPO
   if (codigo === 'pratoRaso' || codigo === 'pratoFundo' || codigo === 'pratoSobremesa') {
     return PREVIEW_SCALE_PRATO
   }
@@ -87,27 +128,27 @@ function caixaCamada(
   }
 }
 
-/** Âncora da caixa: centro (pratos) ou canto superior esquerdo da taça (75% / -15%). */
-function origemCaixa(
+function origemCaixaPadrao(
   codigo: string,
   boxW: number,
   boxH: number,
+  geo: GeometriaLugar,
 ): { x: number; y: number } {
   if (codigo === 'taca') {
     return {
-      x: PLACE_X + PLACE_SIZE * 0.75,
-      y: PLACE_Y + PLACE_SIZE * -0.15,
+      x: geo.placeX + geo.placeSize * 0.75,
+      y: geo.placeY + geo.placeSize * -0.15,
     }
   }
   if (codigo === 'talher') {
     return {
-      x: PLACE_X + PLACE_SIZE * 1.08 - boxW / 2,
-      y: LAYER_CY - boxH / 2,
+      x: geo.placeX + geo.placeSize * 1.08 - boxW / 2,
+      y: geo.layerCy - boxH / 2,
     }
   }
   return {
-    x: LAYER_CX - boxW / 2,
-    y: LAYER_CY - boxH / 2,
+    x: geo.layerCx - boxW / 2,
+    y: geo.layerCy - boxH / 2,
   }
 }
 
@@ -118,15 +159,144 @@ function desenharImagemNaCaixa(
   boxY: number,
   boxW: number,
   boxH: number,
-  /** Taça no preview usa `object-position: center bottom`. */
   alinhar: 'center' | 'bottom' = 'center',
+  rotateDeg = 0,
 ): void {
   const ratio = Math.min(boxW / img.width, boxH / img.height)
   const w = img.width * ratio
   const h = img.height * ratio
   const x = boxX + (boxW - w) / 2
   const y = alinhar === 'bottom' ? boxY + (boxH - h) : boxY + (boxH - h) / 2
-  ctx.drawImage(img, x, y, w, h)
+
+  if (!rotateDeg) {
+    ctx.drawImage(img, x, y, w, h)
+    return
+  }
+
+  const cx = boxX + boxW / 2
+  const cy = boxY + boxH / 2
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate((rotateDeg * Math.PI) / 180)
+  ctx.drawImage(img, -w / 2, -h / 2, w, h)
+  ctx.restore()
+}
+
+function montarCamadas(
+  configuracao: ConfiguracaoMesa,
+  categorias: Categoria[],
+  itens: ItemMesa[],
+): CamadaExport[] {
+  const porCodigo = new Map<string, ItemMesa[]>()
+  for (const categoria of categorias) {
+    const codigo = chaveCamada(categoria)
+    const ids = idsSelecionados(configuracao[categoria.id])
+    const selecionados = obterItensPorIds(itens, ids)
+    if (selecionados.length > 0) {
+      porCodigo.set(codigo, selecionados)
+    }
+  }
+
+  const sousplat = porCodigo.get('sousplat')?.[0]
+  const pratoRaso = porCodigo.get('pratoRaso')?.[0]
+  const ancoraCm = sousplat
+    ? dimensoesParaExport(sousplat, 'sousplat').largura
+    : pratoRaso
+      ? dimensoesParaExport(pratoRaso, 'pratoRaso').largura
+      : GUARDANAPO_ALTURA_VISUAL_CM
+
+  const dimsGuardanapo = dimensoesVisuaisGuardanapo(
+    porCodigo.get('guardanapo')?.[0] ?? ({ nome: '' } as ItemMesa),
+    Math.min(ancoraCm, GUARDANAPO_ALTURA_VISUAL_CM + 2),
+  )
+
+  const raioPratoPct = raioPratoVisualPct(ancoraCm, PREVIEW_SCALE_PRATO)
+  const comLugarAmericano = Boolean(porCodigo.get('lugarAmericano')?.length)
+
+  const ordem = ordenarCategoriasPorCamada(categorias)
+  const camadas: CamadaExport[] = []
+
+  for (const categoria of ordem) {
+    const codigo = chaveCamada(categoria)
+    const selecionados = porCodigo.get(codigo)
+    if (!selecionados?.length) continue
+
+    if (codigo === 'toalha') {
+      camadas.push({
+        item: selecionados[0]!,
+        codigo,
+        larguraCm: 0,
+        comprimentoCm: 0,
+      })
+      continue
+    }
+
+    if (codigo === 'talher') {
+      for (const pos of posicionarTalheres(selecionados, raioPratoPct)) {
+        camadas.push({
+          item: pos.item,
+          codigo,
+          larguraCm: pos.larguraCm,
+          comprimentoCm: pos.comprimentoCm,
+          posicao: pos.posicao,
+        })
+      }
+      continue
+    }
+
+    if (codigo === 'taca') {
+      for (const pos of posicionarTacas(selecionados, raioPratoPct, {
+        comLugarAmericano,
+      })) {
+        camadas.push({
+          item: pos.item,
+          codigo,
+          larguraCm: pos.larguraCm,
+          comprimentoCm: pos.comprimentoCm,
+          posicao: pos.posicao,
+        })
+      }
+      continue
+    }
+
+    if (codigo === 'guardanapo') {
+      camadas.push({
+        item: selecionados[0]!,
+        codigo,
+        larguraCm: dimsGuardanapo.largura,
+        comprimentoCm: dimsGuardanapo.comprimento,
+      })
+      continue
+    }
+
+    if (codigo === 'portaGuardanapo') {
+      const guardanapo = porCodigo.get('guardanapo')?.[0]
+      if (!guardanapo) continue
+      const pos = posicionarPortaGuardanapo(
+        selecionados[0]!,
+        dimsGuardanapo.comprimento,
+      )
+      camadas.push({
+        item: pos.item,
+        codigo,
+        larguraCm: pos.larguraCm,
+        comprimentoCm: pos.comprimentoCm,
+        posicao: pos.posicao,
+      })
+      continue
+    }
+
+    const item = selecionados[0]!
+    const dims = dimensoesParaExport(item, codigo)
+    camadas.push({
+      item,
+      codigo,
+      larguraCm: dims.largura,
+      comprimentoCm: dims.comprimento,
+    })
+  }
+
+  return camadas
 }
 
 /**
@@ -152,18 +322,9 @@ export async function exportarMontagemPng(
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, LARGURA, ALTURA)
 
-  const ordem = ordenarCategoriasPorCamada(categorias)
-  const camadas = ordem
-    .map((categoria) => {
-      const item = obterItemPorId(itens, configuracao[categoria.id] ?? null)
-      if (!item) return null
-      return { categoria, item, codigo: chaveCamada(categoria) }
-    })
-    .filter(Boolean) as {
-    categoria: (typeof ordem)[number]
-    item: ItemMesa
-    codigo: string
-  }[]
+  const camadas = montarCamadas(configuracao, categorias, itens)
+  const comLugarAmericano = camadas.some((c) => c.codigo === 'lugarAmericano')
+  const geo = geometriaLugar(comLugarAmericano)
 
   const imagens = await Promise.all(
     camadas.map(({ item, codigo }) => {
@@ -178,16 +339,24 @@ export async function exportarMontagemPng(
 
   for (let i = 0; i < camadas.length; i += 1) {
     const camada = camadas[i]!
-    const { item, codigo } = camada
+    const { item, codigo, larguraCm, comprimentoCm, posicao } = camada
 
     if (codigo === 'toalha') {
       desenharToalha(ctx, item)
       continue
     }
 
-    const dims = dimensoesParaExport(item, codigo)
-    const { w: boxW, h: boxH } = caixaCamada(codigo, dims.largura, dims.comprimento)
-    const { x: boxX, y: boxY } = origemCaixa(codigo, boxW, boxH)
+    const { w: boxW, h: boxH } = caixaCamada(codigo, larguraCm, comprimentoCm)
+    const { x: boxX, y: boxY } = posicao
+      ? origemPxDePosicao(
+          posicao,
+          boxW,
+          boxH,
+          geo.placeX,
+          geo.placeY,
+          geo.placeSize,
+        )
+      : origemCaixaPadrao(codigo, boxW, boxH, geo)
 
     const img = imagens[i]
     if (imagemMesaItem(item)) {
@@ -200,6 +369,7 @@ export async function exportarMontagemPng(
           boxW,
           boxH,
           codigo === 'taca' ? 'bottom' : 'center',
+          posicao?.rotateDeg ?? 0,
         )
         continue
       }
@@ -207,8 +377,16 @@ export async function exportarMontagemPng(
     }
 
     const raio = Math.min(boxW, boxH) / 2
-    const cx = codigo === 'taca' ? boxX + boxW / 2 : LAYER_CX
-    const cy = codigo === 'taca' ? boxY + boxH / 2 : LAYER_CY
+    const cx = posicao
+      ? boxX + boxW / 2
+      : codigo === 'taca'
+        ? boxX + boxW / 2
+        : geo.layerCx
+    const cy = posicao
+      ? boxY + boxH / 2
+      : codigo === 'taca'
+        ? boxY + boxH / 2
+        : geo.layerCy
     ctx.fillStyle = item.cores.primaria
     ctx.beginPath()
     ctx.arc(cx, cy, raio, 0, Math.PI * 2)

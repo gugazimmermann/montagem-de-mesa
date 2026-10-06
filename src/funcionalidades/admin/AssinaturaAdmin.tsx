@@ -22,7 +22,7 @@ import {
 import { obterSessaoCliente } from '../../dados/repositorioClientes'
 import { rastrear } from '../../compartilhado/observabilidade'
 import { useAuth } from '../autenticacao'
-import { AdminAlerta } from './AdminFeedback'
+import { AdminAlerta, AdminEstadoCarregando } from './AdminFeedback'
 import { AdminConfirmacao } from './AdminConfirmacao'
 import {
   AdminPaginaPainel,
@@ -89,6 +89,7 @@ export function AssinaturaAdmin() {
   const [atualizandoAposCheckout, setAtualizandoAposCheckout] = useState(false)
   const [confirmarCancelar, setConfirmarCancelar] = useState(false)
   const [faturas, setFaturas] = useState<FaturaPaga[]>([])
+  const [carregandoHistorico, setCarregandoHistorico] = useState(true)
   const [resumoStripe, setResumoStripe] = useState<AssinaturaStripeResumo | null>(
     null,
   )
@@ -106,9 +107,11 @@ export function AssinaturaAdmin() {
     if (!cliente?.stripeCustomerId) {
       setFaturas([])
       setResumoStripe(null)
+      setCarregandoHistorico(false)
       return
     }
 
+    setCarregandoHistorico(true)
     try {
       const resultado = await listarFaturasPagas()
       setFaturas(resultado.faturas)
@@ -124,6 +127,8 @@ export function AssinaturaAdmin() {
     } catch (e) {
       console.error('histórico de faturas', e)
       setFaturas([])
+    } finally {
+      setCarregandoHistorico(false)
     }
   }, [
     cliente?.stripeCustomerId,
@@ -457,7 +462,12 @@ export function AssinaturaAdmin() {
           </div>
         </section>
 
-        {faturas.length > 0 ? (
+        {carregandoHistorico && temStripe && faturas.length === 0 ? (
+          <section className={ui.assinaturaSecao}>
+            <h2>Pagamentos anteriores</h2>
+            <AdminEstadoCarregando mensagem="Carregando pagamentos…" />
+          </section>
+        ) : faturas.length > 0 ? (
           <section className={ui.assinaturaSecao}>
             <h2>Pagamentos anteriores</h2>
             <ul className={ui.assinaturaFaturas}>

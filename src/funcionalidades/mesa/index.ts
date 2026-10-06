@@ -8,3 +8,10 @@ export {
   ehCodigoCamadaConhecido,
 } from './ordemCamadas'
 export type { CodigoCamada } from './ordemCamadas'
+export {
+  classificarTalher,
+  posicionarTalheres,
+  posicionarTacas,
+  posicionarPortaGuardanapo,
+  raioPratoVisualPct,
+} from './layoutEtiqueta'

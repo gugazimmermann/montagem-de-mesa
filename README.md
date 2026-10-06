@@ -209,6 +209,15 @@ node scripts/seed-itens-raffiner.mjs        # upsert itens + upload WebP
 node scripts/gerar-catalogo-raffiner.mjs    # só regenera catalogo.json
 ```
 
+## Montagem pública (preview)
+
+Na página `/:slug`, o visitante monta o lugar à mesa com pré-visualização em tempo real e export PNG:
+
+- **Talheres e taças** aceitam **vários itens** ao mesmo tempo (URL `?m=` com ids separados por vírgula).
+- Posicionamento por etiqueta em [`layoutEtiqueta.ts`](src/funcionalidades/mesa/layoutEtiqueta.ts): garfos/colheres de mesa à esquerda, facas à direita, sobremesa acima (horizontal), taças no canto superior direito.
+- **Guardanapo** usa escala visual do PNG dobrado; **porta-guardanapo** cobre o anel de madeira embutido na foto do guardanapo.
+- Com **lugar americano**, o lugar é recentrado e elevado para o jogo não sair da mesa; com **sousplat** o layout compacto permanece.
+
 ## Rotas
 
 | Rota | Descrição |
@@ -265,7 +274,7 @@ src/funcionalidades/
   admin/                    # login, painel, cadastro, assinatura, ajuda
   autenticacao/             # AuthProvider, rota protegida
   catalogo/                 # helpers do catálogo
-  mesa/                     # seletor, preview, enviar montagem
+  mesa/                     # seletor, preview, layout de etiqueta, enviar montagem
 imagens/                    # assets locais para seed (gitignored; seed → Storage)
 public/ajuda/               # exemplos da ajuda do painel
 supabase/migrations/        # schema, RLS, storage, trial, CRM
