@@ -98,6 +98,12 @@ function origemCaixa(
       y: PLACE_Y + PLACE_SIZE * -0.15,
     }
   }
+  if (codigo === 'talher') {
+    return {
+      x: PLACE_X + PLACE_SIZE * 1.08 - boxW / 2,
+      y: LAYER_CY - boxH / 2,
+    }
+  }
   return {
     x: LAYER_CX - boxW / 2,
     y: LAYER_CY - boxH / 2,

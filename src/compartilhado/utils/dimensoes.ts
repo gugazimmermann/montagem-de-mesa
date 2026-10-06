@@ -2,20 +2,26 @@ import type { CSSProperties } from 'react'
 import type { DimensoesItem, ItemMesa } from '../tipos'
 
 type CategoriaMedida =
+  | 'lugarAmericano'
   | 'sousplat'
   | 'pratoRaso'
   | 'pratoFundo'
   | 'pratoSobremesa'
+  | 'guardanapo'
   | 'portaGuardanapo'
+  | 'talher'
   | 'taca'
 
 const PADROES_CATEGORIA: Record<CategoriaMedida, DimensoesItem> = {
-  sousplat: { largura: 36, comprimento: 36 },
+  lugarAmericano: { largura: 48, comprimento: 35 },
+  sousplat: { largura: 33, comprimento: 33 },
   pratoRaso: { largura: 27, comprimento: 27 },
   pratoFundo: { largura: 27, comprimento: 27 },
   pratoSobremesa: { largura: 20, comprimento: 20 },
+  guardanapo: { largura: 45, comprimento: 45 },
   portaGuardanapo: { largura: 8, comprimento: 8 },
-  taca: { largura: 12, comprimento: 22 },
+  talher: { largura: 3, comprimento: 20 },
+  taca: { largura: 9, comprimento: 20 },
 }
 
 const PADROES_REDONDO: Partial<Record<CategoriaMedida, number>> = {
@@ -44,18 +50,34 @@ export const PREVIEW_SCALE_PRATO = PREVIEW_SCALE * 1.1
 /** Leve aumento só nas taças */
 export const PREVIEW_SCALE_TACA = PREVIEW_SCALE * 1.155
 
+function numeroCm(texto: string): number {
+  return parseFloat(texto.replace(',', '.'))
+}
+
 export function inferirDimensoes(nome: string, categoria: string): DimensoesItem {
-  const matchRet = nome.match(/(\d+)\s*x\s*(\d+)\s*cm/i)
-  if (matchRet) {
+  const match3 = nome.match(
+    /(\d+(?:[.,]\d+)?)(?:\s*cm)?\s*x\s*(\d+(?:[.,]\d+)?)(?:\s*cm)?\s*x\s*(\d+(?:[.,]\d+)?)\s*cm/i,
+  )
+  if (match3) {
     return {
-      largura: Number(matchRet[1]),
-      comprimento: Number(matchRet[2]),
+      largura: numeroCm(match3[1]),
+      comprimento: numeroCm(match3[3]),
     }
+  }
+
+  const matchRet = nome.match(
+    /(\d+(?:[.,]\d+)?)(?:\s*cm)?\s*x\s*(\d+(?:[.,]\d+)?)\s*cm/i,
+  )
+  if (matchRet) {
+    const a = numeroCm(matchRet[1])
+    const b = numeroCm(matchRet[2])
+    if (categoria === 'talher') return { largura: b, comprimento: a }
+    return { largura: a, comprimento: b }
   }
 
   const matchDiam = nome.match(/(\d+(?:[.,]\d+)?)\s*cm/i)
   if (matchDiam) {
-    const diametro = parseFloat(matchDiam[1].replace(',', '.'))
+    const diametro = numeroCm(matchDiam[1])
     return { largura: diametro, comprimento: diametro }
   }
 

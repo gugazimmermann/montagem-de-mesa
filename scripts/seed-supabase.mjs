@@ -8,16 +8,25 @@
  * Defaults: financeiroraffiner@gmail.com / Raffiner / raffiner / trialing 14d
  * Fonte: imagens/logos e imagens/itens/raffiner (não apaga locais após upload).
  */
+import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import {
   existsSync,
   readFileSync,
   readdirSync,
   statSync,
+  unlinkSync,
 } from 'node:fs'
 import { basename, extname, join, relative } from 'node:path'
+import { tmpdir } from 'node:os'
 import pg from 'pg'
 import slugify from 'slugify'
+import {
+  PASTA_PARA_CODIGO,
+  chaveItem,
+  escreverCatalogo,
+  interpretarArquivo,
+} from './lib/catalogo-raffiner.mjs'
 import { carregarEnvRaiz } from './lib/carregar-env.mjs'
 import {
   BUCKET_ITENS,
@@ -40,15 +49,9 @@ const password = process.env.SEED_PASSWORD || ''
 const SLUG = 'raffiner'
 const NOME = 'Raffiner'
 
-/** Pasta em imagens/itens/raffiner → codigo da categoria no catálogo */
-const PASTA_PARA_CODIGO = {
-  Sousplat: 'sousplat',
-  'Pratos Rasos': 'pratoRaso',
-  'Pratos Fundos': 'pratoFundo',
-  'Pratos de sobremesa': 'pratoSobremesa',
-  'Porta Guardanapos': 'portaGuardanapo',
-  Tacas: 'taca',
-}
+/** Limite do bucket `itens` (migration). PNG grande vira WebP antes do upload. */
+const LIMITE_ITEM_BYTES = 5 * 1024 * 1024
+const SCRIPT_WEBP = join(root, 'scripts/lib/para-webp.py')
 
 if (!password || password.length < 10) {
   console.error('Defina SEED_PASSWORD no .env (mín. 10 caracteres, igual ao app).')
@@ -63,12 +66,15 @@ if (!url.startsWith('https://')) {
 }
 
 const catalogoPath = join(root, 'src/dados/catalogo.json')
-const catalogo = JSON.parse(readFileSync(catalogoPath, 'utf8'))
+const { catalogo, avisos } = escreverCatalogo(
+  join(root, 'imagens/itens/raffiner'),
+  catalogoPath,
+)
+for (const aviso of avisos) console.warn(aviso)
+console.log(
+  `Catálogo local: ${catalogo.categorias.length} categorias, ${catalogo.itens.length} itens`,
+)
 const admin = criarAdmin()
-
-function semAcentos(texto) {
-  return texto.normalize('NFD').replace(/\p{M}/gu, '')
-}
 
 async function buscarUsuarioPorEmail() {
   const alvo = email.toLowerCase()
@@ -92,6 +98,12 @@ async function garantirUsuario() {
       password,
       email_confirm: true,
     })
+    if (error?.code === 'weak_password') {
+      console.warn(
+        'Senha do seed recusada pelo Auth (fraca). Usuário existente segue com a senha atual.',
+      )
+      return existenteId
+    }
     if (error) throw error
     console.log('Usuário Auth atualizado:', existenteId)
     return existenteId
@@ -270,6 +282,36 @@ async function seedCatalogo(clienteId) {
   console.log(`Catálogo: ${categorias.length} categorias, ${itens.length} itens`)
 }
 
+function prepararImagem(arquivo) {
+  const ext = extname(arquivo).toLowerCase()
+  if (ext === '.webp' && statSync(arquivo).size <= LIMITE_ITEM_BYTES) {
+    return { body: readFileSync(arquivo), ext: '.webp' }
+  }
+
+  const destino = join(tmpdir(), `item-${randomUUID()}.webp`)
+  const tentativas = [
+    ['1600', '80'],
+    ['1200', '70'],
+    ['800', '60'],
+  ]
+  let ultimoErro = 'arquivo passou de 5 MB'
+  try {
+    for (const [lado, qualidade] of tentativas) {
+      execFileSync('python3', [SCRIPT_WEBP, arquivo, destino, lado, qualidade], {
+        stdio: ['ignore', 'ignore', 'pipe'],
+      })
+      if (statSync(destino).size <= LIMITE_ITEM_BYTES) {
+        const body = readFileSync(destino)
+        return { body, ext: '.webp' }
+      }
+      ultimoErro = `ainda ${statSync(destino).size} bytes após ${lado}px`
+    }
+  } finally {
+    if (existsSync(destino)) unlinkSync(destino)
+  }
+  throw new Error(ultimoErro)
+}
+
 function listarImagens(dir) {
   const out = []
   for (const nome of readdirSync(dir)) {
@@ -343,10 +385,12 @@ async function uploadItens(clienteId) {
     }
 
     const nomeArquivo = basename(arquivo, extname(arquivo))
-    arquivoPorItem.set(
-      `${codigo}|${semAcentos(nomeArquivo).toLowerCase()}`,
-      arquivo,
-    )
+    const info = interpretarArquivo(nomeArquivo, codigo)
+    const chave = `${codigo}|${chaveItem(info.nome)}`
+    const atual = arquivoPorItem.get(chave)
+    if (!atual || (info.ehFrontal && !atual.ehFrontal)) {
+      arquivoPorItem.set(chave, { arquivo, ehFrontal: info.ehFrontal })
+    }
   }
 
   const { data: itensDb, error: itensErr } = await admin
@@ -366,20 +410,27 @@ async function uploadItens(clienteId) {
       continue
     }
 
-    const chave = `${codigo}|${semAcentos(row.nome).toLowerCase()}`
-    const arquivo = arquivoPorItem.get(chave)
-    if (!arquivo) {
+    const chave = `${codigo}|${chaveItem(row.nome)}`
+    const encontrado = arquivoPorItem.get(chave)
+    if (!encontrado) {
       console.warn('Sem imagem para:', codigo, row.nome)
       semMatch += 1
       continue
     }
 
-    const extComPonto = extname(arquivo).toLowerCase()
-    const pathStorage = `${clienteId}/${row.categoria_id}/${row.id}${extComPonto}`
-    const body = readFileSync(arquivo)
+    let preparado
+    try {
+      preparado = prepararImagem(encontrado.arquivo)
+    } catch (err) {
+      console.error('Falha ao preparar imagem:', row.nome, err.message)
+      falhas += 1
+      continue
+    }
 
-    const { error } = await admin.storage.from(BUCKET_ITENS).upload(pathStorage, body, {
-      contentType: MIME_POR_EXT[extComPonto] || 'application/octet-stream',
+    const pathStorage = `${clienteId}/${row.categoria_id}/${row.id}${preparado.ext}`
+
+    const { error } = await admin.storage.from(BUCKET_ITENS).upload(pathStorage, preparado.body, {
+      contentType: MIME_POR_EXT[preparado.ext] || 'application/octet-stream',
       upsert: true,
     })
     if (error) {

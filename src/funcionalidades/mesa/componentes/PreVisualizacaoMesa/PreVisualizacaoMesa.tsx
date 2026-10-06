@@ -182,6 +182,35 @@ function CamadaPrato({
   )
 }
 
+function CamadaFoto({
+  item,
+  codigo,
+  classe,
+  aoAmpliarItem,
+}: {
+  item: ItemMesa
+  codigo: string
+  classe: string
+  aoAmpliarItem?: (item: ItemMesa) => void
+}) {
+  const comDim = itemComDimensoes(item, codigo)
+  const comImagem = Boolean(item.imagem)
+
+  return (
+    <CamadaClicavel
+      item={item}
+      aoAmpliarItem={aoAmpliarItem}
+      className={`layer layer--sized ${classe} ${!comImagem ? 'layer--round' : ''}`}
+      style={{
+        ...estiloDimensionado(comDim),
+        ...(!comImagem ? varsCores(item) : {}),
+      }}
+    >
+      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
+    </CamadaClicavel>
+  )
+}
+
 function CamadaPortaGuardanapo({
   item,
   aoAmpliarItem,
@@ -269,6 +298,12 @@ export function PreVisualizacaoMesa({
   aoAmpliarItem,
 }: PropsPreVisualizacaoMesa) {
   const toalha = obterItemPorCodigo(categorias, configuracao, itens, 'toalha')
+  const lugarAmericano = obterItemPorCodigo(
+    categorias,
+    configuracao,
+    itens,
+    'lugarAmericano',
+  )
   const sousplat = obterItemPorCodigo(categorias, configuracao, itens, 'sousplat')
   const pratoRaso = obterItemPorCodigo(categorias, configuracao, itens, 'pratoRaso')
   const pratoFundo = obterItemPorCodigo(categorias, configuracao, itens, 'pratoFundo')
@@ -278,12 +313,14 @@ export function PreVisualizacaoMesa({
     itens,
     'pratoSobremesa',
   )
+  const guardanapo = obterItemPorCodigo(categorias, configuracao, itens, 'guardanapo')
   const portaGuardanapo = obterItemPorCodigo(
     categorias,
     configuracao,
     itens,
     'portaGuardanapo',
   )
+  const talher = obterItemPorCodigo(categorias, configuracao, itens, 'talher')
   const taca = obterItemPorCodigo(categorias, configuracao, itens, 'taca')
 
   const genericas = categorias
@@ -293,11 +330,14 @@ export function PreVisualizacaoMesa({
 
   const resumo = [
     toalha,
+    lugarAmericano,
     sousplat,
     pratoRaso,
     pratoFundo,
     pratoSobremesa,
+    guardanapo,
     portaGuardanapo,
+    talher,
     taca,
     ...genericas,
   ]
@@ -307,11 +347,14 @@ export function PreVisualizacaoMesa({
 
   const vazia =
     !toalha &&
+    !lugarAmericano &&
     !sousplat &&
     !pratoRaso &&
     !pratoFundo &&
     !pratoSobremesa &&
+    !guardanapo &&
     !portaGuardanapo &&
+    !talher &&
     !taca &&
     genericas.length === 0
 
@@ -333,6 +376,14 @@ export function PreVisualizacaoMesa({
             } as CSSProperties
           }
         >
+          {lugarAmericano && (
+            <CamadaFoto
+              item={lugarAmericano}
+              codigo="lugarAmericano"
+              classe="lugar-americano"
+              aoAmpliarItem={aoAmpliarItem}
+            />
+          )}
           {sousplat && (
             <CamadaSousplat item={sousplat} aoAmpliarItem={aoAmpliarItem} />
           )}
@@ -357,9 +408,25 @@ export function PreVisualizacaoMesa({
               aoAmpliarItem={aoAmpliarItem}
             />
           )}
+          {guardanapo && (
+            <CamadaFoto
+              item={guardanapo}
+              codigo="guardanapo"
+              classe="guardanapo"
+              aoAmpliarItem={aoAmpliarItem}
+            />
+          )}
           {portaGuardanapo && (
             <CamadaPortaGuardanapo
               item={portaGuardanapo}
+              aoAmpliarItem={aoAmpliarItem}
+            />
+          )}
+          {talher && (
+            <CamadaFoto
+              item={talher}
+              codigo="talher"
+              classe="talher"
               aoAmpliarItem={aoAmpliarItem}
             />
           )}

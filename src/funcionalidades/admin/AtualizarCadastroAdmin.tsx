@@ -10,7 +10,7 @@ import {
   obterSessaoCliente,
   solicitarTrocaEmail,
 } from '../../dados/repositorioClientes'
-import { enviarLogoStorage, exigirUrlStorageOuVazio } from '../../dados/storage'
+import { enviarLogoStorage, exigirUrlStorageOuVazio, resolverUrlAssinada } from '../../dados/storage'
 import { supabase } from '../../dados/supabase'
 import { useAuth } from '../autenticacao'
 import { AdminAlerta } from './AdminFeedback'
@@ -49,6 +49,7 @@ function FormularioAtualizarCadastro({
   const [email, setEmail] = useState(clienteAtual.email)
   const [whatsapp, setWhatsapp] = useState(() => formatarWhatsapp(clienteAtual.whatsapp))
   const [logo, setLogo] = useState(clienteAtual.logo)
+  const [logoUrl, setLogoUrl] = useState<string | undefined>()
   const {
     arquivo: arquivoLogo,
     preview: previewLogo,
@@ -76,6 +77,30 @@ function FormularioAtualizarCadastro({
     clienteAtual.whatsapp,
     clienteAtual.logo,
   ])
+
+  // Path do Storage não serve como src; resolve URL assinada para o preview.
+  useEffect(() => {
+    if (previewLogo) {
+      setLogoUrl(undefined)
+      return
+    }
+    const valor = logo.trim()
+    if (!valor) {
+      setLogoUrl(undefined)
+      return
+    }
+    if (/^(https?:|blob:)/i.test(valor)) {
+      setLogoUrl(valor)
+      return
+    }
+    let cancelado = false
+    void resolverUrlAssinada(valor, 'logos').then((url) => {
+      if (!cancelado) setLogoUrl(url)
+    })
+    return () => {
+      cancelado = true
+    }
+  }, [logo, previewLogo])
 
   useEffect(() => {
     const bruto = window.location.hash.replace(/^#/, '')
@@ -143,7 +168,7 @@ function FormularioAtualizarCadastro({
     }
   }, [definirCliente])
 
-  const logoExibida = previewLogo || logo
+  const logoExibida = previewLogo || logoUrl
 
   async function aoVerificarEndereco() {
     const normalizado = gerarSlug(slug)
@@ -346,17 +371,22 @@ function FormularioAtualizarCadastro({
       <section className={ui.painelSecao}>
         <form className={ui.painelForm} onSubmit={(e) => void aoSalvar(e)}>
           <label className={ui.field}>
-            <span className={ui.fieldLabel}>Nome</span>
+            <span className={ui.fieldLabel}>Nome de exibição</span>
             <input
               className={ui.fieldInput}
               type="text"
               name="nome"
               autoComplete="organization"
+              placeholder="Ex.: Raffiner"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               required
               disabled={salvando}
+              aria-describedby="cadastro-nome-exibicao-dica"
             />
+            <span id="cadastro-nome-exibicao-dica" className={ui.fieldDica}>
+              Aparece no título do painel e na montagem pública.
+            </span>
           </label>
 
           <label className={ui.field}>
@@ -428,7 +458,12 @@ function FormularioAtualizarCadastro({
                 setErro(null)
               }}
               disabled={salvando}
+              aria-describedby="logo-upload-dica"
             />
+            <span id="logo-upload-dica" className={ui.fieldDica}>
+              WebP, PNG, JPEG ou GIF (até 2 MB). Ao salvar, a imagem é
+              redimensionada (~512px) e convertida para WebP leve.
+            </span>
           </label>
 
           {logoExibida && (

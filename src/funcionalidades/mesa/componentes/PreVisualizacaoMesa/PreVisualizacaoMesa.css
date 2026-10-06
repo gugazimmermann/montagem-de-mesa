@@ -153,6 +153,27 @@ button.layer--clicavel:focus-visible {
   user-select: none;
 }
 
+/* —— Lugar americano —— */
+.lugar-americano {
+  z-index: 0;
+  background: none;
+  overflow: visible;
+  box-shadow: none;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.28));
+}
+
+.lugar-americano img,
+.guardanapo img,
+.talher img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* —— Sousplat —— */
 .sousplat {
   background:
@@ -228,8 +249,16 @@ button.layer--clicavel:focus-visible {
 }
 
 /* —— Porta-guardanapo —— */
-.porta-guardanapo {
+.guardanapo {
   z-index: 5;
+  background: none;
+  overflow: visible;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.28));
+}
+
+.porta-guardanapo {
+  z-index: 6;
   background: none;
   overflow: visible;
   box-shadow: none;
@@ -244,11 +273,20 @@ button.layer--clicavel:focus-visible {
   display: block;
 }
 
+.talher {
+  left: 108%;
+  z-index: 7;
+  background: none;
+  overflow: visible;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.3));
+}
+
 /* —— Taça —— */
 .taca {
   left: 75%;
   top: -15%;
-  z-index: 6;
+  z-index: 8;
   background: none;
   overflow: visible;
   transform: none;

@@ -3,11 +3,14 @@ import type { Categoria } from '../../compartilhado/tipos'
 /** Ordem de empilhamento no preview e no export PNG (fundo → topo). */
 export const CODIGOS_CAMADA = [
   'toalha',
+  'lugarAmericano',
   'sousplat',
   'pratoRaso',
   'pratoFundo',
   'pratoSobremesa',
+  'guardanapo',
   'portaGuardanapo',
+  'talher',
   'taca',
 ] as const
 

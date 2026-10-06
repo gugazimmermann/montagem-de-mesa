@@ -1,5 +1,10 @@
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
-import { priceId, siteUrl, stripeClient } from '../_shared/stripe.ts'
+import {
+  garantirCustomerStripe,
+  priceId,
+  siteUrl,
+  stripeClient,
+} from '../_shared/stripe.ts'
 import { obterClienteDoUsuario, supabaseAdmin } from '../_shared/supabase.ts'
 
 Deno.serve(async (req) => {
@@ -21,14 +26,17 @@ Deno.serve(async (req) => {
     const stripe = stripeClient()
     const admin = supabaseAdmin()
 
-    let customerId = cliente.stripe_customer_id
-    if (!customerId) {
-      const customer = await stripe.customers.create({
+    const { customerId, precisouSalvar } = await garantirCustomerStripe(
+      stripe,
+      cliente.stripe_customer_id,
+      {
         email: cliente.email,
-        name: cliente.nome,
-        metadata: { cliente_id: cliente.id },
-      })
-      customerId = customer.id
+        nome: cliente.nome,
+        clienteId: cliente.id,
+      },
+    )
+
+    if (precisouSalvar) {
       const { error } = await admin
         .from('clientes')
         .update({ stripe_customer_id: customerId })
@@ -61,7 +69,8 @@ Deno.serve(async (req) => {
     return jsonResponse({ url: session.url })
   } catch (err) {
     if (err instanceof Response) return err
-    console.error('criar-checkout', err)
-    return jsonResponse({ error: 'Erro interno' }, 500)
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('criar-checkout', msg, err)
+    return jsonResponse({ error: 'Não foi possível iniciar o checkout' }, 500)
   }
 })

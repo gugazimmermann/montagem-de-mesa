@@ -135,17 +135,22 @@ export function CadastroAdmin() {
     >
       <form className={ui.loginForm} onSubmit={aoEnviar}>
         <label className={ui.field}>
-          <span className={ui.fieldLabel}>Nome</span>
+          <span className={ui.fieldLabel}>Nome de exibição</span>
           <input
             type="text"
             name="nome"
             className={ui.fieldInput}
             autoComplete="organization"
+            placeholder="Ex.: Raffiner"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             required
             disabled={enviando}
+            aria-describedby="cadastro-nome-dica"
           />
+          <span id="cadastro-nome-dica" className={ui.fieldDica}>
+            Aparece no painel e na página pública da montagem.
+          </span>
         </label>
 
         <label className={ui.field}>

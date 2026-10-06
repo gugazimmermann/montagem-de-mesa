@@ -122,9 +122,12 @@ export function AdminAjuda({ aberto, secaoInicial = 'visao-geral', aoFechar }: P
           >
             <h3 id="ajuda-cadastro">Cadastro</h3>
             <p>
-              Em Atualizar cadastro, configure o nome, a URL pública (slug), o
-              logo e o WhatsApp. O WhatsApp é necessário para o visitante
-              conseguir falar com você após enviar a montagem.
+              Defina o nome de exibição (como o estabelecimento aparece no
+              painel e na página pública). Em Atualizar cadastro, ajuste também
+              a URL pública (slug), o logo e o WhatsApp. O WhatsApp é necessário
+              para o visitante conseguir falar com você após enviar a montagem.
+              A logo é otimizada automaticamente (até ~512px, WebP) para carregar
+              rápido na página pública.
             </p>
           </section>
 

@@ -56,12 +56,14 @@ Copy [`.env.example`](.env.example) and fill it in. Keep frontend, local scripts
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role — only for `npm run seed:supabase` |
 | `DATABASE_URL` | Postgres URI — `npm run db:migrate` (and transactional seed) |
 | `SEED_EMAIL` | Optional; default `financeiroraffiner@gmail.com` |
-| `SEED_PASSWORD` | Required for seed (min. 10 characters) |
-| `DATABASE_SSL_REJECT_UNAUTHORIZED` | `false` only if local SSL CA verification fails |
+| `SEED_PASSWORD` | Required for seed (min. 10 characters) — Auth demo user password |
+| `DATABASE_SSL_REJECT_UNAUTHORIZED` | `false` if `db:migrate` fails on local SSL certificate |
+
+[`.env.example`](.env.example) has section-by-section comments (frontend, scripts, Stripe, Resend, and Edge secrets checklist).
 
 ### Edge Function secrets
 
-Supabase Dashboard → Edge Functions → Secrets (or `supabase secrets set`):
+Supabase Dashboard → Edge Functions → Secrets (or `supabase secrets set` **with the CLI linked to the correct project**):
 
 | Secret | Use |
 |--------|-----|
@@ -71,6 +73,8 @@ Supabase Dashboard → Edge Functions → Secrets (or `supabase secrets set`):
 | `SITE_URL` | App origin (`http://localhost:5173` or production domain) |
 | `RESEND_API_KEY` | Resend API key |
 | `RESEND_FROM` | Sender (e.g. `Montagem de Mesa <onboarding@resend.dev>` for tests) |
+
+Auto-injected by Supabase into functions: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Supabase
 
@@ -99,15 +103,17 @@ Signup confirmation → `/admin`; password reset → `/admin/redefinir-senha`; e
 npm run db:migrate
 ```
 
-Applies files in [`supabase/migrations/`](supabase/migrations/) (lexicographic order): schema, trial/subscription, optimizations, insert/URL protection, and CRM with soft-delete.
+Applies files in [`supabase/migrations/`](supabase/migrations/) (lexicographic order): schema, trial/subscription, optimizations, insert/URL protection, CRM with soft-delete, and billing-column bypass for Dashboard admin (`postgres` / `supabase_admin`).
 
 Does not reset the project Database. Without `DATABASE_URL`: `supabase db query --linked -f supabase/migrations/FILE.sql`.
+
+Stripe columns (`stripe_customer_id`, etc.) change only via **service role** (Edge Functions) or Dashboard admin session; a normal authenticated Table Editor role cannot edit billing fields.
 
 ### Edge Functions
 
 | Function | Role |
 |----------|------|
-| `criar-checkout` | Subscription Checkout Session |
+| `criar-checkout` | Subscription Checkout Session (recreates Stripe customer if DB id is invalid/deleted) |
 | `criar-portal` | Customer Portal (card / invoices) |
 | `cancelar-assinatura` | Cancel at period end |
 | `listar-faturas` | Invoice history (+ sync if needed) |
@@ -148,7 +154,7 @@ supabase functions deploy enviar-montagem --no-verify-jwt
    Signing secret → `STRIPE_WEBHOOK_SECRET`.
 6. Test card: `4242 4242 4242 4242` ([docs](https://docs.stripe.com/testing)).
 
-UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/active, Subscribe, Manage billing, Cancel at period end, invoices.
+UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/active, Subscribe; **Manage billing** only with a Stripe subscription; payment history only when invoices exist.
 
 ## Resend (submit composition)
 
@@ -178,12 +184,15 @@ Expected layout:
 ```
 imagens/logos/raffiner.webp
 imagens/itens/raffiner/
+  Lugar Americano/
   Sousplat/
   Pratos Rasos/
   Pratos Fundos/
   Pratos de sobremesa/
+  Guardanapos/
   Porta Guardanapos/
-  Tacas/
+  Talheres/
+  Taças/
 ```
 
 ## Routes
@@ -199,7 +208,8 @@ imagens/itens/raffiner/
 | `/admin/redefinir-senha` | New password (after email link) |
 | `/admin/assinatura` | Trial, Checkout, Portal, invoices |
 | `/admin/painel` | Catalog (categories and items) + onboarding/help |
-| `/admin/painel/cadastro` | Name, address, email, logo, and WhatsApp |
+| `/admin/painel/nome-exibicao` | Display name + slug (first step if the account has no name yet) |
+| `/admin/painel/cadastro` | Display name, address, email, logo (~512px WebP optimized) and WhatsApp |
 | `/admin/painel/montagens` | History and lead CRM |
 | `/admin/painel/categorias/...` | Category and item CRUD |
 
@@ -239,7 +249,7 @@ src/funcionalidades/
   autenticacao/             # AuthProvider, protected route
   catalogo/                 # catalog helpers
   mesa/                     # selector, preview, submit composition
-imagens/                    # local assets (seed → Storage)
+imagens/                    # local seed assets (gitignored; seed → Storage)
 public/ajuda/               # admin help examples
 supabase/migrations/        # schema, RLS, storage, trial, CRM
 supabase/functions/         # Stripe + enviar-montagem

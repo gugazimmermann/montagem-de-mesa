@@ -22,7 +22,7 @@ import {
 import { obterSessaoCliente } from '../../dados/repositorioClientes'
 import { rastrear } from '../../compartilhado/observabilidade'
 import { useAuth } from '../autenticacao'
-import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
+import { AdminAlerta } from './AdminFeedback'
 import { AdminConfirmacao } from './AdminConfirmacao'
 import {
   AdminPaginaPainel,
@@ -92,8 +92,6 @@ export function AssinaturaAdmin() {
   const [resumoStripe, setResumoStripe] = useState<AssinaturaStripeResumo | null>(
     null,
   )
-  const [carregandoHistorico, setCarregandoHistorico] = useState(false)
-  const [erroHistorico, setErroHistorico] = useState<string | null>(null)
   const checkoutProcessadoRef = useRef<string | null>(null)
   const carregarHistoricoRef = useRef<() => Promise<void>>(async () => {})
   const checkoutTimeoutRef = useRef<number | null>(null)
@@ -108,12 +106,9 @@ export function AssinaturaAdmin() {
     if (!cliente?.stripeCustomerId) {
       setFaturas([])
       setResumoStripe(null)
-      setErroHistorico(null)
       return
     }
 
-    setCarregandoHistorico(true)
-    setErroHistorico(null)
     try {
       const resultado = await listarFaturasPagas()
       setFaturas(resultado.faturas)
@@ -127,11 +122,8 @@ export function AssinaturaAdmin() {
         await refrescarCliente()
       }
     } catch (e) {
-      setErroHistorico(
-        e instanceof Error ? e.message : 'Não foi possível carregar o histórico.',
-      )
-    } finally {
-      setCarregandoHistorico(false)
+      console.error('histórico de faturas', e)
+      setFaturas([])
     }
   }, [
     cliente?.stripeCustomerId,
@@ -321,6 +313,8 @@ export function AssinaturaAdmin() {
   })
   const mostrarTrial = statusEfetivo === 'trialing' && !pagaAtiva
   const mostrarAssinar = !temAcesso || mostrarTrial
+  /** Portal só com assinatura Stripe; customer criado no checkout abandonado não conta. */
+  const mostrarPortal = temStripe && temSubscription
   const podeCancelar =
     temSubscription &&
     pagaAtiva &&
@@ -392,7 +386,6 @@ export function AssinaturaAdmin() {
         alerta={alerta}
       >
         <section className={ui.assinaturaSecao}>
-          <h2>Status atual</h2>
           <p className={ui.assinaturaIntro}>
             Gerencie o período de avaliação e a cobrança recorrente da sua montagem.
           </p>
@@ -423,7 +416,7 @@ export function AssinaturaAdmin() {
             ) : null}
           </dl>
 
-          {!temStripe ? (
+          {!temSubscription ? (
             <p className={ui.assinaturaAviso}>
               Ainda não há cobrança vinculada a esta conta. Ao assinar, o
               histórico de pagamentos e o cancelamento passam a aparecer aqui.
@@ -441,7 +434,7 @@ export function AssinaturaAdmin() {
                 {acaoOcupada === 'checkout' ? 'Abrindo checkout…' : 'Assinar agora'}
               </button>
             ) : null}
-            {temStripe ? (
+            {mostrarPortal ? (
               <button
                 type="button"
                 className="btn btn--ghost"
@@ -464,27 +457,9 @@ export function AssinaturaAdmin() {
           </div>
         </section>
 
-        <section className={ui.assinaturaSecao}>
-          <h2>Pagamentos anteriores</h2>
-          {!temStripe ? (
-            <AdminEstadoVazio
-              titulo="Nenhum pagamento registrado"
-              descricao="Quando houver faturas pagas, elas aparecerão nesta lista."
-            />
-          ) : carregandoHistorico ? (
-            <p className={ui.assinaturaCarregando} role="status">
-              Carregando histórico…
-            </p>
-          ) : erroHistorico ? (
-            <AdminAlerta tipo="error" titulo="Histórico">
-              {erroHistorico}
-            </AdminAlerta>
-          ) : faturas.length === 0 ? (
-            <AdminEstadoVazio
-              titulo="Nenhum pagamento registrado"
-              descricao="Ainda não há faturas pagas vinculadas a esta conta."
-            />
-          ) : (
+        {faturas.length > 0 ? (
+          <section className={ui.assinaturaSecao}>
+            <h2>Pagamentos anteriores</h2>
             <ul className={ui.assinaturaFaturas}>
               {faturas.map((fatura) => (
                 <li key={fatura.id} className={ui.assinaturaFatura}>
@@ -524,8 +499,8 @@ export function AssinaturaAdmin() {
                 </li>
               ))}
             </ul>
-          )}
-        </section>
+          </section>
+        ) : null}
       </AdminPaginaPainel>
 
       <AdminConfirmacao

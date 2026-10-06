@@ -3,6 +3,20 @@ import { UploadErro } from '../../dados/storage'
 
 export const SENHA_MIN = 10
 
+/**
+ * Nome ainda é o fallback automático do e-mail (ex.: contato@loja.com → "contato").
+ * Contas criadas no Dashboard Auth sem passar pelo cadastro do app caem nesse caso.
+ */
+export function nomeExibicaoPendente(cliente: {
+  nome: string
+  email: string
+}): boolean {
+  const nome = cliente.nome.trim().toLowerCase()
+  if (!nome) return true
+  const local = (cliente.email.split('@')[0] ?? '').trim().toLowerCase()
+  return Boolean(local) && nome === local
+}
+
 /** Rotas de auth/paywall que não devem ser o destino após login com acesso. */
 const DESTINOS_POS_LOGIN_IGNORADOS = new Set([
   '/admin',

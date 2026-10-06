@@ -14,6 +14,16 @@ export const TAMANHO_MAX_ITEM = 5 * 1024 * 1024
 /** TTL das URLs assinadas (1h). */
 export const TTL_URL_ASSINADA_SEG = 60 * 60
 
+/**
+ * Logo na página: ~48px de altura / max 220px de largura.
+ * 512px cobre retina 2–2.5x com folga e mantém o arquivo leve.
+ */
+export const LOGO_MAX_LADO_PX = 512
+export const LOGO_QUALIDADE = 0.8
+/** Itens na pré-visualização da mesa. */
+export const ITEM_MAX_LADO_PX = 1600
+export const ITEM_QUALIDADE = 0.85
+
 const MSG_FORMATO = 'Formato de imagem não suportado. Use WebP, PNG, JPEG ou GIF.'
 
 export const MIME_IMAGEM: Record<string, string> = {
@@ -21,6 +31,15 @@ export const MIME_IMAGEM: Record<string, string> = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
   'image/gif': 'gif',
+}
+
+export type OpcoesCompressaoUpload = {
+  maxLado?: number
+  qualidade?: number
+  /** Preferir WebP (preserva transparência; GIF permanece intacto). */
+  preferirWebp?: boolean
+  /** Só pula compressão se já couber no maxLado e for menor que isto. */
+  tamanhoOkBytes?: number
 }
 
 function extensaoDoArquivo(arquivo: File): string {
@@ -45,11 +64,27 @@ function contentTypeDoArquivo(arquivo: File): string {
   return arquivo.type
 }
 
-/** Redimensiona/comprime no client antes do upload (max 1600px, JPEG/WebP quality). */
+function tipoSaidaCompressao(
+  tipoOrigem: string,
+  preferirWebp: boolean,
+): string {
+  if (preferirWebp) return 'image/webp'
+  if (tipoOrigem === 'image/png' || tipoOrigem === 'image/webp') return tipoOrigem
+  return 'image/jpeg'
+}
+
+/** Redimensiona/comprime no client antes do upload. */
 export async function comprimirImagemParaUpload(
   arquivo: File,
-  maxLado = 1600,
+  opcoes: OpcoesCompressaoUpload = {},
 ): Promise<File> {
+  const {
+    maxLado = ITEM_MAX_LADO_PX,
+    qualidade = ITEM_QUALIDADE,
+    preferirWebp = false,
+    tamanhoOkBytes = 800 * 1024,
+  } = opcoes
+
   if (!arquivo.type.startsWith('image/') || arquivo.type === 'image/gif') {
     return arquivo
   }
@@ -57,13 +92,17 @@ export async function comprimirImagemParaUpload(
   try {
     const bitmap = await createImageBitmap(arquivo)
     const escala = Math.min(1, maxLado / Math.max(bitmap.width, bitmap.height))
-    if (escala >= 1 && arquivo.size <= 800 * 1024) {
+    const precisaRedimensionar = escala < 1
+    const precisaReencodar =
+      preferirWebp || arquivo.size > tamanhoOkBytes || precisaRedimensionar
+
+    if (!precisaReencodar) {
       bitmap.close()
       return arquivo
     }
 
-    const w = Math.round(bitmap.width * escala)
-    const h = Math.round(bitmap.height * escala)
+    const w = Math.max(1, Math.round(bitmap.width * escala))
+    const h = Math.max(1, Math.round(bitmap.height * escala))
     const canvas = document.createElement('canvas')
     canvas.width = w
     canvas.height = h
@@ -75,14 +114,16 @@ export async function comprimirImagemParaUpload(
     ctx.drawImage(bitmap, 0, 0, w, h)
     bitmap.close()
 
-    const tipoSaida =
-      arquivo.type === 'image/png' || arquivo.type === 'image/webp'
-        ? arquivo.type
-        : 'image/jpeg'
+    const tipoSaida = tipoSaidaCompressao(arquivo.type, preferirWebp)
     const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, tipoSaida, 0.85),
+      canvas.toBlob(resolve, tipoSaida, qualidade),
     )
     if (!blob) return arquivo
+
+    // Se a compressão piorou o tamanho e não forçamos WebP, mantém o original.
+    if (!preferirWebp && blob.size >= arquivo.size && !precisaRedimensionar) {
+      return arquivo
+    }
 
     const ext = MIME_IMAGEM[tipoSaida] ?? 'jpg'
     const nomeBase = arquivo.name.replace(/\.[^.]+$/, '') || 'imagem'
@@ -277,7 +318,15 @@ export async function enviarLogoStorage(
   clienteId: string,
   arquivo: File,
 ): Promise<string> {
-  const comprimido = await comprimirImagemParaUpload(arquivo)
+  validarImagem(arquivo, TAMANHO_MAX_LOGO, '2 MB')
+
+  const comprimido = await comprimirImagemParaUpload(arquivo, {
+    maxLado: LOGO_MAX_LADO_PX,
+    qualidade: LOGO_QUALIDADE,
+    preferirWebp: true,
+    // Logos pequenas ainda devem ir para WebP no tamanho da página.
+    tamanhoOkBytes: 40 * 1024,
+  })
   validarImagem(comprimido, TAMANHO_MAX_LOGO, '2 MB')
 
   const ext = extensaoDoArquivo(comprimido)
@@ -286,6 +335,7 @@ export async function enviarLogoStorage(
   const { error } = await supabase.storage.from(BUCKET_LOGOS).upload(objectKey, comprimido, {
     contentType: contentTypeDoArquivo(comprimido),
     upsert: true,
+    cacheControl: '3600',
   })
   if (error) throw new UploadErro('Não foi possível enviar a logo.')
 
@@ -299,7 +349,10 @@ export async function enviarImagemItemStorage(
   itemId: string,
   arquivo: File,
 ): Promise<string> {
-  const comprimido = await comprimirImagemParaUpload(arquivo)
+  const comprimido = await comprimirImagemParaUpload(arquivo, {
+    maxLado: ITEM_MAX_LADO_PX,
+    qualidade: ITEM_QUALIDADE,
+  })
   validarImagem(comprimido, TAMANHO_MAX_ITEM, '5 MB')
 
   const ext = extensaoDoArquivo(comprimido)

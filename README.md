@@ -56,12 +56,14 @@ Copie [`.env.example`](.env.example) e preencha. Separe bem o que vai no fronten
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role — só `npm run seed:supabase` |
 | `DATABASE_URL` | URI do Postgres — `npm run db:migrate` (e seed transacional) |
 | `SEED_EMAIL` | Opcional; padrão `financeiroraffiner@gmail.com` |
-| `SEED_PASSWORD` | Obrigatório no seed (mín. 10 caracteres) |
-| `DATABASE_SSL_REJECT_UNAUTHORIZED` | `false` só se o SSL local falhar a verificação de CA |
+| `SEED_PASSWORD` | Obrigatório no seed (mín. 10 caracteres) — senha do usuário Auth demo |
+| `DATABASE_SSL_REJECT_UNAUTHORIZED` | `false` se `db:migrate` falhar com certificado SSL local |
+
+O arquivo [`.env.example`](.env.example) traz comentários seção a seção (frontend, scripts, Stripe, Resend e checklist dos secrets).
 
 ### Secrets das Edge Functions
 
-Dashboard Supabase → Edge Functions → Secrets (ou `supabase secrets set`):
+Dashboard Supabase → Edge Functions → Secrets (ou `supabase secrets set` **com o CLI linkado ao projeto certo**):
 
 | Secret | Uso |
 |--------|-----|
@@ -71,6 +73,8 @@ Dashboard Supabase → Edge Functions → Secrets (ou `supabase secrets set`):
 | `SITE_URL` | Origem do app (`http://localhost:5173` ou domínio de produção) |
 | `RESEND_API_KEY` | API key do Resend |
 | `RESEND_FROM` | Remetente (ex.: `Montagem de Mesa <onboarding@resend.dev>` em testes) |
+
+Já injetados pelo Supabase nas functions: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Supabase
 
@@ -99,15 +103,17 @@ Confirmação de cadastro → `/admin`; reset de senha → `/admin/redefinir-sen
 npm run db:migrate
 ```
 
-Aplica os arquivos em [`supabase/migrations/`](supabase/migrations/) (ordem lexicográfica): schema, trial/assinatura, otimizações, proteção de inserts/URLs e CRM com soft-delete.
+Aplica os arquivos em [`supabase/migrations/`](supabase/migrations/) (ordem lexicográfica): schema, trial/assinatura, otimizações, proteção de inserts/URLs, CRM com soft-delete e bypass de colunas de billing para admin do Dashboard (`postgres` / `supabase_admin`).
 
 Não reseta o Database do projeto. Alternativa sem `DATABASE_URL`: `supabase db query --linked -f supabase/migrations/ARQUIVO.sql`.
+
+Colunas Stripe (`stripe_customer_id`, etc.) só mudam via **service role** (Edge Functions) ou sessão admin do Dashboard; o Table Editor com role autenticada comum não altera billing.
 
 ### Edge Functions
 
 | Function | Papel |
 |----------|--------|
-| `criar-checkout` | Checkout Session de assinatura |
+| `criar-checkout` | Checkout Session de assinatura (recria customer Stripe se o ID do banco for inválido/deletado) |
 | `criar-portal` | Customer Portal (cartão / faturas) |
 | `cancelar-assinatura` | Cancela no fim do período |
 | `listar-faturas` | Histórico de faturas (+ sync se necessário) |
@@ -148,7 +154,7 @@ supabase functions deploy enviar-montagem --no-verify-jwt
    Signing secret → `STRIPE_WEBHOOK_SECRET`.
 6. Cartão de teste: `4242 4242 4242 4242` ([docs](https://docs.stripe.com/testing)).
 
-UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/ativa, Assinar, Gerenciar cobrança, Cancelar no fim do período, faturas.
+UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/ativa, Assinar; **Gerenciar cobrança** só com assinatura Stripe; histórico de pagamentos só quando há faturas.
 
 ## Resend (enviar montagem)
 
@@ -178,12 +184,15 @@ Layout esperado:
 ```
 imagens/logos/raffiner.webp
 imagens/itens/raffiner/
+  Lugar Americano/
   Sousplat/
   Pratos Rasos/
   Pratos Fundos/
   Pratos de sobremesa/
+  Guardanapos/
   Porta Guardanapos/
-  Tacas/
+  Talheres/
+  Taças/
 ```
 
 ## Rotas
@@ -199,7 +208,8 @@ imagens/itens/raffiner/
 | `/admin/redefinir-senha` | Nova senha (após o link do e-mail) |
 | `/admin/assinatura` | Trial, Checkout, Portal, faturas |
 | `/admin/painel` | Catálogo (categorias e itens) + onboarding/ajuda |
-| `/admin/painel/cadastro` | Nome, endereço, e-mail, logo e WhatsApp |
+| `/admin/painel/nome-exibicao` | Nome de exibição + slug (primeiro passo se a conta veio sem nome) |
+| `/admin/painel/cadastro` | Nome de exibição, endereço, e-mail, logo (otimizada ~512px WebP) e WhatsApp |
 | `/admin/painel/montagens` | Histórico e CRM de leads |
 | `/admin/painel/categorias/...` | CRUD de categorias e itens |
 
@@ -239,7 +249,7 @@ src/funcionalidades/
   autenticacao/             # AuthProvider, rota protegida
   catalogo/                 # helpers do catálogo
   mesa/                     # seletor, preview, enviar montagem
-imagens/                    # assets locais (seed → Storage)
+imagens/                    # assets locais para seed (gitignored; seed → Storage)
 public/ajuda/               # exemplos da ajuda do painel
 supabase/migrations/        # schema, RLS, storage, trial, CRM
 supabase/functions/         # Stripe + enviar-montagem

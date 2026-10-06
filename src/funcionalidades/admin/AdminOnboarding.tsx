@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Cliente, DadosCliente } from '../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
+import { nomeExibicaoPendente } from './adminUtils'
 import * as ui from './adminClasses'
 
 type Props = {
@@ -27,12 +28,19 @@ export function AdminOnboarding({ cliente, dados, linkPublico, aoAbrirAjuda }: P
   })
 
   const passos = useMemo(() => {
+    const temNome = Boolean(cliente && !nomeExibicaoPendente(cliente))
     const temLogo = Boolean(cliente?.logo?.trim())
     const temWhatsapp = (cliente?.whatsapp?.replace(/\D/g, '').length ?? 0) >= 12
     const catsEditaveis = dados.categorias.filter((c) => !ehCategoriaFixa(c.id))
     const temCategoria = catsEditaveis.length > 0
     const temItem = dados.itens.some((i) => !ehCategoriaFixa(i.categoria))
     return [
+      {
+        id: 'nome',
+        rotulo: 'Definir nome de exibição',
+        feito: temNome,
+        para: '/admin/painel/nome-exibicao',
+      },
       {
         id: 'logo',
         rotulo: 'Adicionar logo',
@@ -67,10 +75,21 @@ export function AdminOnboarding({ cliente, dados, linkPublico, aoAbrirAjuda }: P
         externo: true,
       },
     ] as const
-  }, [cliente?.logo, cliente?.whatsapp, dados.categorias, dados.itens, linkPublico])
+  }, [
+    cliente,
+    cliente?.logo,
+    cliente?.whatsapp,
+    dados.categorias,
+    dados.itens,
+    linkPublico,
+  ])
 
-  const pendentes = passos.filter((p) => p.id !== 'link' && !p.feito)
-  if (!clienteId || dismissed || pendentes.length === 0) return null
+  const pendentes = useMemo(
+    () => passos.filter((p) => p.id === 'link' || !p.feito),
+    [passos],
+  )
+  const faltamObrigatorios = passos.some((p) => p.id !== 'link' && !p.feito)
+  if (!clienteId || dismissed || !faltamObrigatorios) return null
 
   function dispensar() {
     try {
@@ -100,25 +119,18 @@ export function AdminOnboarding({ cliente, dados, linkPublico, aoAbrirAjuda }: P
         Complete o checklist para deixar a montagem pronta durante o período de avaliação.
       </p>
       <ul className={ui.onboardingLista}>
-        {passos.map((passo) => (
+        {pendentes.map((passo) => (
           <li key={passo.id} className={ui.onboardingItem}>
-            <span>
-              {passo.feito ? (
-                <span className={ui.onboardingFeito}>Concluído — </span>
-              ) : null}
-              {passo.rotulo}
-            </span>
-            {!passo.feito && (
-              <Link
-                className="btn btn--ghost"
-                to={passo.para}
-                {...('externo' in passo && passo.externo
-                  ? { target: '_blank', rel: 'noopener noreferrer' }
-                  : {})}
-              >
-                Ir
-              </Link>
-            )}
+            <span>{passo.rotulo}</span>
+            <Link
+              className="btn btn--ghost"
+              to={passo.para}
+              {...('externo' in passo && passo.externo
+                ? { target: '_blank', rel: 'noopener noreferrer' }
+                : {})}
+            >
+              Ir
+            </Link>
           </li>
         ))}
       </ul>

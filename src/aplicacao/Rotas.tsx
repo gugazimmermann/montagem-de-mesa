@@ -39,6 +39,11 @@ const AtualizarCadastroAdmin = lazy(() =>
     default: m.AtualizarCadastroAdmin,
   })),
 )
+const NomeExibicaoAdmin = lazy(() =>
+  import('../funcionalidades/admin/NomeExibicaoAdmin').then((m) => ({
+    default: m.NomeExibicaoAdmin,
+  })),
+)
 const HistoricoMontagensAdmin = lazy(() =>
   import('../funcionalidades/admin/HistoricoMontagensAdmin').then((m) => ({
     default: m.HistoricoMontagensAdmin,
@@ -105,6 +110,14 @@ export function Rotas() {
         element={comSuspense(
           <RotaProtegida>
             <PainelAdmin />
+          </RotaProtegida>,
+        )}
+      />
+      <Route
+        path="/admin/painel/nome-exibicao"
+        element={comSuspense(
+          <RotaProtegida>
+            <NomeExibicaoAdmin />
           </RotaProtegida>,
         )}
       />
