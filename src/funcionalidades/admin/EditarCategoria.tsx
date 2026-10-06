@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
+import { imagemCatalogoItem } from '../../compartilhado/tipos'
 import { atualizarCategoria, excluirItemDb, trocarOrdemItem } from '../../dados/repositorioClientes'
 import { useAuth } from '../autenticacao'
 import { AmpliarImagem } from './AmpliarImagem'
@@ -219,10 +220,11 @@ export function EditarCategoria() {
             {itensCategoria.map((item, indice) => {
               const anterior = itensCategoria[indice - 1]
               const proximo = itensCategoria[indice + 1]
+              const src = imagemCatalogoItem(item)
               return (
               <li key={item.id} className={ui.itensItem}>
-                {item.imagem ? (
-                  <AmpliarImagem src={item.imagem} alt={item.nome} />
+                {src ? (
+                  <AmpliarImagem src={src} alt={item.nome} />
                 ) : (
                   <div className={ui.itensPreview} aria-hidden="true">
                     <span style={{ background: item.cores.primaria }} />
@@ -334,7 +336,7 @@ export function EditarCategoria() {
       <AdminConfirmacao
         aberto={excluirItemId !== null}
         titulo="Excluir item?"
-        descricao="O item sai do catálogo público. Confirme para continuar."
+        descricao="O item será excluído e não poderá ser recuperado. Confirme para continuar."
         confirmarRotulo="Excluir"
         processando={excluindo}
         processandoRotulo="Excluindo…"

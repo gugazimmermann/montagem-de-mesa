@@ -210,14 +210,24 @@ export const itensItem =
   `${listItem} items-start justify-start gap-2 max-[520px]:gap-2`
 
 export const itensPreview =
-  'size-10 shrink-0 overflow-hidden rounded-sm border border-border bg-transparent p-0 [&_img]:block [&_img]:size-full [&_img]:object-cover [&_span]:block [&_span]:size-full'
+  'size-10 shrink-0 overflow-hidden rounded-sm border border-border bg-surface-solid p-0.5 [&_img]:block [&_img]:size-full [&_img]:object-contain [&_span]:block [&_span]:size-full'
 
 export const itensPreviewClicavel =
   `${itensPreview} cursor-zoom-in font-[inherit] text-inherit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text`
 
-export const itensInfo = 'min-w-40 flex-1 max-[520px]:min-w-0 max-[520px]:flex-[1_1_100%]'
+/** Preview grande no formulário de item (peça inteira, fácil de ver). */
+export const itensGridCampos =
+  'grid grid-cols-2 items-stretch gap-2.5 max-[520px]:grid-cols-1'
 
-export const itensGridCampos = 'grid grid-cols-2 gap-2.5 max-[520px]:grid-cols-1'
+/** Coluna do upload de imagem no formulário (mesa | catálogo). */
+export const itensColunaImagem =
+  'flex min-w-0 flex-col gap-2 rounded-md border border-border bg-surface-solid p-3'
+
+/** Preview grande no formulário de item (peça inteira, fácil de ver). */
+export const itensPreviewFormulario =
+  'mt-auto flex aspect-square w-full min-w-0 items-center justify-center overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--border)_35%,transparent)] p-2 cursor-zoom-in font-[inherit] text-inherit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text [&_img]:block [&_img]:max-h-full [&_img]:max-w-full [&_img]:w-auto [&_img]:h-auto [&_img]:object-contain'
+
+export const itensInfo = 'min-w-40 flex-1 max-[520px]:min-w-0 max-[520px]:flex-[1_1_100%]'
 
 export const assinaturaSecao = `${painelSecao} grid gap-3`
 

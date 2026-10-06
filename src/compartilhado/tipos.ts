@@ -10,6 +10,22 @@ export type PadraoTecido =
   | 'herringbone'
   | 'border'
 
+/** Imagem para lista/seletor/admin (frontal preferida). */
+export function imagemCatalogoItem(item: {
+  imagem?: string
+  imagemCatalogo?: string
+}): string | undefined {
+  return item.imagemCatalogo || item.imagem
+}
+
+/** Imagem para preview da mesa (ângulo de colocação). */
+export function imagemMesaItem(item: {
+  imagem?: string
+  imagemCatalogo?: string
+}): string | undefined {
+  return item.imagem || item.imagemCatalogo
+}
+
 export interface DimensoesItem {
   largura: number
   comprimento: number
@@ -19,8 +35,10 @@ export interface ItemMesa {
   id: string
   nome: string
   categoria: IdCategoria
-  /** URL pública de foto do produto (ex.: sousplats) */
+  /** Foto usada no preview da mesa (ângulo de colocação) */
   imagem?: string
+  /** Foto frontal / catálogo (lista de Itens e seletor) */
+  imagemCatalogo?: string
   /** Tokens de cor para o preview quando não há imagem */
   cores: {
     primaria: string

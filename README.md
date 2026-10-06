@@ -167,19 +167,7 @@ Na montagem pública (`/:slug`), o visitante envia nome, e-mail, WhatsApp e ende
 
 ## Seed e imagens
 
-```bash
-npm run seed:supabase
-```
-
-Requer `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `SEED_PASSWORD`:
-
-- cria/atualiza o usuário Auth
-- recria o cliente **Raffiner** (`slug=raffiner`) em trial (14 dias)
-- importa [`src/dados/catalogo.json`](src/dados/catalogo.json)
-- envia logo e fotos de [`imagens/`](imagens/) para o Storage
-- atualiza as URLs no banco (não reescreve o JSON local)
-
-Layout esperado:
+A pasta [`imagens/`](imagens/) é **gitignored** (fonte local para seed/upload). Layout esperado:
 
 ```
 imagens/logos/raffiner.webp
@@ -193,6 +181,32 @@ imagens/itens/raffiner/
   Porta Guardanapos/
   Talheres/
   Taças/
+```
+
+Nomes de arquivo: medidas (`- 42cm x 29cm`) viram `largura`/`comprimento`; o prefixo da categoria some do nome do item. Variante `Frontal` vira `imagem_catalogo` (lista/seletor); a outra foto vira `imagem` (preview da mesa).
+
+### Seed completo (recria o cliente demo)
+
+```bash
+npm run seed:supabase
+```
+
+Requer `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `SEED_PASSWORD`:
+
+- cria/atualiza o usuário Auth
+- recria o cliente **Raffiner** (`slug=raffiner`) em trial (14 dias)
+- regenera [`src/dados/catalogo.json`](src/dados/catalogo.json) a partir de `imagens/itens/raffiner`
+- envia logo e fotos para o Storage (WebP otimizado)
+- grava paths no banco (`imagem` e `imagem_catalogo`)
+
+### Seed incremental (cliente já existente)
+
+Não recria o cliente — use o UUID do Raffiner (ou passe outro id):
+
+```bash
+node scripts/seed-categorias-raffiner.mjs   # upsert categorias
+node scripts/seed-itens-raffiner.mjs        # upsert itens + upload WebP
+node scripts/gerar-catalogo-raffiner.mjs    # só regenera catalogo.json
 ```
 
 ## Rotas
@@ -220,7 +234,7 @@ imagens/itens/raffiner/
 | Usuários / senhas | Supabase Auth |
 | Cliente (`clientes`) | Postgres — UUID, `slug`, `auth_user_id`, Stripe/trial |
 | Montagens enviadas | `montagens_enviadas` — insert via Edge Function; CRM (`lead_status`, `nota_interna`) |
-| Categorias e itens | Postgres — UUID; RLS com `cliente_tem_acesso` |
+| Categorias e itens | Postgres — UUID; RLS com `cliente_tem_acesso`; item tem `imagem` (mesa) e `imagem_catalogo` (lista) |
 | Logos / fotos | Storage (`logos`, `itens`); fonte local em `imagens/` |
 | Toalhas fixas | [`src/dados/toalhas.json`](src/dados/toalhas.json) |
 | Assinatura | Stripe via Edge Functions |
@@ -237,6 +251,9 @@ imagens/itens/raffiner/
 | `npm run test:watch` | Vitest em watch |
 | `npm run db:migrate` | Aplica migrations via `DATABASE_URL` |
 | `npm run seed:supabase` | Auth + cliente + catálogo + upload de `imagens/` |
+| `node scripts/seed-categorias-raffiner.mjs` | Upsert categorias Raffiner (cliente existente) |
+| `node scripts/seed-itens-raffiner.mjs` | Upsert itens + upload WebP (cliente existente) |
+| `node scripts/gerar-catalogo-raffiner.mjs` | Regenera `src/dados/catalogo.json` |
 
 ## Estrutura do repositório
 
@@ -273,5 +290,6 @@ Após o deploy: atualize Site URL e Redirect URLs no Auth; publique as Edge Func
 ## Convenções do app
 
 - Categorias do seed usam `codigo` estável (`sousplat`, `pratoRaso`, …) para o preview; o PK é UUID.
+- Itens podem ter duas fotos: `imagem` no preview da mesa; `imagem_catalogo` (frontal) na lista/seletor/admin.
 - Categorias criadas no admin sem `codigo` aparecem no preview como camada genérica (se tiverem imagem).
 - Pastas e rotas do código estão em português; UI do admin também.

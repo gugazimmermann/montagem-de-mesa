@@ -5,9 +5,14 @@ import * as ui from './adminClasses'
 type AmpliarImagemProps = {
   src: string
   alt: string
+  className?: string
 }
 
-export function AmpliarImagem({ src, alt }: AmpliarImagemProps) {
+export function AmpliarImagem({
+  src,
+  alt,
+  className = ui.itensPreviewClicavel,
+}: AmpliarImagemProps) {
   const [aberto, setAberto] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
 
@@ -16,7 +21,7 @@ export function AmpliarImagem({ src, alt }: AmpliarImagemProps) {
       <button
         ref={triggerRef}
         type="button"
-        className={ui.itensPreviewClicavel}
+        className={className}
         onClick={() => setAberto(true)}
         aria-label={`Ampliar imagem de ${alt}`}
       >

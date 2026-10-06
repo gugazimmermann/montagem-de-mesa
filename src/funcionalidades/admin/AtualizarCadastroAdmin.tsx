@@ -21,6 +21,7 @@ import {
 import { mapearErroCadastro, mapearErroUpload } from './adminUtils'
 import * as ui from './adminClasses'
 import { useObjectUrlPreview } from './useObjectUrlPreview'
+import { InputArquivo } from './InputArquivo'
 
 function limparHashUrl() {
   window.history.replaceState(null, '', window.location.pathname + window.location.search)
@@ -446,25 +447,25 @@ function FormularioAtualizarCadastro({
             />
           </label>
 
-          <label className={ui.field}>
+          <div className={ui.field}>
             <span className={ui.fieldLabel}>Logo</span>
-            <input
-              className={ui.fieldInput}
-              type="file"
+            <InputArquivo
               accept={acceptLogo}
+              arquivo={arquivoLogo}
+              disabled={salvando}
+              aria-label="Enviar logo"
+              aria-describedby="logo-upload-dica"
               onChange={(e) => {
                 aoEscolherLogo(e)
                 setMensagem(null)
                 setErro(null)
               }}
-              disabled={salvando}
-              aria-describedby="logo-upload-dica"
             />
             <span id="logo-upload-dica" className={ui.fieldDica}>
               WebP, PNG, JPEG ou GIF (até 2 MB). Ao salvar, a imagem é
               redimensionada (~512px) e convertida para WebP leve.
             </span>
-          </label>
+          </div>
 
           {logoExibida && (
             <div className={ui.painelLogoPreview}>

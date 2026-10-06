@@ -1,5 +1,6 @@
 import { type CSSProperties, type KeyboardEvent, memo } from 'react'
 import type { Categoria, ConfiguracaoMesa, IdCategoria, ItemMesa } from '../../../../compartilhado/tipos'
+import { imagemCatalogoItem } from '../../../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../../../dados/categoriasFixas'
 import { obterItensPorCategoria } from '../../../catalogo'
 import './SeletorItens.css'
@@ -15,10 +16,11 @@ interface PropsSeletorItens {
 }
 
 function AmostraItem({ item }: { item: ItemMesa }) {
-  if (item.imagem) {
+  const src = imagemCatalogoItem(item)
+  if (src) {
     return (
       <span className="item-card__swatch item-card__swatch--image" aria-hidden="true">
-        <img src={item.imagem} alt="" loading="lazy" />
+        <img src={src} alt="" loading="lazy" />
       </span>
     )
   }

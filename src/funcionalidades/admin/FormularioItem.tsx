@@ -17,6 +17,7 @@ import * as ui from './adminClasses'
 import { mapearErroUpload } from './adminUtils'
 import { useDadosCliente } from './useDadosCliente'
 import { useObjectUrlPreview } from './useObjectUrlPreview'
+import { InputArquivo } from './InputArquivo'
 
 const PADROES: { valor: PadraoTecido; rotulo: string }[] = [
   { valor: 'solid', rotulo: 'Liso' },
@@ -35,6 +36,7 @@ interface FormItem {
   nome: string
   descricao: string
   imagem: string
+  imagemCatalogo: string
   corPrimaria: string
   largura: string
   comprimento: string
@@ -45,6 +47,7 @@ const formItemVazio: FormItem = {
   nome: '',
   descricao: '',
   imagem: '',
+  imagemCatalogo: '',
   corPrimaria: COR_PADRAO,
   largura: '',
   comprimento: '',
@@ -56,10 +59,33 @@ function itemParaForm(item: ItemMesa): FormItem {
     nome: item.nome,
     descricao: item.descricao ?? '',
     imagem: item.imagem ?? '',
+    imagemCatalogo: item.imagemCatalogo ?? '',
     corPrimaria: item.cores.primaria,
     largura: item.largura != null ? String(item.largura) : '',
     comprimento: item.comprimento != null ? String(item.comprimento) : '',
     padrao: item.padrao ?? '',
+  }
+}
+
+function validarUrlImagem(
+  valor: string,
+  rotulo: string,
+  clienteId: string,
+): string | { erro: string } {
+  const trim = valor.trim()
+  if (!trim) return ''
+  try {
+    return exigirUrlStorageOuVazio(trim, rotulo, {
+      clienteId,
+      tipo: 'item',
+    })
+  } catch (e) {
+    return {
+      erro:
+        e instanceof Error
+          ? e.message
+          : `${rotulo} inválida. Use upload ou URL do Storage deste projeto.`,
+    }
   }
 }
 
@@ -98,22 +124,17 @@ function montarItem(
   const descricao = form.descricao.trim()
   if (descricao) item.descricao = descricao
 
-  const imagem = form.imagem.trim()
-  if (imagem) {
-    try {
-      item.imagem = exigirUrlStorageOuVazio(imagem, 'URL da imagem', {
-        clienteId,
-        tipo: 'item',
-      })
-    } catch (e) {
-      return {
-        erro:
-          e instanceof Error
-            ? e.message
-            : 'URL da imagem inválida. Use upload ou URL do Storage deste projeto.',
-      }
-    }
-  }
+  const imagem = validarUrlImagem(form.imagem, 'URL da imagem na mesa', clienteId)
+  if (typeof imagem === 'object') return imagem
+  if (imagem) item.imagem = imagem
+
+  const imagemCatalogo = validarUrlImagem(
+    form.imagemCatalogo,
+    'URL da imagem no catálogo',
+    clienteId,
+  )
+  if (typeof imagemCatalogo === 'object') return imagemCatalogo
+  if (imagemCatalogo) item.imagemCatalogo = imagemCatalogo
 
   const largura = form.largura.trim() ? Number(form.largura) : undefined
   const comprimento = form.comprimento.trim() ? Number(form.comprimento) : undefined
@@ -141,13 +162,8 @@ export function FormularioItem() {
   const ehToalha = categoriaId === 'toalha'
 
   const { dados, carregando, erro: erroCarga } = useDadosCliente(cliente?.id)
-  const {
-    arquivo: arquivoImagem,
-    preview: previewImagem,
-    escolher,
-    limpar: limparPreview,
-    accept,
-  } = useObjectUrlPreview()
+  const previewMesa = useObjectUrlPreview()
+  const previewCatalogo = useObjectUrlPreview()
 
   const [formItem, setFormItem] = useState<FormItem>(formItemVazio)
   const [erro, setErro] = useState<string | null>(null)
@@ -185,7 +201,8 @@ export function FormularioItem() {
   const dadosAtuais = dados
   const idCategoria = categoriaId
   const voltarPara = `/admin/painel/categorias/${idCategoria}`
-  const imagemExibida = previewImagem || formItem.imagem
+  const imagemMesaExibida = previewMesa.preview || formItem.imagem
+  const imagemCatalogoExibida = previewCatalogo.preview || formItem.imagemCatalogo
 
   async function salvarItem(evento: FormEvent) {
     evento.preventDefault()
@@ -214,12 +231,22 @@ export function FormularioItem() {
 
     setEnviando(true)
     try {
-      if (arquivoImagem) {
+      if (previewMesa.arquivo) {
         resultado.imagem = await enviarImagemItemStorage(
           idCliente,
           idCategoria,
           resultado.id,
-          arquivoImagem,
+          previewMesa.arquivo,
+          'mesa',
+        )
+      }
+      if (previewCatalogo.arquivo) {
+        resultado.imagemCatalogo = await enviarImagemItemStorage(
+          idCliente,
+          idCategoria,
+          resultado.id,
+          previewCatalogo.arquivo,
+          'catalogo',
         )
       }
       if (itemId) {
@@ -328,81 +355,109 @@ export function FormularioItem() {
           </div>
 
           {ehToalha && (
-            <>
-              <label className={ui.field}>
-                <span className={ui.fieldLabel}>Padrão do tecido</span>
-                <select
-                  className={ui.fieldInput}
-                  value={formItem.padrao}
-                  onChange={(e) => setFormItem((f) => ({ ...f, padrao: e.target.value }))}
-                  disabled={enviando}
-                >
-                  <option value="">Nenhum</option>
-                  {PADROES.map((p) => (
-                    <option key={p.valor} value={p.valor}>
-                      {p.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <label className={ui.field}>
+              <span className={ui.fieldLabel}>Padrão do tecido</span>
+              <select
+                className={ui.fieldInput}
+                value={formItem.padrao}
+                onChange={(e) => setFormItem((f) => ({ ...f, padrao: e.target.value }))}
+                disabled={enviando}
+              >
+                <option value="">Nenhum</option>
+                {PADROES.map((p) => (
+                  <option key={p.valor} value={p.valor}>
+                    {p.rotulo}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
-              <label className={ui.field}>
-                <span className={ui.fieldLabel}>Imagem (URL)</span>
+          <div className={`${ui.fieldLabel} flex flex-wrap items-center justify-between gap-2`}>
+            <span>Imagens</span>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => setAjudaAberta(true)}
+            >
+              Como tratar imagens
+            </button>
+          </div>
+
+          <div className={ui.itensGridCampos}>
+            <div className={ui.itensColunaImagem}>
+              <p className="m-0 text-sm text-muted">
+                Ângulo de colocação no mesa de montagem.
+              </p>
+              {ehToalha && (
                 <input
                   className={ui.fieldInput}
                   type="text"
                   value={formItem.imagem}
                   placeholder={
-                    arquivoImagem
+                    previewMesa.arquivo
                       ? 'Novo arquivo será enviado ao salvar'
-                      : 'URL do Storage...'
+                      : 'URL do Storage…'
                   }
                   onChange={(e) => {
-                    limparPreview()
+                    previewMesa.limpar()
                     setFormItem((f) => ({ ...f, imagem: e.target.value }))
                   }}
                   disabled={enviando}
                 />
-              </label>
-            </>
-          )}
-
-          <div className={ui.field}>
-            <div className={`${ui.fieldLabel} flex flex-wrap items-center justify-between gap-2`}>
-              <span>{ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}</span>
-              <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={() => setAjudaAberta(true)}
-              >
-                Como tratar imagens
-              </button>
-            </div>
-            <label className="block">
-              <span className="sr-only">
-                {ehToalha ? 'Ou enviar arquivo' : 'Enviar arquivo'}
-              </span>
-              <input
-                className={ui.fieldInput}
-                type="file"
-                accept={accept}
+              )}
+              <InputArquivo
+                accept={previewMesa.accept}
+                arquivo={previewMesa.arquivo}
+                disabled={enviando}
+                aria-label="Enviar imagem na mesa"
                 onChange={(e) => {
-                  escolher(e)
+                  previewMesa.escolher(e)
                   setErro(null)
                 }}
-                disabled={enviando}
               />
-            </label>
-          </div>
-
-          {imagemExibida && (
-            <div className={ui.painelLogoPreview}>
-              <AmpliarImagem
-                src={imagemExibida}
-                alt={formItem.nome.trim() || 'Pré-visualização do item'}
-              />
+              {imagemMesaExibida ? (
+                <AmpliarImagem
+                  className={ui.itensPreviewFormulario}
+                  src={imagemMesaExibida}
+                  alt={`${formItem.nome.trim() || 'Item'} na mesa`}
+                />
+              ) : (
+                <div
+                  className={`${ui.itensPreviewFormulario} pointer-events-none cursor-default opacity-40`}
+                  aria-hidden="true"
+                />
+              )}
             </div>
-          )}
+
+            <div className={ui.itensColunaImagem}>
+              <p className="m-0 text-sm text-muted">
+                Aparece na lista de itens e no seletor. Opcional.
+              </p>
+              <InputArquivo
+                accept={previewCatalogo.accept}
+                arquivo={previewCatalogo.arquivo}
+                disabled={enviando}
+                aria-label="Enviar imagem no catálogo"
+                onChange={(e) => {
+                  previewCatalogo.escolher(e)
+                  setErro(null)
+                }}
+              />
+              {imagemCatalogoExibida ? (
+                <AmpliarImagem
+                  className={ui.itensPreviewFormulario}
+                  src={imagemCatalogoExibida}
+                  alt={`${formItem.nome.trim() || 'Item'} no catálogo`}
+                />
+              ) : (
+                <div
+                  className={`${ui.itensPreviewFormulario} pointer-events-none cursor-default opacity-40`}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          </div>
 
           <div className={ui.painelFormAcoes}>
             <button type="submit" className="btn btn--primary" disabled={enviando}>
@@ -417,8 +472,8 @@ export function FormularioItem() {
 
       <AdminAjuda
         aberto={ajudaAberta}
-        secaoInicial="imagens"
         aoFechar={() => setAjudaAberta(false)}
+        secaoInicial="imagens"
       />
     </AdminPaginaPainel>
   )

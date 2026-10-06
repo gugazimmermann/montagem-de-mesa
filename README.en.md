@@ -167,19 +167,7 @@ On the public page (`/:slug`), the visitor submits name, email, WhatsApp, and ad
 
 ## Seed and images
 
-```bash
-npm run seed:supabase
-```
-
-Requires `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SEED_PASSWORD`:
-
-- creates/updates the Auth user
-- recreates the **Raffiner** client (`slug=raffiner`) on trial (14 days)
-- imports [`src/dados/catalogo.json`](src/dados/catalogo.json)
-- uploads logo and photos from [`imagens/`](imagens/) to Storage
-- updates URLs in the database (does not rewrite local JSON)
-
-Expected layout:
+The [`imagens/`](imagens/) folder is **gitignored** (local source for seed/upload). Expected layout:
 
 ```
 imagens/logos/raffiner.webp
@@ -193,6 +181,32 @@ imagens/itens/raffiner/
   Porta Guardanapos/
   Talheres/
   Taças/
+```
+
+File names: size suffixes (`- 42cm x 29cm`) become `largura`/`comprimento`; the category prefix is stripped from the item name. A `Frontal` variant becomes `imagem_catalogo` (list/selector); the other photo becomes `imagem` (table preview).
+
+### Full seed (recreates the demo client)
+
+```bash
+npm run seed:supabase
+```
+
+Requires `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SEED_PASSWORD`:
+
+- creates/updates the Auth user
+- recreates the **Raffiner** client (`slug=raffiner`) on trial (14 days)
+- regenerates [`src/dados/catalogo.json`](src/dados/catalogo.json) from `imagens/itens/raffiner`
+- uploads logo and photos to Storage (optimized WebP)
+- writes paths in the database (`imagem` and `imagem_catalogo`)
+
+### Incremental seed (existing client)
+
+Does not recreate the client — uses the Raffiner UUID (or pass another id):
+
+```bash
+node scripts/seed-categorias-raffiner.mjs   # upsert categories
+node scripts/seed-itens-raffiner.mjs        # upsert items + WebP upload
+node scripts/gerar-catalogo-raffiner.mjs    # regenerate catalogo.json only
 ```
 
 ## Routes
@@ -220,7 +234,7 @@ imagens/itens/raffiner/
 | Users / passwords | Supabase Auth |
 | Client (`clientes`) | Postgres — UUID, `slug`, `auth_user_id`, Stripe/trial |
 | Submitted compositions | `montagens_enviadas` — insert via Edge Function; CRM (`lead_status`, `nota_interna`) |
-| Categories and items | Postgres — UUID; RLS with `cliente_tem_acesso` |
+| Categories and items | Postgres — UUID; RLS with `cliente_tem_acesso`; item has `imagem` (table) and `imagem_catalogo` (list) |
 | Logos / photos | Storage (`logos`, `itens`); local source in `imagens/` |
 | Fixed tablecloths | [`src/dados/toalhas.json`](src/dados/toalhas.json) |
 | Subscription | Stripe via Edge Functions |
@@ -237,6 +251,9 @@ imagens/itens/raffiner/
 | `npm run test:watch` | Vitest watch mode |
 | `npm run db:migrate` | Apply migrations via `DATABASE_URL` |
 | `npm run seed:supabase` | Auth + client + catalog + upload from `imagens/` |
+| `node scripts/seed-categorias-raffiner.mjs` | Upsert Raffiner categories (existing client) |
+| `node scripts/seed-itens-raffiner.mjs` | Upsert items + WebP upload (existing client) |
+| `node scripts/gerar-catalogo-raffiner.mjs` | Regenerate `src/dados/catalogo.json` |
 
 ## Repository structure
 
@@ -273,5 +290,6 @@ After deploy: update Auth Site URL and Redirect URLs; publish Edge Functions and
 ## App conventions
 
 - Seed categories use a stable `codigo` (`sousplat`, `pratoRaso`, …) for the preview; the primary key is a UUID.
+- Items may have two photos: `imagem` on the table preview; `imagem_catalogo` (frontal) in the list/selector/admin.
 - Admin-created categories without `codigo` render as a generic preview layer (if they have an image).
 - Code folders and routes are in Portuguese; the admin UI is Portuguese as well.

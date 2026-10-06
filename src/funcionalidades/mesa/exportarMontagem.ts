@@ -1,4 +1,5 @@
 import type { ConfiguracaoMesa, Categoria, ItemMesa, PadraoTecido } from '../../compartilhado/tipos'
+import { imagemMesaItem } from '../../compartilhado/tipos'
 import {
   inferirDimensoes,
   PREVIEW_SCALE,
@@ -165,11 +166,12 @@ export async function exportarMontagemPng(
   }[]
 
   const imagens = await Promise.all(
-    camadas.map(({ item, codigo }) =>
-      codigo !== 'toalha' && item.imagem
-        ? carregarImagem(item.imagem)
-        : Promise.resolve(null),
-    ),
+    camadas.map(({ item, codigo }) => {
+      const src = imagemMesaItem(item)
+      return codigo !== 'toalha' && src
+        ? carregarImagem(src)
+        : Promise.resolve(null)
+    }),
   )
 
   let imagensFalharam = 0
@@ -188,7 +190,7 @@ export async function exportarMontagemPng(
     const { x: boxX, y: boxY } = origemCaixa(codigo, boxW, boxH)
 
     const img = imagens[i]
-    if (item.imagem) {
+    if (imagemMesaItem(item)) {
       if (img) {
         desenharImagemNaCaixa(
           ctx,

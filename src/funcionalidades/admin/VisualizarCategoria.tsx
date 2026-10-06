@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import { imagemCatalogoItem } from '../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../dados/categoriasFixas'
 import { useAuth } from '../autenticacao'
 import { AmpliarImagem } from './AmpliarImagem'
@@ -74,10 +75,12 @@ export function VisualizarCategoria() {
           />
         ) : (
           <ul className={ui.list}>
-            {itensCategoria.map((item) => (
+            {itensCategoria.map((item) => {
+              const src = imagemCatalogoItem(item)
+              return (
               <li key={item.id} className={ui.itensItem}>
-                {item.imagem ? (
-                  <AmpliarImagem src={item.imagem} alt={item.nome} />
+                {src ? (
+                  <AmpliarImagem src={src} alt={item.nome} />
                 ) : (
                   <div className={ui.itensPreview} aria-hidden="true">
                     <span style={{ background: item.cores.primaria }} />
@@ -88,7 +91,8 @@ export function VisualizarCategoria() {
                   {item.descricao && <p>{item.descricao}</p>}
                 </div>
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
       </section>

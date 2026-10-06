@@ -90,6 +90,7 @@ export async function criarItem(clienteId: string, item: ItemMesa): Promise<void
     categoria_id: item.categoria,
     nome: item.nome,
     imagem: item.imagem ?? null,
+    imagem_catalogo: item.imagemCatalogo ?? null,
     cores: item.cores,
     largura: item.largura ?? null,
     comprimento: item.comprimento ?? null,
@@ -107,6 +108,7 @@ export async function atualizarItem(clienteId: string, item: ItemMesa): Promise<
     .update({
       nome: item.nome,
       imagem: item.imagem ?? null,
+      imagem_catalogo: item.imagemCatalogo ?? null,
       cores: item.cores,
       largura: item.largura ?? null,
       comprimento: item.comprimento ?? null,

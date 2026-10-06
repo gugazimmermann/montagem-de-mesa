@@ -11,6 +11,7 @@ import { useAuth } from '../funcionalidades/autenticacao'
 import { ImagemAmpliada } from '../compartilhado/ImagemAmpliada'
 import { ID_CATEGORIA_TOALHA } from '../dados/categoriasFixas'
 import type { ConfiguracaoMesa, DadosCliente, IdCategoria, ItemMesa } from '../compartilhado/tipos'
+import { imagemMesaItem } from '../compartilhado/tipos'
 import './App.css'
 
 const FormularioEnviarMontagem = lazy(() =>
@@ -409,9 +410,9 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
           </div>
         )}
 
-        {itemAmpliado?.imagem && (
+        {imagemMesaItem(itemAmpliado ?? {}) && itemAmpliado && (
           <ImagemAmpliada
-            src={itemAmpliado.imagem}
+            src={imagemMesaItem(itemAmpliado)!}
             alt={itemAmpliado.nome}
             aberto
             aoFechar={() => setItemAmpliado(null)}

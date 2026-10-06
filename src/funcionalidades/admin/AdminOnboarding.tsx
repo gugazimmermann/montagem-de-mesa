@@ -8,7 +8,6 @@ import * as ui from './adminClasses'
 type Props = {
   cliente: Cliente | null | undefined
   dados: DadosCliente
-  linkPublico: string
   aoAbrirAjuda?: () => void
 }
 
@@ -16,7 +15,7 @@ function chaveDismiss(clienteId: string) {
   return `onboarding-dismiss:${clienteId}`
 }
 
-export function AdminOnboarding({ cliente, dados, linkPublico, aoAbrirAjuda }: Props) {
+export function AdminOnboarding({ cliente, dados, aoAbrirAjuda }: Props) {
   const clienteId = cliente?.id
   const [dismissed, setDismissed] = useState(() => {
     if (!clienteId) return true
@@ -67,29 +66,11 @@ export function AdminOnboarding({ cliente, dados, linkPublico, aoAbrirAjuda }: P
           ? `/admin/painel/categorias/${catsEditaveis[0]!.id}/itens/novo`
           : '/admin/painel/categorias/novo',
       },
-      {
-        id: 'link',
-        rotulo: 'Abrir página pública',
-        feito: false,
-        para: linkPublico,
-        externo: true,
-      },
     ] as const
-  }, [
-    cliente,
-    cliente?.logo,
-    cliente?.whatsapp,
-    dados.categorias,
-    dados.itens,
-    linkPublico,
-  ])
+  }, [cliente, cliente?.logo, cliente?.whatsapp, dados.categorias, dados.itens])
 
-  const pendentes = useMemo(
-    () => passos.filter((p) => p.id === 'link' || !p.feito),
-    [passos],
-  )
-  const faltamObrigatorios = passos.some((p) => p.id !== 'link' && !p.feito)
-  if (!clienteId || dismissed || !faltamObrigatorios) return null
+  const pendentes = useMemo(() => passos.filter((p) => !p.feito), [passos])
+  if (!clienteId || dismissed || pendentes.length === 0) return null
 
   function dispensar() {
     try {
@@ -122,13 +103,7 @@ export function AdminOnboarding({ cliente, dados, linkPublico, aoAbrirAjuda }: P
         {pendentes.map((passo) => (
           <li key={passo.id} className={ui.onboardingItem}>
             <span>{passo.rotulo}</span>
-            <Link
-              className="btn btn--ghost"
-              to={passo.para}
-              {...('externo' in passo && passo.externo
-                ? { target: '_blank', rel: 'noopener noreferrer' }
-                : {})}
-            >
+            <Link className="btn btn--ghost" to={passo.para}>
               Ir
             </Link>
           </li>

@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import type { Categoria, ConfiguracaoMesa, ItemMesa } from '../../../../compartilhado/tipos'
+import { imagemMesaItem } from '../../../../compartilhado/tipos'
 import { obterItemPorId } from '../../../catalogo'
 import {
   estiloCamadaDimensionada,
@@ -90,7 +91,7 @@ function CamadaClicavel({
   style,
   children,
 }: PropsCamadaClicavel) {
-  const podeAmpliar = Boolean(item.imagem && aoAmpliarItem)
+  const podeAmpliar = Boolean(imagemMesaItem(item) && aoAmpliarItem)
 
   if (!podeAmpliar) {
     return (
@@ -121,7 +122,8 @@ function CamadaSousplat({
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
   const comDim = itemComDimensoes(item, 'sousplat')
-  const comImagem = Boolean(item.imagem)
+  const srcImagem = imagemMesaItem(item)
+  const comImagem = Boolean(srcImagem)
   const redondo = !comImagem && itemRedondo(comDim)
 
   return (
@@ -131,7 +133,7 @@ function CamadaSousplat({
       className={`layer layer--sized sousplat ${redondo ? 'layer--round' : ''} ${comImagem ? 'sousplat--image' : ''}`}
       style={{ ...estiloDimensionado(comDim), ...(!comImagem ? varsCores(item) : {}) }}
     >
-      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
+      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
@@ -152,7 +154,8 @@ function CamadaPrato({
         ? 'pratoSobremesa'
         : 'pratoRaso'
   const comDim = itemComDimensoes(item, codigo)
-  const comImagem = Boolean(item.imagem)
+  const srcImagem = imagemMesaItem(item)
+  const comImagem = Boolean(srcImagem)
   const classeVariante =
     variante === 'fundo'
       ? 'plate--fundo'
@@ -174,7 +177,7 @@ function CamadaPrato({
       }
     >
       {comImagem ? (
-        <img src={item.imagem} alt="" draggable={false} />
+        <img src={srcImagem} alt="" draggable={false} />
       ) : (
         <div className="plate__inner" />
       )}
@@ -194,7 +197,8 @@ function CamadaFoto({
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
   const comDim = itemComDimensoes(item, codigo)
-  const comImagem = Boolean(item.imagem)
+  const srcImagem = imagemMesaItem(item)
+  const comImagem = Boolean(srcImagem)
 
   return (
     <CamadaClicavel
@@ -206,7 +210,7 @@ function CamadaFoto({
         ...(!comImagem ? varsCores(item) : {}),
       }}
     >
-      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
+      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
@@ -219,7 +223,8 @@ function CamadaPortaGuardanapo({
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
   const comDim = itemComDimensoes(item, 'portaGuardanapo')
-  const comImagem = Boolean(item.imagem)
+  const srcImagem = imagemMesaItem(item)
+  const comImagem = Boolean(srcImagem)
 
   return (
     <CamadaClicavel
@@ -231,7 +236,7 @@ function CamadaPortaGuardanapo({
         ...(!comImagem ? varsCores(item) : {}),
       }}
     >
-      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
+      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
@@ -244,7 +249,8 @@ function CamadaTaca({
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
   const comDim = itemComDimensoes(item, 'taca')
-  const comImagem = Boolean(item.imagem)
+  const srcImagem = imagemMesaItem(item)
+  const comImagem = Boolean(srcImagem)
 
   return (
     <CamadaClicavel
@@ -259,7 +265,7 @@ function CamadaTaca({
         } as CSSProperties
       }
     >
-      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
+      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
@@ -273,7 +279,8 @@ function CamadaGenerica({
   aoAmpliarItem?: (item: ItemMesa) => void
 }) {
   const comDim = itemComDimensoes(item, item.categoria)
-  const comImagem = Boolean(item.imagem)
+  const srcImagem = imagemMesaItem(item)
+  const comImagem = Boolean(srcImagem)
 
   return (
     <CamadaClicavel
@@ -285,7 +292,7 @@ function CamadaGenerica({
         ...(!comImagem ? varsCores(item) : {}),
       }}
     >
-      {comImagem && <img src={item.imagem} alt="" draggable={false} />}
+      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }

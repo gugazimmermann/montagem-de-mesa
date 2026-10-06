@@ -348,6 +348,7 @@ export async function enviarImagemItemStorage(
   categoriaId: string,
   itemId: string,
   arquivo: File,
+  variante: 'mesa' | 'catalogo' = 'mesa',
 ): Promise<string> {
   const comprimido = await comprimirImagemParaUpload(arquivo, {
     maxLado: ITEM_MAX_LADO_PX,
@@ -356,7 +357,8 @@ export async function enviarImagemItemStorage(
   validarImagem(comprimido, TAMANHO_MAX_ITEM, '5 MB')
 
   const ext = extensaoDoArquivo(comprimido)
-  const objectKey = `${clienteId}/${categoriaId}/${itemId}.${ext}`
+  const sufixo = variante === 'catalogo' ? '-catalogo' : ''
+  const objectKey = `${clienteId}/${categoriaId}/${itemId}${sufixo}.${ext}`
 
   const { error } = await supabase.storage.from(BUCKET_ITENS).upload(objectKey, comprimido, {
     contentType: contentTypeDoArquivo(comprimido),

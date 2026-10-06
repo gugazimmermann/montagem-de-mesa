@@ -82,6 +82,7 @@ type ItemRow = {
   categoria_id: string
   nome: string
   imagem: string | null
+  imagem_catalogo?: string | null
   cores: ItemMesa['cores']
   largura: number | null
   comprimento: number | null
@@ -138,6 +139,7 @@ function mapItem(row: ItemRow): ItemMesa {
     cores: row.cores,
   }
   if (row.imagem) item.imagem = row.imagem
+  if (row.imagem_catalogo) item.imagemCatalogo = row.imagem_catalogo
   if (row.largura != null) item.largura = Number(row.largura)
   if (row.comprimento != null) item.comprimento = Number(row.comprimento)
   if (row.padrao) item.padrao = row.padrao as PadraoTecido
@@ -270,7 +272,7 @@ export async function carregarDadosCliente(
     supabase
       .from('itens')
       .select(
-        'id, categoria_id, nome, imagem, cores, largura, comprimento, padrao, descricao, ordem',
+        'id, categoria_id, nome, imagem, imagem_catalogo, cores, largura, comprimento, padrao, descricao, ordem',
       )
       .eq('cliente_id', id)
       .is('deleted_at', null)
@@ -325,6 +327,7 @@ type CatalogoPublicoRpc = {
     categoria_id: string
     nome: string
     imagem?: string | null
+    imagem_catalogo?: string | null
     cores: ItemMesa['cores']
     largura?: number | null
     comprimento?: number | null
@@ -396,6 +399,7 @@ export async function carregarCatalogoPublico(
       categoria_id: i.categoria_id,
       nome: i.nome,
       imagem: i.imagem ?? null,
+      imagem_catalogo: i.imagem_catalogo ?? null,
       cores: i.cores,
       largura: i.largura ?? null,
       comprimento: i.comprimento ?? null,
@@ -430,14 +434,24 @@ async function assinarMidiasDadosCliente(
   if (dados.logo) entradas.push({ valor: dados.logo, bucket: 'logos' })
   for (const item of dados.itens) {
     if (item.imagem) entradas.push({ valor: item.imagem, bucket: 'itens' })
+    if (item.imagemCatalogo) {
+      entradas.push({ valor: item.imagemCatalogo, bucket: 'itens' })
+    }
   }
 
   const mapa = await resolverUrlsAssinadasEmLote(entradas)
   const logo = dados.logo ? mapa.get(dados.logo) ?? dados.logo : ''
   const itens = dados.itens.map((item) => {
-    if (!item.imagem) return item
-    const assinada = mapa.get(item.imagem)
-    return assinada ? { ...item, imagem: assinada } : item
+    const proximo = { ...item }
+    if (item.imagem) {
+      const assinada = mapa.get(item.imagem)
+      if (assinada) proximo.imagem = assinada
+    }
+    if (item.imagemCatalogo) {
+      const assinada = mapa.get(item.imagemCatalogo)
+      if (assinada) proximo.imagemCatalogo = assinada
+    }
+    return proximo
   })
 
   return { ...dados, logo, itens }

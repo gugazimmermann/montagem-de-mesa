@@ -127,7 +127,6 @@ export function PainelAdmin() {
       <AdminOnboarding
         cliente={cliente}
         dados={dados}
-        linkPublico={linkPublico}
         aoAbrirAjuda={() => setAjudaAberta(true)}
       />
       <header className={ui.painelHeader}>
@@ -380,7 +379,7 @@ export function PainelAdmin() {
       <AdminConfirmacao
         aberto={excluirId !== null}
         titulo="Excluir categoria?"
-        descricao="A categoria e os itens vinculados saem do catálogo público (podem ser recuperados no banco). Confirme para continuar."
+        descricao="A categoria e os itens vinculados serão excluídos e não poderão ser recuperados. Confirme para continuar."
         confirmarRotulo="Excluir"
         processando={excluindo}
         processandoRotulo="Excluindo…"

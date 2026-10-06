@@ -48,10 +48,11 @@
   ],
   "itens": [
     {
-      "id": "lugarAmericano-lugar-americano-coracao-rosa",
-      "nome": "Lugar Americano Coração Rosa",
+      "id": "lugarAmericano-coracao-rosa",
+      "nome": "Coração Rosa",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -61,10 +62,11 @@
       "comprimento": 29
     },
     {
-      "id": "lugarAmericano-lugar-americano-de-grama",
-      "nome": "Lugar Americano de Grama",
+      "id": "lugarAmericano-de-grama",
+      "nome": "de Grama",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -74,10 +76,11 @@
       "comprimento": 34
     },
     {
-      "id": "lugarAmericano-lugar-americano-folha-rose-dupla-face",
-      "nome": "Lugar Americano Folha Rosê Dupla Face",
+      "id": "lugarAmericano-folha-rose-dupla-face",
+      "nome": "Folha Rosê Dupla Face",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -87,10 +90,11 @@
       "comprimento": 36
     },
     {
-      "id": "lugarAmericano-lugar-americano-linhao-bege",
-      "nome": "Lugar Americano Linhão Bege",
+      "id": "lugarAmericano-linhao-bege",
+      "nome": "Linhão Bege",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -100,10 +104,11 @@
       "comprimento": 35
     },
     {
-      "id": "lugarAmericano-lugar-americano-linho-misto-bege",
-      "nome": "Lugar Americano Linho Misto Bege",
+      "id": "lugarAmericano-linho-misto-bege",
+      "nome": "Linho Misto Bege",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -113,10 +118,11 @@
       "comprimento": 36
     },
     {
-      "id": "lugarAmericano-lugar-americano-organza-rosa-toalha-para-bandeja",
-      "nome": "Lugar Americano Organza Rosa (Toalha para Bandeja)",
+      "id": "lugarAmericano-organza-rosa-toalha-para-bandeja",
+      "nome": "Organza Rosa (Toalha para Bandeja)",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -126,10 +132,11 @@
       "comprimento": 29
     },
     {
-      "id": "lugarAmericano-lugar-americano-redondo-nylon-com-bordado-cru",
-      "nome": "Lugar Americano Redondo Nylon com Bordado Cru",
+      "id": "lugarAmericano-redondo-nylon-com-bordado-cru",
+      "nome": "Redondo Nylon com Bordado Cru",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -139,10 +146,11 @@
       "comprimento": 42
     },
     {
-      "id": "lugarAmericano-lugar-americano-redondo-nylon-com-bordado-lilas",
-      "nome": "Lugar Americano Redondo Nylon com Bordado Lilás",
+      "id": "lugarAmericano-redondo-nylon-com-bordado-lilas",
+      "nome": "Redondo Nylon com Bordado Lilás",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -152,10 +160,11 @@
       "comprimento": 42
     },
     {
-      "id": "lugarAmericano-lugar-americano-redondo-renda-branco",
-      "nome": "Lugar Americano Redondo Renda Branco",
+      "id": "lugarAmericano-redondo-renda-branco",
+      "nome": "Redondo Renda Branco",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -165,10 +174,11 @@
       "comprimento": 43
     },
     {
-      "id": "lugarAmericano-lugar-americano-redondo-verde-bordado",
-      "nome": "Lugar Americano Redondo Verde Bordado",
+      "id": "lugarAmericano-redondo-verde-bordado",
+      "nome": "Redondo Verde Bordado",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -178,10 +188,11 @@
       "comprimento": 43
     },
     {
-      "id": "lugarAmericano-lugar-americano-renda-verde",
-      "nome": "Lugar Americano Renda Verde",
+      "id": "lugarAmericano-renda-verde",
+      "nome": "Renda Verde",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -191,10 +202,11 @@
       "comprimento": 35
     },
     {
-      "id": "lugarAmericano-lugar-americano-renda-verde-musgo",
-      "nome": "Lugar Americano Renda Verde Musgo",
+      "id": "lugarAmericano-renda-verde-musgo",
+      "nome": "Renda Verde Musgo",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -204,10 +216,11 @@
       "comprimento": 35
     },
     {
-      "id": "lugarAmericano-lugar-americano-renda-vermelho",
-      "nome": "Lugar Americano Renda Vermelho",
+      "id": "lugarAmericano-renda-vermelho",
+      "nome": "Renda Vermelho",
       "categoria": "lugarAmericano",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#efe6d6",
         "secundaria": "#f7f1e6",
@@ -215,12 +228,125 @@
       },
       "largura": 50,
       "comprimento": 35
+    },
+    {
+      "id": "sousplat-arabesco-dourado",
+      "nome": "Arabesco Dourado",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 33,
+      "comprimento": 33
+    },
+    {
+      "id": "sousplat-arabesco-fendi",
+      "nome": "Arabesco Fendi",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 33,
+      "comprimento": 33
+    },
+    {
+      "id": "sousplat-arabesco-prata",
+      "nome": "Arabesco Prata",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 33,
+      "comprimento": 33
+    },
+    {
+      "id": "sousplat-arabesco-rosa",
+      "nome": "Arabesco Rosa",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 33,
+      "comprimento": 33
+    },
+    {
+      "id": "sousplat-basic-azul-marinho",
+      "nome": "Basic Azul Marinho",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 33,
+      "comprimento": 33
+    },
+    {
+      "id": "sousplat-basic-camurca",
+      "nome": "Basic Camurça",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 33,
+      "comprimento": 33
+    },
+    {
+      "id": "sousplat-basic-verde-eucalipto",
+      "nome": "Basic Verde Eucalipto",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 33,
+      "comprimento": 33
+    },
+    {
+      "id": "sousplat-branco",
+      "nome": "Branco",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 33,
+      "comprimento": 33
     },
     {
       "id": "sousplat-capa-para-base-de-mdf-branco",
       "nome": "Capa para Base de MDF Branco",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -234,6 +360,7 @@
       "nome": "Capa para Base de MDF Verde",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -247,6 +374,7 @@
       "nome": "Capa para Base de MDF Vermelho",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -256,140 +384,11 @@
       "comprimento": 30
     },
     {
-      "id": "sousplat-mini-sousplat-dourado",
-      "nome": "Mini Sousplat Dourado",
+      "id": "sousplat-de-cristal-pearl-wolff",
+      "nome": "de Cristal Pearl Wolff",
       "categoria": "sousplat",
       "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 25,
-      "comprimento": 25
-    },
-    {
-      "id": "sousplat-mini-sousplat-prata",
-      "nome": "Mini Sousplat Prata",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 25,
-      "comprimento": 25
-    },
-    {
-      "id": "sousplat-sousplat-arabesco-dourado",
-      "nome": "Sousplat Arabesco Dourado",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 33,
-      "comprimento": 33
-    },
-    {
-      "id": "sousplat-sousplat-arabesco-fendi",
-      "nome": "Sousplat Arabesco Fendi",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 33,
-      "comprimento": 33
-    },
-    {
-      "id": "sousplat-sousplat-arabesco-prata",
-      "nome": "Sousplat Arabesco Prata",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 33,
-      "comprimento": 33
-    },
-    {
-      "id": "sousplat-sousplat-arabesco-rosa",
-      "nome": "Sousplat Arabesco Rosa",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 33,
-      "comprimento": 33
-    },
-    {
-      "id": "sousplat-sousplat-basic-azul-marinho",
-      "nome": "Sousplat Basic Azul Marinho",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 33,
-      "comprimento": 33
-    },
-    {
-      "id": "sousplat-sousplat-basic-camurca",
-      "nome": "Sousplat Basic Camurça",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 33,
-      "comprimento": 33
-    },
-    {
-      "id": "sousplat-sousplat-basic-verde-eucalipto",
-      "nome": "Sousplat Basic Verde Eucalipto",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 33,
-      "comprimento": 33
-    },
-    {
-      "id": "sousplat-sousplat-branco",
-      "nome": "Sousplat Branco",
-      "categoria": "sousplat",
-      "imagem": null,
-      "cores": {
-        "primaria": "#e8dcc8",
-        "secundaria": "#f5efe4",
-        "destaque": "#c4b49a"
-      },
-      "largura": 33,
-      "comprimento": 33
-    },
-    {
-      "id": "sousplat-sousplat-de-cristal-pearl-wolff",
-      "nome": "Sousplat de Cristal Pearl Wolff",
-      "categoria": "sousplat",
-      "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -399,10 +398,11 @@
       "comprimento": 32
     },
     {
-      "id": "sousplat-sousplat-de-sisal",
-      "nome": "Sousplat de Sisal",
+      "id": "sousplat-de-sisal",
+      "nome": "de Sisal",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -412,10 +412,11 @@
       "comprimento": 38
     },
     {
-      "id": "sousplat-sousplat-delicate-azul-bebe",
-      "nome": "Sousplat Delicate Azul Bebê",
+      "id": "sousplat-delicate-azul-bebe",
+      "nome": "Delicate Azul Bebê",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -425,10 +426,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-delicate-lilas",
-      "nome": "Sousplat Delicate Lilás",
+      "id": "sousplat-delicate-lilas",
+      "nome": "Delicate Lilás",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -438,10 +440,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-delicate-rosa-bebe",
-      "nome": "Sousplat Delicate Rosa Bebê",
+      "id": "sousplat-delicate-rosa-bebe",
+      "nome": "Delicate Rosa Bebê",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -451,10 +454,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-delicate-verde",
-      "nome": "Sousplat Delicate Verde",
+      "id": "sousplat-delicate-verde",
+      "nome": "Delicate Verde",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -464,10 +468,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-detroit-fiber",
-      "nome": "Sousplat Detroit Fiber",
+      "id": "sousplat-detroit-fiber",
+      "nome": "Detroit Fiber",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -477,10 +482,25 @@
       "comprimento": 32
     },
     {
-      "id": "sousplat-sousplat-dourado-brilho",
-      "nome": "Sousplat Dourado Brilho",
+      "id": "sousplat-dourado",
+      "nome": "Dourado",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 25,
+      "comprimento": 25
+    },
+    {
+      "id": "sousplat-dourado-brilho",
+      "nome": "Dourado Brilho",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -490,10 +510,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-estampado-de-natal",
-      "nome": "Sousplat Estampado de Natal",
+      "id": "sousplat-estampado-de-natal",
+      "nome": "Estampado de Natal",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -503,10 +524,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-inox",
-      "nome": "Sousplat Inox",
+      "id": "sousplat-inox",
+      "nome": "Inox",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -516,10 +538,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-mdf",
-      "nome": "Sousplat MDF",
+      "id": "sousplat-mdf",
+      "nome": "MDF",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -529,10 +552,11 @@
       "comprimento": 30
     },
     {
-      "id": "sousplat-sousplat-ou-jogo-americano-palha",
-      "nome": "Sousplat ou Jogo Americano Palha",
+      "id": "sousplat-ou-jogo-americano-palha",
+      "nome": "ou Jogo Americano Palha",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -542,10 +566,11 @@
       "comprimento": 38.5
     },
     {
-      "id": "sousplat-sousplat-petit-algodao-rosa",
-      "nome": "Sousplat Petit Algodão Rosa",
+      "id": "sousplat-petit-algodao-rosa",
+      "nome": "Petit Algodão Rosa",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -555,10 +580,11 @@
       "comprimento": 26.5
     },
     {
-      "id": "sousplat-sousplat-petit-capuccino",
-      "nome": "Sousplat Petit Capuccino",
+      "id": "sousplat-petit-capuccino",
+      "nome": "Petit Capuccino",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -568,10 +594,11 @@
       "comprimento": 26.5
     },
     {
-      "id": "sousplat-sousplat-petit-julie-rosa",
-      "nome": "Sousplat Petit Julie Rosa",
+      "id": "sousplat-petit-julie-rosa",
+      "nome": "Petit Julie Rosa",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -581,10 +608,11 @@
       "comprimento": 26.5
     },
     {
-      "id": "sousplat-sousplat-plissado-home-style",
-      "nome": "Sousplat Plissado Home Style",
+      "id": "sousplat-plissado-home-style",
+      "nome": "Plissado Home Style",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -594,10 +622,25 @@
       "comprimento": 32
     },
     {
-      "id": "sousplat-sousplat-preto",
-      "nome": "Sousplat Preto",
+      "id": "sousplat-prata",
+      "nome": "Prata",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#e8dcc8",
+        "secundaria": "#f5efe4",
+        "destaque": "#c4b49a"
+      },
+      "largura": 25,
+      "comprimento": 25
+    },
+    {
+      "id": "sousplat-preto",
+      "nome": "Preto",
+      "categoria": "sousplat",
+      "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -607,10 +650,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-vermelho-brilho",
-      "nome": "Sousplat Vermelho Brilho",
+      "id": "sousplat-vermelho-brilho",
+      "nome": "Vermelho Brilho",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -620,10 +664,11 @@
       "comprimento": 33
     },
     {
-      "id": "sousplat-sousplat-vermelho-cronus",
-      "nome": "Sousplat Vermelho Cronus",
+      "id": "sousplat-vermelho-cronus",
+      "nome": "Vermelho Cronus",
       "categoria": "sousplat",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#e8dcc8",
         "secundaria": "#f5efe4",
@@ -633,10 +678,11 @@
       "comprimento": 33
     },
     {
-      "id": "pratoRaso-prato-raso-bunny-cenoura",
-      "nome": "Prato Raso Bunny - Cenoura",
+      "id": "pratoRaso-bunny-cenoura",
+      "nome": "Bunny - Cenoura",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -646,10 +692,11 @@
       "comprimento": 29
     },
     {
-      "id": "pratoRaso-prato-raso-carrinho-de-natal",
-      "nome": "Prato Raso Carrinho de Natal",
+      "id": "pratoRaso-carrinho-de-natal",
+      "nome": "Carrinho de Natal",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -659,10 +706,11 @@
       "comprimento": 26
     },
     {
-      "id": "pratoRaso-prato-raso-celebrate-bege",
-      "nome": "Prato Raso Celebrate Bege",
+      "id": "pratoRaso-celebrate-bege",
+      "nome": "Celebrate Bege",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -672,10 +720,11 @@
       "comprimento": 29.5
     },
     {
-      "id": "pratoRaso-prato-raso-celebrate-verde",
-      "nome": "Prato Raso Celebrate Verde",
+      "id": "pratoRaso-celebrate-verde",
+      "nome": "Celebrate Verde",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -685,10 +734,11 @@
       "comprimento": 29.5
     },
     {
-      "id": "pratoRaso-prato-raso-celebrate-vermelho",
-      "nome": "Prato Raso Celebrate Vermelho",
+      "id": "pratoRaso-celebrate-vermelho",
+      "nome": "Celebrate Vermelho",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -698,10 +748,11 @@
       "comprimento": 29.5
     },
     {
-      "id": "pratoRaso-prato-raso-coelha-rosa",
-      "nome": "Prato Raso Coelha Rosa",
+      "id": "pratoRaso-coelha-rosa",
+      "nome": "Coelha Rosa",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -711,10 +762,11 @@
       "comprimento": 27
     },
     {
-      "id": "pratoRaso-prato-raso-cristal-pearl",
-      "nome": "Prato Raso Cristal Pearl",
+      "id": "pratoRaso-cristal-pearl",
+      "nome": "Cristal Pearl",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -724,10 +776,11 @@
       "comprimento": 27.5
     },
     {
-      "id": "pratoRaso-prato-raso-flamingo-diamond-filete-de-prata",
-      "nome": "Prato Raso Flamingo Diamond Filete de Prata",
+      "id": "pratoRaso-flamingo-diamond-filete-de-prata",
+      "nome": "Flamingo Diamond Filete de Prata",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -737,10 +790,11 @@
       "comprimento": 29
     },
     {
-      "id": "pratoRaso-prato-raso-flora-dalia",
-      "nome": "Prato Raso Flora Dalia",
+      "id": "pratoRaso-flora-dalia",
+      "nome": "Flora Dalia",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -750,10 +804,11 @@
       "comprimento": 27.5
     },
     {
-      "id": "pratoRaso-prato-raso-flowers-royal-white-pip-studio",
-      "nome": "Prato Raso Flowers - Royal White - Pip Studio",
+      "id": "pratoRaso-flowers-royal-white-pip-studio",
+      "nome": "Flowers - Royal White - Pip Studio",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -763,10 +818,11 @@
       "comprimento": 30
     },
     {
-      "id": "pratoRaso-prato-raso-guirlanda-de-azevinho",
-      "nome": "Prato Raso Guirlanda de Azevinho",
+      "id": "pratoRaso-guirlanda-de-azevinho",
+      "nome": "Guirlanda de Azevinho",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -776,10 +832,11 @@
       "comprimento": 26
     },
     {
-      "id": "pratoRaso-prato-raso-majestic-natal",
-      "nome": "Prato Raso Majestic Natal",
+      "id": "pratoRaso-majestic-natal",
+      "nome": "Majestic Natal",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -789,10 +846,11 @@
       "comprimento": 26.5
     },
     {
-      "id": "pratoRaso-prato-raso-mar",
-      "nome": "Prato Raso Mar",
+      "id": "pratoRaso-mar",
+      "nome": "Mar",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -802,10 +860,11 @@
       "comprimento": 28
     },
     {
-      "id": "pratoRaso-prato-raso-natalino-modelo-1",
-      "nome": "Prato Raso Natalino Modelo 1",
+      "id": "pratoRaso-natalino-modelo-1",
+      "nome": "Natalino Modelo 1",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -815,10 +874,11 @@
       "comprimento": 27.5
     },
     {
-      "id": "pratoRaso-prato-raso-natalino-modelo-2",
-      "nome": "Prato Raso Natalino Modelo 2",
+      "id": "pratoRaso-natalino-modelo-2",
+      "nome": "Natalino Modelo 2",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -828,10 +888,11 @@
       "comprimento": 27.5
     },
     {
-      "id": "pratoRaso-prato-raso-nobre",
-      "nome": "Prato Raso Nobre",
+      "id": "pratoRaso-nobre",
+      "nome": "Nobre",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -841,10 +902,11 @@
       "comprimento": 27.5
     },
     {
-      "id": "pratoRaso-prato-raso-roma-amarelo",
-      "nome": "Prato Raso Roma Amarelo",
+      "id": "pratoRaso-roma-amarelo",
+      "nome": "Roma Amarelo",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -854,10 +916,11 @@
       "comprimento": 26.5
     },
     {
-      "id": "pratoRaso-prato-raso-roma-verde",
-      "nome": "Prato Raso Roma Verde",
+      "id": "pratoRaso-roma-verde",
+      "nome": "Roma Verde",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -867,10 +930,11 @@
       "comprimento": 26.5
     },
     {
-      "id": "pratoRaso-prato-raso-stripes-rosa",
-      "nome": "Prato Raso Stripes Rosa",
+      "id": "pratoRaso-stripes-rosa",
+      "nome": "Stripes Rosa",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -880,10 +944,11 @@
       "comprimento": 29.5
     },
     {
-      "id": "pratoRaso-prato-raso-unni-avela",
-      "nome": "Prato Raso Unni Avelã",
+      "id": "pratoRaso-unni-avela",
+      "nome": "Unni Avelã",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -893,10 +958,11 @@
       "comprimento": 26
     },
     {
-      "id": "pratoRaso-prato-raso-verde-esmeralda",
-      "nome": "Prato Raso Verde Esmeralda",
+      "id": "pratoRaso-verde-esmeralda",
+      "nome": "Verde Esmeralda",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -906,10 +972,11 @@
       "comprimento": 29.5
     },
     {
-      "id": "pratoRaso-prato-raso-vivant-areia",
-      "nome": "Prato Raso Vivant Areia",
+      "id": "pratoRaso-vivant-areia",
+      "nome": "Vivant Areia",
       "categoria": "pratoRaso",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -917,12 +984,27 @@
       },
       "largura": 26,
       "comprimento": 26
+    },
+    {
+      "id": "pratoFundo-frutos-do-mar",
+      "nome": "Frutos do Mar",
+      "categoria": "pratoFundo",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#faf8f5",
+        "secundaria": "#e8e4df",
+        "destaque": "#d0cbc4"
+      },
+      "largura": 25,
+      "comprimento": 25
     },
     {
       "id": "pratoFundo-prato-coracao-funny",
       "nome": "Prato Coração Funny",
       "categoria": "pratoFundo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -932,23 +1014,11 @@
       "comprimento": 25.5
     },
     {
-      "id": "pratoFundo-prato-fundo-frutos-do-mar",
-      "nome": "Prato Fundo Frutos do Mar",
-      "categoria": "pratoFundo",
-      "imagem": null,
-      "cores": {
-        "primaria": "#faf8f5",
-        "secundaria": "#e8e4df",
-        "destaque": "#d0cbc4"
-      },
-      "largura": 25,
-      "comprimento": 25
-    },
-    {
       "id": "pratoFundo-prato-para-risoto",
       "nome": "Prato para Risoto",
       "categoria": "pratoFundo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -958,10 +1028,11 @@
       "comprimento": 30
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-bunny",
-      "nome": "Prato de Sobremesa Bunny",
+      "id": "pratoSobremesa-bunny",
+      "nome": "Bunny",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -971,10 +1042,11 @@
       "comprimento": 20
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-celebrate-bege",
-      "nome": "Prato de Sobremesa Celebrate Bege",
+      "id": "pratoSobremesa-celebrate-bege",
+      "nome": "Celebrate Bege",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -984,10 +1056,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-celebrate-verde",
-      "nome": "Prato de Sobremesa Celebrate Verde",
+      "id": "pratoSobremesa-celebrate-verde",
+      "nome": "Celebrate Verde",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -997,10 +1070,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-celebrate-vermelho",
-      "nome": "Prato de Sobremesa Celebrate Vermelho",
+      "id": "pratoSobremesa-celebrate-vermelho",
+      "nome": "Celebrate Vermelho",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1010,10 +1084,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-coelha-rosa",
-      "nome": "Prato de Sobremesa Coelha Rosa",
+      "id": "pratoSobremesa-coelha-rosa",
+      "nome": "Coelha Rosa",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1023,10 +1098,11 @@
       "comprimento": 19
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-cristal-pearl",
-      "nome": "Prato de Sobremesa Cristal Pearl",
+      "id": "pratoSobremesa-cristal-pearl",
+      "nome": "Cristal Pearl",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1036,10 +1112,11 @@
       "comprimento": 19
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-encanto",
-      "nome": "Prato de Sobremesa Encanto",
+      "id": "pratoSobremesa-encanto",
+      "nome": "Encanto",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1049,10 +1126,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-fica-vai-ter-bolo",
-      "nome": "Prato de Sobremesa Fica Vai Ter Bolo",
+      "id": "pratoSobremesa-fica-vai-ter-bolo",
+      "nome": "Fica Vai Ter Bolo",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1062,10 +1140,11 @@
       "comprimento": 21.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-flamingo-diamond-filete-de-prata",
-      "nome": "Prato de Sobremesa Flamingo Diamond Filete de Prata",
+      "id": "pratoSobremesa-flamingo-diamond-filete-de-prata",
+      "nome": "Flamingo Diamond Filete de Prata",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1075,10 +1154,11 @@
       "comprimento": 22
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-flora-dalia",
-      "nome": "Prato de Sobremesa Flora Dalia",
+      "id": "pratoSobremesa-flora-dalia",
+      "nome": "Flora Dalia",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1088,10 +1168,11 @@
       "comprimento": 21.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-frutos-do-mar",
-      "nome": "Prato de Sobremesa Frutos do Mar",
+      "id": "pratoSobremesa-frutos-do-mar",
+      "nome": "Frutos do Mar",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1101,10 +1182,11 @@
       "comprimento": 21
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-gnomville-gnomo-noel",
-      "nome": "Prato de Sobremesa Gnomville Gnomo Noel",
+      "id": "pratoSobremesa-gnomville-gnomo-noel",
+      "nome": "Gnomville Gnomo Noel",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1114,10 +1196,11 @@
       "comprimento": 20
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-guirlanda-de-alecrim",
-      "nome": "Prato de Sobremesa Guirlanda de Alecrim",
+      "id": "pratoSobremesa-guirlanda-de-alecrim",
+      "nome": "Guirlanda de Alecrim",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1127,10 +1210,11 @@
       "comprimento": 19
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-limao",
-      "nome": "Prato de Sobremesa Limão",
+      "id": "pratoSobremesa-limao",
+      "nome": "Limão",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1140,10 +1224,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-listrado-rosa",
-      "nome": "Prato de Sobremesa Listrado Rosa",
+      "id": "pratoSobremesa-listrado-rosa",
+      "nome": "Listrado Rosa",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1153,10 +1238,11 @@
       "comprimento": 21
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-majestic-natal",
-      "nome": "Prato de Sobremesa Majestic Natal",
+      "id": "pratoSobremesa-majestic-natal",
+      "nome": "Majestic Natal",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1166,10 +1252,11 @@
       "comprimento": 19.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-natal-iluminado",
-      "nome": "Prato de Sobremesa Natal Iluminado",
+      "id": "pratoSobremesa-natal-iluminado",
+      "nome": "Natal Iluminado",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1179,10 +1266,11 @@
       "comprimento": 19.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-natal-nordico-mod-1",
-      "nome": "Prato de Sobremesa Natal Nórdico Mod 1",
+      "id": "pratoSobremesa-natal-nordico-mod-1",
+      "nome": "Natal Nórdico Mod 1",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1192,10 +1280,11 @@
       "comprimento": 19
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-nobre",
-      "nome": "Prato de Sobremesa Nobre",
+      "id": "pratoSobremesa-nobre",
+      "nome": "Nobre",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1205,10 +1294,11 @@
       "comprimento": 20
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-palmeira-palha",
-      "nome": "Prato de Sobremesa Palmeira Palha",
+      "id": "pratoSobremesa-palmeira-palha",
+      "nome": "Palmeira Palha",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1218,10 +1308,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-papai-noel",
-      "nome": "Prato de Sobremesa Papai Noel",
+      "id": "pratoSobremesa-papai-noel",
+      "nome": "Papai Noel",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1231,10 +1322,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-pinheiro",
-      "nome": "Prato de Sobremesa Pinheiro",
+      "id": "pratoSobremesa-pinheiro",
+      "nome": "Pinheiro",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1244,10 +1336,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-renas-com-filete-dourado",
-      "nome": "Prato de Sobremesa Renas com Filete Dourado",
+      "id": "pratoSobremesa-renas-com-filete-dourado",
+      "nome": "Renas com Filete Dourado",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1257,10 +1350,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-retangular-plateau-white",
-      "nome": "Prato de Sobremesa Retangular Plateau White",
+      "id": "pratoSobremesa-retangular-plateau-white",
+      "nome": "Retangular Plateau White",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1270,10 +1364,11 @@
       "comprimento": 16
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-valencia",
-      "nome": "Prato de Sobremesa Valência",
+      "id": "pratoSobremesa-valencia",
+      "nome": "Valência",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1283,10 +1378,11 @@
       "comprimento": 20
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-verde-esmeralda",
-      "nome": "Prato de Sobremesa Verde Esmeralda",
+      "id": "pratoSobremesa-verde-esmeralda",
+      "nome": "Verde Esmeralda",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1296,10 +1392,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-vivant-areia",
-      "nome": "Prato de Sobremesa Vivant Areia",
+      "id": "pratoSobremesa-vivant-areia",
+      "nome": "Vivant Areia",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1309,10 +1406,11 @@
       "comprimento": 19.5
     },
     {
-      "id": "pratoSobremesa-prato-de-sobremesa-vivant-avela",
-      "nome": "Prato de Sobremesa Vivant Avelã",
+      "id": "pratoSobremesa-vivant-avela",
+      "nome": "Vivant Avelã",
       "categoria": "pratoSobremesa",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#faf8f5",
         "secundaria": "#e8e4df",
@@ -1322,10 +1420,11 @@
       "comprimento": 19.5
     },
     {
-      "id": "guardanapo-guardanapo-100percent-algodao-com-ponto-ajour-preto",
-      "nome": "Guardanapo 100% Algodão com Ponto Ajour Preto",
+      "id": "guardanapo-100percent-algodao-com-ponto-ajour-preto",
+      "nome": "100% Algodão com Ponto Ajour Preto",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1335,10 +1434,11 @@
       "comprimento": 40
     },
     {
-      "id": "guardanapo-guardanapo-100percent-algodao-listra-azul",
-      "nome": "Guardanapo 100% Algodão Listra Azul",
+      "id": "guardanapo-100percent-algodao-listra-azul",
+      "nome": "100% Algodão Listra Azul",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1348,10 +1448,11 @@
       "comprimento": 44
     },
     {
-      "id": "guardanapo-guardanapo-100percent-algodao-vermelho",
-      "nome": "Guardanapo 100% Algodão Vermelho",
+      "id": "guardanapo-100percent-algodao-vermelho",
+      "nome": "100% Algodão Vermelho",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1361,10 +1462,11 @@
       "comprimento": 40
     },
     {
-      "id": "guardanapo-guardanapo-100percent-algodao-vermelho-bordado-feliz-natal",
-      "nome": "Guardanapo 100% Algodão Vermelho Bordado Feliz Natal",
+      "id": "guardanapo-100percent-algodao-vermelho-bordado-feliz-natal",
+      "nome": "100% Algodão Vermelho Bordado Feliz Natal",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1374,10 +1476,11 @@
       "comprimento": 40
     },
     {
-      "id": "guardanapo-guardanapo-algodao-mocha-mousse",
-      "nome": "Guardanapo Algodão Mocha Mousse",
+      "id": "guardanapo-algodao-mocha-mousse",
+      "nome": "Algodão Mocha Mousse",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1387,10 +1490,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-branco",
-      "nome": "Guardanapo Branco",
+      "id": "guardanapo-branco",
+      "nome": "Branco",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1400,10 +1504,11 @@
       "comprimento": 45
     },
     {
-      "id": "guardanapo-guardanapo-branco-com-festone-vermelho",
-      "nome": "Guardanapo Branco com Festonê Vermelho",
+      "id": "guardanapo-branco-com-festone-vermelho",
+      "nome": "Branco com Festonê Vermelho",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1413,10 +1518,11 @@
       "comprimento": 45
     },
     {
-      "id": "guardanapo-guardanapo-de-linho-verde-com-ponto-ajour",
-      "nome": "Guardanapo de Linho Verde com Ponto Ajour",
+      "id": "guardanapo-de-linho-verde-com-ponto-ajour",
+      "nome": "de Linho Verde com Ponto Ajour",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1426,10 +1532,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-de-renda-branco",
-      "nome": "Guardanapo de Renda Branco",
+      "id": "guardanapo-de-renda-branco",
+      "nome": "de Renda Branco",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1439,10 +1546,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-de-renda-vermelho",
-      "nome": "Guardanapo de Renda Vermelho",
+      "id": "guardanapo-de-renda-vermelho",
+      "nome": "de Renda Vermelho",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1452,10 +1560,11 @@
       "comprimento": 40
     },
     {
-      "id": "guardanapo-guardanapo-lilas-100percent-algodao-com-ponto-ajour",
-      "nome": "Guardanapo lilás 100% Algodão com Ponto Ajour",
+      "id": "guardanapo-lilas-100percent-algodao-com-ponto-ajour",
+      "nome": "lilás 100% Algodão com Ponto Ajour",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1465,10 +1574,11 @@
       "comprimento": 40
     },
     {
-      "id": "guardanapo-guardanapo-linho-bordado-camarao",
-      "nome": "Guardanapo Linho Bordado Camarão",
+      "id": "guardanapo-linho-bordado-camarao",
+      "nome": "Linho Bordado Camarão",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1478,10 +1588,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-bordado-cavalo-marinho",
-      "nome": "Guardanapo Linho Bordado Cavalo Marinho",
+      "id": "guardanapo-linho-bordado-cavalo-marinho",
+      "nome": "Linho Bordado Cavalo Marinho",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1491,10 +1602,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-bordado-coral",
-      "nome": "Guardanapo Linho Bordado Coral",
+      "id": "guardanapo-linho-bordado-coral",
+      "nome": "Linho Bordado Coral",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1504,10 +1616,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-bordado-estrela-do-mar",
-      "nome": "Guardanapo Linho Bordado Estrela-do-Mar",
+      "id": "guardanapo-linho-bordado-estrela-do-mar",
+      "nome": "Linho Bordado Estrela-do-Mar",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1517,10 +1630,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-bordado-floco-de-neve",
-      "nome": "Guardanapo Linho Bordado Floco de Neve",
+      "id": "guardanapo-linho-bordado-floco-de-neve",
+      "nome": "Linho Bordado Floco de Neve",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1530,10 +1644,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-bordado-lagosta",
-      "nome": "Guardanapo Linho Bordado Lagosta",
+      "id": "guardanapo-linho-bordado-lagosta",
+      "nome": "Linho Bordado Lagosta",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1543,10 +1658,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-bordado-ostra",
-      "nome": "Guardanapo Linho Bordado Ostra",
+      "id": "guardanapo-linho-bordado-ostra",
+      "nome": "Linho Bordado Ostra",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1556,10 +1672,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-bordado-sino",
-      "nome": "Guardanapo Linho Bordado Sino",
+      "id": "guardanapo-linho-bordado-sino",
+      "nome": "Linho Bordado Sino",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1569,10 +1686,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-amarelo-bebe",
-      "nome": "Guardanapo Linho Misto Amarelo Bebe",
+      "id": "guardanapo-linho-misto-amarelo-bebe",
+      "nome": "Linho Misto Amarelo Bebe",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1582,10 +1700,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-azul-claro",
-      "nome": "Guardanapo Linho Misto Azul Claro",
+      "id": "guardanapo-linho-misto-azul-claro",
+      "nome": "Linho Misto Azul Claro",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1595,10 +1714,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-bege",
-      "nome": "Guardanapo Linho Misto Bege",
+      "id": "guardanapo-linho-misto-bege",
+      "nome": "Linho Misto Bege",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1608,10 +1728,11 @@
       "comprimento": 45
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-bordado-limao-siciliano",
-      "nome": "Guardanapo Linho Misto Bordado Limão Siciliano",
+      "id": "guardanapo-linho-misto-bordado-limao-siciliano",
+      "nome": "Linho Misto Bordado Limão Siciliano",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1621,10 +1742,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-com-ponto-ajour-cru-bege",
-      "nome": "Guardanapo Linho Misto com Ponto Ajour cru bege",
+      "id": "guardanapo-linho-misto-com-ponto-ajour-cru-bege",
+      "nome": "Linho Misto com Ponto Ajour cru bege",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1634,10 +1756,11 @@
       "comprimento": 44
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-com-ponto-ajour-marinho",
-      "nome": "Guardanapo Linho Misto com Ponto Ajour Marinho",
+      "id": "guardanapo-linho-misto-com-ponto-ajour-marinho",
+      "nome": "Linho Misto com Ponto Ajour Marinho",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1647,10 +1770,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-com-ponto-ajour-pessego",
-      "nome": "Guardanapo Linho Misto com Ponto Ajour Pêssego",
+      "id": "guardanapo-linho-misto-com-ponto-ajour-pessego",
+      "nome": "Linho Misto com Ponto Ajour Pêssego",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1660,10 +1784,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-lilas",
-      "nome": "Guardanapo Linho Misto Lilás",
+      "id": "guardanapo-linho-misto-lilas",
+      "nome": "Linho Misto Lilás",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1673,10 +1798,11 @@
       "comprimento": 45
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-preto-ponto-ajour",
-      "nome": "Guardanapo Linho Misto Preto Ponto Ajour",
+      "id": "guardanapo-linho-misto-preto-ponto-ajour",
+      "nome": "Linho Misto Preto Ponto Ajour",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1686,10 +1812,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-rosa",
-      "nome": "Guardanapo Linho Misto Rosa",
+      "id": "guardanapo-linho-misto-rosa",
+      "nome": "Linho Misto Rosa",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1699,10 +1826,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-rosa-bebe",
-      "nome": "Guardanapo Linho Misto Rosa Bebê",
+      "id": "guardanapo-linho-misto-rosa-bebe",
+      "nome": "Linho Misto Rosa Bebê",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1712,10 +1840,11 @@
       "comprimento": 44.5
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-rosa-cha",
-      "nome": "Guardanapo Linho Misto Rosa Chá",
+      "id": "guardanapo-linho-misto-rosa-cha",
+      "nome": "Linho Misto Rosa Chá",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1725,10 +1854,11 @@
       "comprimento": 50
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-rosa-pink",
-      "nome": "Guardanapo linho misto rosa pink",
+      "id": "guardanapo-linho-misto-rosa-pink",
+      "nome": "linho misto rosa pink",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1738,10 +1868,11 @@
       "comprimento": 39
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-terracota",
-      "nome": "Guardanapo Linho Misto Terracota",
+      "id": "guardanapo-linho-misto-terracota",
+      "nome": "Linho Misto Terracota",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1751,10 +1882,11 @@
       "comprimento": 44.5
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-tulipas",
-      "nome": "Guardanapo Linho Misto Tulipas",
+      "id": "guardanapo-linho-misto-tulipas",
+      "nome": "Linho Misto Tulipas",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1764,10 +1896,11 @@
       "comprimento": 40
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-verde-eucalipto",
-      "nome": "Guardanapo Linho Misto Verde Eucalipto",
+      "id": "guardanapo-linho-misto-verde-eucalipto",
+      "nome": "Linho Misto Verde Eucalipto",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1777,10 +1910,11 @@
       "comprimento": 40
     },
     {
-      "id": "guardanapo-guardanapo-linho-misto-vinho",
-      "nome": "Guardanapo linho misto Vinho",
+      "id": "guardanapo-linho-misto-vinho",
+      "nome": "linho misto Vinho",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1790,10 +1924,11 @@
       "comprimento": 40
     },
     {
-      "id": "guardanapo-guardanapo-renda-verde-cha",
-      "nome": "Guardanapo Renda Verde Chá",
+      "id": "guardanapo-renda-verde-cha",
+      "nome": "Renda Verde Chá",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1803,10 +1938,11 @@
       "comprimento": 42
     },
     {
-      "id": "guardanapo-guardanapo-renda-verde-musgo",
-      "nome": "Guardanapo Renda Verde Musgo",
+      "id": "guardanapo-renda-verde-musgo",
+      "nome": "Renda Verde Musgo",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1816,10 +1952,11 @@
       "comprimento": 42
     },
     {
-      "id": "guardanapo-guardanapo-verde-bordado",
-      "nome": "Guardanapo Verde Bordado",
+      "id": "guardanapo-verde-bordado",
+      "nome": "Verde Bordado",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1829,10 +1966,11 @@
       "comprimento": 39
     },
     {
-      "id": "guardanapo-guardanapo-verde-oliva",
-      "nome": "Guardanapo Verde Oliva",
+      "id": "guardanapo-verde-oliva",
+      "nome": "Verde Oliva",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1842,10 +1980,11 @@
       "comprimento": 45
     },
     {
-      "id": "guardanapo-guardanapo-xadrez-quadriculado-azul-percal-misto",
-      "nome": "Guardanapo Xadrez Quadriculado Azul Percal Misto",
+      "id": "guardanapo-xadrez-quadriculado-azul-percal-misto",
+      "nome": "Xadrez Quadriculado Azul Percal Misto",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1855,10 +1994,11 @@
       "comprimento": 39
     },
     {
-      "id": "guardanapo-guardanapo-xadrez-quadriculado-preto-e-branco",
-      "nome": "Guardanapo Xadrez Quadriculado Preto e Branco",
+      "id": "guardanapo-xadrez-quadriculado-preto-e-branco",
+      "nome": "Xadrez Quadriculado Preto e Branco",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1868,10 +2008,11 @@
       "comprimento": 42
     },
     {
-      "id": "guardanapo-guardanapo-xadrez-quadriculado-rosa-percal-misto",
-      "nome": "Guardanapo Xadrez Quadriculado Rosa Percal Misto",
+      "id": "guardanapo-xadrez-quadriculado-rosa-percal-misto",
+      "nome": "Xadrez Quadriculado Rosa Percal Misto",
       "categoria": "guardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#f4f1ea",
         "secundaria": "#e7e0d4",
@@ -1881,10 +2022,11 @@
       "comprimento": 39
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-artesanal-cinto-caramelo",
-      "nome": "Porta Guardanapo Artesanal Cinto Caramelo",
+      "id": "portaGuardanapo-artesanal-cinto-caramelo",
+      "nome": "Artesanal Cinto Caramelo",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1894,10 +2036,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-artesanal-matinho",
-      "nome": "Porta Guardanapo Artesanal Matinho",
+      "id": "portaGuardanapo-artesanal-matinho",
+      "nome": "Artesanal Matinho",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1907,10 +2050,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-azevinho",
-      "nome": "Porta Guardanapo Azevinho",
+      "id": "portaGuardanapo-azevinho",
+      "nome": "Azevinho",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1920,10 +2064,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-bola-de-natal-dourada",
-      "nome": "Porta Guardanapo Bola de Natal Dourada",
+      "id": "portaGuardanapo-bola-de-natal-dourada",
+      "nome": "Bola de Natal Dourada",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1933,10 +2078,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-bola-de-natal-vermelho",
-      "nome": "Porta Guardanapo Bola de Natal Vermelho",
+      "id": "portaGuardanapo-bola-de-natal-vermelho",
+      "nome": "Bola de Natal Vermelho",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1946,10 +2092,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-bolinhas-de-natal-dourado",
-      "nome": "Porta Guardanapo Bolinhas de Natal Dourado",
+      "id": "portaGuardanapo-bolinhas-de-natal-dourado",
+      "nome": "Bolinhas de Natal Dourado",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1959,10 +2106,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-bolinhas-de-natal-vermelho",
-      "nome": "Porta Guardanapo Bolinhas de Natal Vermelho",
+      "id": "portaGuardanapo-bolinhas-de-natal-vermelho",
+      "nome": "Bolinhas de Natal Vermelho",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1972,10 +2120,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-concha",
-      "nome": "Porta Guardanapo Concha",
+      "id": "portaGuardanapo-concha",
+      "nome": "Concha",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1985,10 +2134,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-de-botao-de-rosa",
-      "nome": "Porta Guardanapo de Botão de Rosa",
+      "id": "portaGuardanapo-de-botao-de-rosa",
+      "nome": "de Botão de Rosa",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -1998,10 +2148,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-de-mdf-coracao",
-      "nome": "Porta Guardanapo de MDF Coração",
+      "id": "portaGuardanapo-de-mdf-coracao",
+      "nome": "de MDF Coração",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2011,10 +2162,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-de-metal-love",
-      "nome": "Porta Guardanapo de Metal Love",
+      "id": "portaGuardanapo-de-metal-love",
+      "nome": "de Metal Love",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2024,10 +2176,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-de-metal-love-dourado",
-      "nome": "Porta Guardanapo de Metal Love Dourado",
+      "id": "portaGuardanapo-de-metal-love-dourado",
+      "nome": "de Metal Love Dourado",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2037,10 +2190,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-de-metal-love-prata",
-      "nome": "Porta Guardanapo de Metal Love Prata",
+      "id": "portaGuardanapo-de-metal-love-prata",
+      "nome": "de Metal Love Prata",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2050,10 +2204,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-de-palha",
-      "nome": "Porta Guardanapo de Palha",
+      "id": "portaGuardanapo-de-palha",
+      "nome": "de Palha",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2063,10 +2218,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-de-rosa",
-      "nome": "Porta Guardanapo de Rosa",
+      "id": "portaGuardanapo-de-rosa",
+      "nome": "de Rosa",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2076,10 +2232,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-elegance-inox",
-      "nome": "Porta Guardanapo Elegance Inox",
+      "id": "portaGuardanapo-elegance-inox",
+      "nome": "Elegance Inox",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2089,10 +2246,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-elegance-inox-dourado",
-      "nome": "Porta Guardanapo Elegance Inox Dourado",
+      "id": "portaGuardanapo-elegance-inox-dourado",
+      "nome": "Elegance Inox Dourado",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2102,10 +2260,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-espiral-dourado",
-      "nome": "Porta Guardanapo Espiral Dourado",
+      "id": "portaGuardanapo-espiral-dourado",
+      "nome": "Espiral Dourado",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2115,10 +2274,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-espirito-santo-com-perolas",
-      "nome": "Porta Guardanapo Espírito Santo com Pérolas",
+      "id": "portaGuardanapo-espirito-santo-com-perolas",
+      "nome": "Espírito Santo com Pérolas",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2128,10 +2288,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-guirlanda-de-pinha",
-      "nome": "Porta Guardanapo Guirlanda de Pinha",
+      "id": "portaGuardanapo-guirlanda-de-pinha",
+      "nome": "Guirlanda de Pinha",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2141,10 +2302,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-junino",
-      "nome": "Porta Guardanapo Junino",
+      "id": "portaGuardanapo-junino",
+      "nome": "Junino",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2154,10 +2316,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-laco-cinza",
-      "nome": "Porta Guardanapo Laço Cinza",
+      "id": "portaGuardanapo-laco-cinza",
+      "nome": "Laço Cinza",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2167,10 +2330,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-laco-verde",
-      "nome": "Porta Guardanapo Laço Verde",
+      "id": "portaGuardanapo-laco-verde",
+      "nome": "Laço Verde",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2180,10 +2344,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-laco-vermelho",
-      "nome": "Porta Guardanapo Laço Vermelho",
+      "id": "portaGuardanapo-laco-vermelho",
+      "nome": "Laço Vermelho",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2193,10 +2358,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-no-traccia-dourado",
-      "nome": "Porta Guardanapo Nó Traccia Dourado",
+      "id": "portaGuardanapo-no-traccia-dourado",
+      "nome": "Nó Traccia Dourado",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2206,10 +2372,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-no-traccia-toffee",
-      "nome": "Porta Guardanapo Nó Traccia Toffee",
+      "id": "portaGuardanapo-no-traccia-toffee",
+      "nome": "Nó Traccia Toffee",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2219,10 +2386,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-perola",
-      "nome": "Porta Guardanapo Pérola",
+      "id": "portaGuardanapo-perola",
+      "nome": "Pérola",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2232,10 +2400,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-pick-de-natal",
-      "nome": "Porta Guardanapo Pick de Natal",
+      "id": "portaGuardanapo-pick-de-natal",
+      "nome": "Pick de Natal",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2245,10 +2414,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-rosa-vermelha",
-      "nome": "Porta Guardanapo Rosa Vermelha",
+      "id": "portaGuardanapo-rosa-vermelha",
+      "nome": "Rosa Vermelha",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2258,10 +2428,11 @@
       "comprimento": 8
     },
     {
-      "id": "portaGuardanapo-porta-guardanapo-uva",
-      "nome": "Porta Guardanapo Uva",
+      "id": "portaGuardanapo-uva",
+      "nome": "Uva",
       "categoria": "portaGuardanapo",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#c4a574",
         "secundaria": "#e8d4b0",
@@ -2269,259 +2440,13 @@
       },
       "largura": 8,
       "comprimento": 8
-    },
-    {
-      "id": "talher-colher-de-mesa-agra-capuccino",
-      "nome": "Colher de Mesa Agra Capuccino",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 4,
-      "comprimento": 20
-    },
-    {
-      "id": "talher-colher-de-mesa-agra-vermelho",
-      "nome": "Colher de Mesa Agra Vermelho",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 4,
-      "comprimento": 20
-    },
-    {
-      "id": "talher-colher-de-mesa-bambu",
-      "nome": "Colher de Mesa Bambu",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 4,
-      "comprimento": 19.5
-    },
-    {
-      "id": "talher-colher-de-mesa-gopala-off-white",
-      "nome": "Colher de Mesa Gopala Off White",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 4,
-      "comprimento": 19.5
-    },
-    {
-      "id": "talher-colher-de-mesa-vicenza-tramontina",
-      "nome": "Colher de Mesa Vicenza Tramontina",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 4,
-      "comprimento": 19.5
-    },
-    {
-      "id": "talher-colher-de-sobremesa-agra-capuccino",
-      "nome": "Colher de Sobremesa Agra Capuccino",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 3,
-      "comprimento": 17
-    },
-    {
-      "id": "talher-colher-de-sobremesa-agra-vermelho",
-      "nome": "Colher de Sobremesa Agra Vermelho",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 3,
-      "comprimento": 17
-    },
-    {
-      "id": "talher-colher-de-sobremesa-bambu",
-      "nome": "Colher de sobremesa Bambu",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 3,
-      "comprimento": 17
-    },
-    {
-      "id": "talher-colher-de-sobremesa-gopala-off-white",
-      "nome": "Colher de Sobremesa Gopala Off White",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 3,
-      "comprimento": 16.5
-    },
-    {
-      "id": "talher-colher-de-sobremesa-vicenza-tramontina",
-      "nome": "Colher de Sobremesa Vicenza Tramontina",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 3,
-      "comprimento": 14
-    },
-    {
-      "id": "talher-faca-de-mesa-agra-capuccino",
-      "nome": "Faca de Mesa Agra Capuccino",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2,
-      "comprimento": 23
-    },
-    {
-      "id": "talher-faca-de-mesa-agra-vermelho",
-      "nome": "Faca de Mesa Agra Vermelho",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2,
-      "comprimento": 23
-    },
-    {
-      "id": "talher-faca-de-mesa-bambu",
-      "nome": "Faca de Mesa Bambu",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2,
-      "comprimento": 23
-    },
-    {
-      "id": "talher-faca-de-mesa-berna-dourado",
-      "nome": "Faca de Mesa Berna Dourado",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2,
-      "comprimento": 23
-    },
-    {
-      "id": "talher-faca-de-mesa-gopala-off-white",
-      "nome": "Faca de Mesa Gopala Off White",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2,
-      "comprimento": 22.5
-    },
-    {
-      "id": "talher-faca-de-mesa-vicenza-tramontina",
-      "nome": "Faca de Mesa Vicenza Tramontina",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2,
-      "comprimento": 24.5
-    },
-    {
-      "id": "talher-faca-de-sobremesa-bambu",
-      "nome": "Faca de sobremesa Bambu",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2,
-      "comprimento": 21
-    },
-    {
-      "id": "talher-faca-de-sobremesa-vicenza-tramontina",
-      "nome": "Faca de Sobremesa Vicenza Tramontina",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2,
-      "comprimento": 22.5
-    },
-    {
-      "id": "talher-faca-para-churrasco",
-      "nome": "Faca para Churrasco",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 3,
-      "comprimento": 25
     },
     {
       "id": "talher-garfo-de-mesa-agra-capuccino",
       "nome": "Garfo de Mesa Agra Capuccino",
       "categoria": "talher",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d9d4cc",
         "secundaria": "#f2efe9",
@@ -2529,12 +2454,55 @@
       },
       "largura": 2.5,
       "comprimento": 20.5
+    },
+    {
+      "id": "talher-faca-de-mesa-agra-capuccino",
+      "nome": "Faca de Mesa Agra Capuccino",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2,
+      "comprimento": 23
+    },
+    {
+      "id": "talher-colher-de-mesa-agra-capuccino",
+      "nome": "Colher de Mesa Agra Capuccino",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 4,
+      "comprimento": 20
+    },
+    {
+      "id": "talher-colher-de-sobremesa-agra-capuccino",
+      "nome": "Colher de Sobremesa Agra Capuccino",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 3,
+      "comprimento": 17
     },
     {
       "id": "talher-garfo-de-mesa-agra-vermelho",
       "nome": "Garfo de Mesa Agra Vermelho",
       "categoria": "talher",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d9d4cc",
         "secundaria": "#f2efe9",
@@ -2544,10 +2512,53 @@
       "comprimento": 20.5
     },
     {
+      "id": "talher-faca-de-mesa-agra-vermelho",
+      "nome": "Faca de Mesa Agra Vermelho",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2,
+      "comprimento": 23
+    },
+    {
+      "id": "talher-colher-de-mesa-agra-vermelho",
+      "nome": "Colher de Mesa Agra Vermelho",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 4,
+      "comprimento": 20
+    },
+    {
+      "id": "talher-colher-de-sobremesa-agra-vermelho",
+      "nome": "Colher de Sobremesa Agra Vermelho",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 3,
+      "comprimento": 17
+    },
+    {
       "id": "talher-garfo-de-mesa-bambu",
       "nome": "Garfo de Mesa Bambu",
       "categoria": "talher",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d9d4cc",
         "secundaria": "#f2efe9",
@@ -2557,49 +2568,11 @@
       "comprimento": 20.5
     },
     {
-      "id": "talher-garfo-de-mesa-berna-dourado",
-      "nome": "Garfo de Mesa Berna Dourado",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2.5,
-      "comprimento": 21.5
-    },
-    {
-      "id": "talher-garfo-de-mesa-gopala-off-white",
-      "nome": "Garfo de Mesa Gopala Off White",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2.5,
-      "comprimento": 20
-    },
-    {
-      "id": "talher-garfo-de-mesa-vicenza-tramontina",
-      "nome": "Garfo de Mesa Vicenza Tramontina",
-      "categoria": "talher",
-      "imagem": null,
-      "cores": {
-        "primaria": "#d9d4cc",
-        "secundaria": "#f2efe9",
-        "destaque": "#b7b0a6"
-      },
-      "largura": 2.5,
-      "comprimento": 20
-    },
-    {
       "id": "talher-garfo-de-sobremesa-bambu",
       "nome": "Garfo de sobremesa Bambu",
       "categoria": "talher",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d9d4cc",
         "secundaria": "#f2efe9",
@@ -2609,23 +2582,67 @@
       "comprimento": 18
     },
     {
-      "id": "talher-garfo-de-sobremesa-vicenza-tramontina",
-      "nome": "Garfo de Sobremesa Vicenza Tramontina",
+      "id": "talher-faca-de-mesa-bambu",
+      "nome": "Faca de Mesa Bambu",
       "categoria": "talher",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d9d4cc",
         "secundaria": "#f2efe9",
         "destaque": "#b7b0a6"
       },
-      "largura": 2.5,
-      "comprimento": 18.5
+      "largura": 2,
+      "comprimento": 23
     },
     {
-      "id": "talher-garfo-para-churrasco",
-      "nome": "Garfo para Churrasco",
+      "id": "talher-faca-de-sobremesa-bambu",
+      "nome": "Faca de sobremesa Bambu",
       "categoria": "talher",
       "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2,
+      "comprimento": 21
+    },
+    {
+      "id": "talher-colher-de-mesa-bambu",
+      "nome": "Colher de Mesa Bambu",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 4,
+      "comprimento": 19.5
+    },
+    {
+      "id": "talher-colher-de-sobremesa-bambu",
+      "nome": "Colher de sobremesa Bambu",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 3,
+      "comprimento": 17
+    },
+    {
+      "id": "talher-garfo-de-mesa-berna-dourado",
+      "nome": "Garfo de Mesa Berna Dourado",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d9d4cc",
         "secundaria": "#f2efe9",
@@ -2635,10 +2652,193 @@
       "comprimento": 21.5
     },
     {
+      "id": "talher-faca-de-mesa-berna-dourado",
+      "nome": "Faca de Mesa Berna Dourado",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2,
+      "comprimento": 23
+    },
+    {
+      "id": "talher-garfo-de-mesa-gopala-off-white",
+      "nome": "Garfo de Mesa Gopala Off White",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2.5,
+      "comprimento": 20
+    },
+    {
+      "id": "talher-faca-de-mesa-gopala-off-white",
+      "nome": "Faca de Mesa Gopala Off White",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2,
+      "comprimento": 22.5
+    },
+    {
+      "id": "talher-colher-de-mesa-gopala-off-white",
+      "nome": "Colher de Mesa Gopala Off White",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 4,
+      "comprimento": 19.5
+    },
+    {
+      "id": "talher-colher-de-sobremesa-gopala-off-white",
+      "nome": "Colher de Sobremesa Gopala Off White",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 3,
+      "comprimento": 16.5
+    },
+    {
+      "id": "talher-garfo-para-churrasco",
+      "nome": "Garfo para Churrasco",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2.5,
+      "comprimento": 21.5
+    },
+    {
+      "id": "talher-faca-para-churrasco",
+      "nome": "Faca para Churrasco",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 3,
+      "comprimento": 25
+    },
+    {
+      "id": "talher-garfo-de-mesa-vicenza-tramontina",
+      "nome": "Garfo de Mesa Vicenza Tramontina",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2.5,
+      "comprimento": 20
+    },
+    {
+      "id": "talher-garfo-de-sobremesa-vicenza-tramontina",
+      "nome": "Garfo de Sobremesa Vicenza Tramontina",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2.5,
+      "comprimento": 18.5
+    },
+    {
+      "id": "talher-faca-de-mesa-vicenza-tramontina",
+      "nome": "Faca de Mesa Vicenza Tramontina",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2,
+      "comprimento": 24.5
+    },
+    {
+      "id": "talher-faca-de-sobremesa-vicenza-tramontina",
+      "nome": "Faca de Sobremesa Vicenza Tramontina",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 2,
+      "comprimento": 22.5
+    },
+    {
+      "id": "talher-colher-de-mesa-vicenza-tramontina",
+      "nome": "Colher de Mesa Vicenza Tramontina",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 4,
+      "comprimento": 19.5
+    },
+    {
+      "id": "talher-colher-de-sobremesa-vicenza-tramontina",
+      "nome": "Colher de Sobremesa Vicenza Tramontina",
+      "categoria": "talher",
+      "imagem": null,
+      "imagemCatalogo": null,
+      "cores": {
+        "primaria": "#d9d4cc",
+        "secundaria": "#f2efe9",
+        "destaque": "#b7b0a6"
+      },
+      "largura": 3,
+      "comprimento": 14
+    },
+    {
       "id": "taca-taca-de-cristal-220ml-espumante-bohemia",
       "nome": "Taça de Cristal 220ml - Espumante - Bohemia",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2652,6 +2852,7 @@
       "nome": "Taça de Cristal 380ml - Cerveja - Bohemia",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2665,6 +2866,7 @@
       "nome": "Taça de Cristal 450ml - Água e Vinho - Bohemia",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2678,6 +2880,7 @@
       "nome": "Taça de Vidro - 170ml - Finger Red - Espumante",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2691,6 +2894,7 @@
       "nome": "Taça de Vidro - 270ml - Finger Red - Vinho",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2704,6 +2908,7 @@
       "nome": "Taça de Vidro - 300ml - Rosa",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2717,6 +2922,7 @@
       "nome": "Taça de Vidro - 325ml - Empire Transparente",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2730,6 +2936,7 @@
       "nome": "Taça de Vidro - 345ml - Brand Vermelho",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2743,6 +2950,7 @@
       "nome": "Taça de Vidro - 345ml - Greek Ambar",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2756,6 +2964,7 @@
       "nome": "Taça de Vidro - 345ml - Greek Verde",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2769,6 +2978,7 @@
       "nome": "Taça de Vidro - 400ml - Finger Red - Vinho",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",
@@ -2782,6 +2992,7 @@
       "nome": "Taça de Vidro - 490ml - Geo Âmbar",
       "categoria": "taca",
       "imagem": null,
+      "imagemCatalogo": null,
       "cores": {
         "primaria": "#d4e8f0",
         "secundaria": "#eef6fa",

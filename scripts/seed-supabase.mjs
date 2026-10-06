@@ -8,32 +8,19 @@
  * Defaults: financeiroraffiner@gmail.com / Raffiner / raffiner / trialing 14d
  * Fonte: imagens/logos e imagens/itens/raffiner (não apaga locais após upload).
  */
-import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import {
-  existsSync,
-  readFileSync,
-  readdirSync,
-  statSync,
-  unlinkSync,
-} from 'node:fs'
-import { basename, extname, join, relative } from 'node:path'
-import { tmpdir } from 'node:os'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import pg from 'pg'
 import slugify from 'slugify'
 import {
-  PASTA_PARA_CODIGO,
   chaveItem,
   escreverCatalogo,
-  interpretarArquivo,
+  gerarCatalogo,
 } from './lib/catalogo-raffiner.mjs'
 import { carregarEnvRaiz } from './lib/carregar-env.mjs'
-import {
-  BUCKET_ITENS,
-  BUCKET_LOGOS,
-  EXTS_IMAGEM,
-  MIME_POR_EXT,
-} from './lib/imagem-mime.mjs'
+import { BUCKET_ITENS, BUCKET_LOGOS, MIME_POR_EXT } from './lib/imagem-mime.mjs'
+import { prepararImagem } from './lib/preparar-imagem.mjs'
 import {
   criarAdmin,
   exigirUrlEServiceKey,
@@ -48,11 +35,6 @@ const email = (process.env.SEED_EMAIL || 'financeiroraffiner@gmail.com').trim()
 const password = process.env.SEED_PASSWORD || ''
 const SLUG = 'raffiner'
 const NOME = 'Raffiner'
-
-/** Limite do bucket `itens` (migration). PNG grande vira WebP antes do upload. */
-const LIMITE_ITEM_BYTES = 5 * 1024 * 1024
-const SCRIPT_WEBP = join(root, 'scripts/lib/para-webp.py')
-
 if (!password || password.length < 10) {
   console.error('Defina SEED_PASSWORD no .env (mín. 10 caracteres, igual ao app).')
   process.exit(1)
@@ -185,6 +167,7 @@ function montarCatalogo(clienteId) {
       nome: item.nome,
       // URLs antigas de outro clienteId falham no CHECK; uploadItens preenche depois.
       imagem: null,
+      imagem_catalogo: null,
       cores: item.cores,
       largura: item.largura ?? null,
       comprimento: item.comprimento ?? null,
@@ -224,14 +207,15 @@ async function seedCatalogoViaPg(clienteId, categorias, itens) {
     for (const item of itens) {
       await client.query(
         `insert into public.itens
-          (cliente_id, id, categoria_id, nome, imagem, cores, largura, comprimento, padrao, descricao, ordem)
-         values ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,$10,$11)`,
+          (cliente_id, id, categoria_id, nome, imagem, imagem_catalogo, cores, largura, comprimento, padrao, descricao, ordem)
+         values ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12)`,
         [
           item.cliente_id,
           item.id,
           item.categoria_id,
           item.nome,
           item.imagem,
+          item.imagem_catalogo ?? null,
           JSON.stringify(item.cores),
           item.largura,
           item.comprimento,
@@ -282,48 +266,18 @@ async function seedCatalogo(clienteId) {
   console.log(`Catálogo: ${categorias.length} categorias, ${itens.length} itens`)
 }
 
-function prepararImagem(arquivo) {
-  const ext = extname(arquivo).toLowerCase()
-  if (ext === '.webp' && statSync(arquivo).size <= LIMITE_ITEM_BYTES) {
-    return { body: readFileSync(arquivo), ext: '.webp' }
-  }
-
-  const destino = join(tmpdir(), `item-${randomUUID()}.webp`)
-  const tentativas = [
-    ['1600', '80'],
-    ['1200', '70'],
-    ['800', '60'],
-  ]
-  let ultimoErro = 'arquivo passou de 5 MB'
-  try {
-    for (const [lado, qualidade] of tentativas) {
-      execFileSync('python3', [SCRIPT_WEBP, arquivo, destino, lado, qualidade], {
-        stdio: ['ignore', 'ignore', 'pipe'],
-      })
-      if (statSync(destino).size <= LIMITE_ITEM_BYTES) {
-        const body = readFileSync(destino)
-        return { body, ext: '.webp' }
-      }
-      ultimoErro = `ainda ${statSync(destino).size} bytes após ${lado}px`
-    }
-  } finally {
-    if (existsSync(destino)) unlinkSync(destino)
-  }
-  throw new Error(ultimoErro)
-}
-
-function listarImagens(dir) {
-  const out = []
-  for (const nome of readdirSync(dir)) {
-    const caminho = join(dir, nome)
-    const st = statSync(caminho)
-    if (st.isDirectory()) {
-      out.push(...listarImagens(caminho))
-      continue
-    }
-    if (EXTS_IMAGEM.has(extname(nome).toLowerCase())) out.push(caminho)
-  }
-  return out
+async function subirItem(pathStorage, arquivoLocal) {
+  const preparado = prepararImagem(arquivoLocal)
+  const { error } = await admin.storage.from(BUCKET_ITENS).upload(
+    pathStorage,
+    preparado.body,
+    {
+      contentType: MIME_POR_EXT[preparado.ext] || 'image/webp',
+      upsert: true,
+    },
+  )
+  if (error) throw error
+  return pathStorage
 }
 
 async function uploadLogo(clienteId) {
@@ -369,29 +323,13 @@ async function uploadItens(clienteId) {
     (catsDb ?? []).filter((c) => c.codigo).map((c) => [c.id, c.codigo]),
   )
 
-  /** chave: codigo|nomeSemAcento → caminho local do arquivo */
-  const arquivoPorItem = new Map()
-  const arquivos = listarImagens(imgsRoot).sort()
-  let semPasta = 0
-
-  for (const arquivo of arquivos) {
-    const rel = relative(imgsRoot, arquivo).split('\\').join('/')
-    const pasta = rel.split('/')[0]
-    const codigo = PASTA_PARA_CODIGO[pasta]
-    if (!codigo) {
-      console.warn('Pasta de categoria desconhecida (ignorada):', pasta)
-      semPasta += 1
-      continue
-    }
-
-    const nomeArquivo = basename(arquivo, extname(arquivo))
-    const info = interpretarArquivo(nomeArquivo, codigo)
-    const chave = `${codigo}|${chaveItem(info.nome)}`
-    const atual = arquivoPorItem.get(chave)
-    if (!atual || (info.ehFrontal && !atual.ehFrontal)) {
-      arquivoPorItem.set(chave, { arquivo, ehFrontal: info.ehFrontal })
-    }
-  }
+  const { itensComArquivos } = gerarCatalogo(imgsRoot)
+  const arquivosPorChave = new Map(
+    itensComArquivos.map((item) => [
+      `${item.categoria}|${chaveItem(item.nome)}`,
+      item,
+    ]),
+  )
 
   const { data: itensDb, error: itensErr } = await admin
     .from('itens')
@@ -411,37 +349,41 @@ async function uploadItens(clienteId) {
     }
 
     const chave = `${codigo}|${chaveItem(row.nome)}`
-    const encontrado = arquivoPorItem.get(chave)
+    const encontrado = arquivosPorChave.get(chave)
     if (!encontrado) {
       console.warn('Sem imagem para:', codigo, row.nome)
       semMatch += 1
       continue
     }
 
-    let preparado
+    const updates = {}
     try {
-      preparado = prepararImagem(encontrado.arquivo)
+      if (encontrado.arquivoMesa) {
+        updates.imagem = await subirItem(
+          `${clienteId}/${row.categoria_id}/${row.id}.webp`,
+          encontrado.arquivoMesa,
+        )
+      }
+      if (encontrado.arquivoCatalogo) {
+        updates.imagem_catalogo = await subirItem(
+          `${clienteId}/${row.categoria_id}/${row.id}-catalogo.webp`,
+          encontrado.arquivoCatalogo,
+        )
+      }
     } catch (err) {
-      console.error('Falha ao preparar imagem:', row.nome, err.message)
+      console.error('Falha upload:', row.nome, err.message)
       falhas += 1
       continue
     }
 
-    const pathStorage = `${clienteId}/${row.categoria_id}/${row.id}${preparado.ext}`
-
-    const { error } = await admin.storage.from(BUCKET_ITENS).upload(pathStorage, preparado.body, {
-      contentType: MIME_POR_EXT[preparado.ext] || 'application/octet-stream',
-      upsert: true,
-    })
-    if (error) {
-      console.error('Falha upload:', pathStorage, error.message)
-      falhas += 1
+    if (Object.keys(updates).length === 0) {
+      semMatch += 1
       continue
     }
 
     const { error: updErr } = await admin
       .from('itens')
-      .update({ imagem: pathStorage })
+      .update(updates)
       .eq('cliente_id', clienteId)
       .eq('id', row.id)
     if (updErr) {
@@ -455,7 +397,7 @@ async function uploadItens(clienteId) {
   }
 
   console.log(
-    `Upload itens: ${ok} ok, ${falhas} falhas, ${semPasta} pasta(s) ignorada(s), ${semMatch} sem match`,
+    `Upload itens: ${ok} ok, ${falhas} falhas, ${semMatch} sem match`,
   )
   if (falhas > 0) throw new Error(`${falhas} upload(s) falharam`)
   console.log(`Paths no banco: ${ok}`)
