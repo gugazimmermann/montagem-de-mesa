@@ -405,6 +405,7 @@ export function PreVisualizacaoMesa({
   const talheresPos = posicionarTalheres(talheres, raioPratoPct)
   const tacasPos = posicionarTacas(tacas, raioPratoPct, {
     comLugarAmericano: Boolean(lugarAmericano),
+    comSousplat: Boolean(sousplat),
   })
   const portaPos =
     guardanapo && portaGuardanapo

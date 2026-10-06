@@ -1,4 +1,8 @@
-import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
+import {
+  corsHeadersPara,
+  jsonResponseComCors,
+  origemPermitida,
+} from '../_shared/cors.ts'
 import { siteUrl } from '../_shared/stripe.ts'
 import { obterClienteDoUsuario, supabaseAdmin } from '../_shared/supabase.ts'
 
@@ -28,7 +32,10 @@ type Body = {
 
 const MAX_ITENS = 40
 const MAX_LINK = 2000
-const RATE_LIMIT = 5
+/** Por IP + slug */
+const RATE_LIMIT_IP = 5
+/** Global por slug (anti-distribuição) */
+const RATE_LIMIT_SLUG = 20
 const RATE_JANELA_SEG = 60
 /** `m` = id:id|id:id… (UUID ou slug, ex. toalha:toalha-marfim-classico) */
 const RE_PARAM_M =
@@ -39,6 +46,13 @@ function texto(valor: unknown, max: number): string | null {
   if (typeof valor !== 'string') return null
   const t = valor.trim()
   if (!t || t.length > max) return null
+  return t
+}
+
+function textoOpcional(valor: unknown, max: number): string {
+  if (typeof valor !== 'string') return ''
+  const t = valor.trim()
+  if (t.length > max) return ''
   return t
 }
 
@@ -86,13 +100,92 @@ function montarLinkMontagem(slug: string, linkCliente: string | null): string | 
   return href.length <= MAX_LINK ? href : null
 }
 
+type AdminClient = ReturnType<typeof supabaseAdmin>
+
+/** Valida itens contra categorias/itens reais do cliente (rótulos). */
+async function validarItensNoCatalogo(
+  admin: AdminClient,
+  clienteId: string,
+  itens: { categoria: string; nome: string }[],
+): Promise<boolean> {
+  const { data: cats, error: erroCats } = await admin
+    .from('categorias')
+    .select('id, rotulo')
+    .eq('cliente_id', clienteId)
+    .is('deleted_at', null)
+
+  if (erroCats || !cats) {
+    console.error('enviar-montagem cats', erroCats)
+    return false
+  }
+
+  const rotulosOk = new Set(cats.map((c) => c.rotulo.trim().toLowerCase()))
+  // Categoria fixa de toalhas (JSON local, não está em `categorias` do cliente)
+  rotulosOk.add('toalha')
+  rotulosOk.add('toalhas')
+
+  const { data: itensDb, error: erroItens } = await admin
+    .from('itens')
+    .select('nome, categoria_id')
+    .eq('cliente_id', clienteId)
+    .is('deleted_at', null)
+
+  if (erroItens) {
+    console.error('enviar-montagem itens', erroItens)
+    return false
+  }
+
+  const nomesPorCatId = new Map<string, Set<string>>()
+  for (const row of itensDb ?? []) {
+    const set = nomesPorCatId.get(row.categoria_id) ?? new Set()
+    set.add(String(row.nome).trim().toLowerCase())
+    nomesPorCatId.set(row.categoria_id, set)
+  }
+
+  const catIdPorRotulo = new Map<string, string[]>()
+  for (const c of cats) {
+    const k = c.rotulo.trim().toLowerCase()
+    const lista = catIdPorRotulo.get(k) ?? []
+    lista.push(c.id)
+    catIdPorRotulo.set(k, lista)
+  }
+
+  for (const item of itens) {
+    const catKey = item.categoria.trim().toLowerCase()
+    if (!rotulosOk.has(catKey)) return false
+
+    if (catKey === 'toalha' || catKey === 'toalhas') continue
+
+    const ids = catIdPorRotulo.get(catKey) ?? []
+    const nomeKey = item.nome.trim().toLowerCase()
+    let achou = false
+    for (const id of ids) {
+      if (nomesPorCatId.get(id)?.has(nomeKey)) {
+        achou = true
+        break
+      }
+    }
+    if (!achou) return false
+  }
+
+  return true
+}
+
 Deno.serve(async (req) => {
+  const cors = corsHeadersPara(req)
+  const json = (body: unknown, status = 200) =>
+    jsonResponseComCors(req, body, status)
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: cors })
   }
 
   if (req.method !== 'POST') {
-    return jsonResponse({ error: 'Método não permitido' }, 405)
+    return json({ error: 'Método não permitido' }, 405)
+  }
+
+  if (req.headers.get('Origin') && !origemPermitida(req)) {
+    return json({ error: 'Origem não permitida.' }, 403)
   }
 
   try {
@@ -100,17 +193,17 @@ Deno.serve(async (req) => {
     try {
       body = (await req.json()) as Body
     } catch {
-      return jsonResponse({ error: 'JSON inválido' }, 400)
+      return json({ error: 'JSON inválido' }, 400)
     }
 
     if (body.acao === 'reenviar') {
       const montagemId = texto(body.montagemId, 80)
       if (!montagemId) {
-        return jsonResponse({ error: 'montagemId obrigatório.' }, 400)
+        return json({ error: 'montagemId obrigatório.' }, 400)
       }
       const authHeader = req.headers.get('Authorization')
       if (!authHeader) {
-        return jsonResponse({ error: 'Não autenticado' }, 401)
+        return json({ error: 'Não autenticado' }, 401)
       }
       let dono: Awaited<ReturnType<typeof obterClienteDoUsuario>>
       try {
@@ -130,7 +223,7 @@ Deno.serve(async (req) => {
         .maybeSingle()
 
       if (erroMontagem || !montagem) {
-        return jsonResponse({ error: 'Montagem não encontrada.' }, 404)
+        return json({ error: 'Montagem não encontrada.' }, 404)
       }
 
       const itensDb = Array.isArray(montagem.itens)
@@ -152,9 +245,9 @@ Deno.serve(async (req) => {
         linkMontagem: String(montagem.link_montagem ?? ''),
       })
       if (!reenviado) {
-        return jsonResponse({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
+        return json({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
       }
-      return jsonResponse({ ok: true })
+      return json({ ok: true })
     }
 
     const slug = texto(body.slug, 80)?.toLowerCase()
@@ -163,31 +256,33 @@ Deno.serve(async (req) => {
     const v = body.visitante ?? {}
 
     const nome = texto(v.nome, 120)
-    const email = texto(v.email, 200)?.toLowerCase()
+    const emailBruto = textoOpcional(v.email, 200).toLowerCase()
     const whatsapp = texto(v.whatsapp, 20)
-    const endereco = texto(v.endereco, 200)
-    const cidade = texto(v.cidade, 100)
-    const estado = texto(v.estado, 2)?.toUpperCase()
+    const endereco = textoOpcional(v.endereco, 200)
+    const cidade = textoOpcional(v.cidade, 100)
+    const estadoBruto = textoOpcional(v.estado, 2).toUpperCase()
+    const estado = estadoBruto.length === 2 ? estadoBruto : ''
 
-    if (!slug || !nome || !email || !whatsapp || !endereco || !cidade || !estado) {
-      return jsonResponse({ error: 'Dados incompletos ou inválidos.' }, 400)
+    if (!slug || !nome || !whatsapp) {
+      return json({ error: 'Informe nome e WhatsApp.' }, 400)
+    }
+
+    const email = emailBruto
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return json({ error: 'E-mail do visitante inválido.' }, 400)
     }
 
     const linkMontagem = montarLinkMontagem(slug, linkCliente)
     if (!linkMontagem) {
-      return jsonResponse({ error: 'Link da montagem inválido.' }, 400)
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return jsonResponse({ error: 'E-mail do visitante inválido.' }, 400)
+      return json({ error: 'Link da montagem inválido.' }, 400)
     }
 
     if (!Array.isArray(body.itens) || body.itens.length === 0) {
-      return jsonResponse({ error: 'Informe os itens da montagem.' }, 400)
+      return json({ error: 'Informe os itens da montagem.' }, 400)
     }
 
     if (body.itens.length > MAX_ITENS) {
-      return jsonResponse({ error: 'Muitos itens na montagem.' }, 400)
+      return json({ error: 'Muitos itens na montagem.' }, 400)
     }
 
     const itens: { categoria: string; nome: string }[] = []
@@ -195,7 +290,7 @@ Deno.serve(async (req) => {
       const categoria = texto(raw?.categoria, 120)
       const nomeItem = texto(raw?.nome, 200)
       if (!categoria || !nomeItem) {
-        return jsonResponse({ error: 'Item da montagem inválido.' }, 400)
+        return json({ error: 'Item da montagem inválido.' }, 400)
       }
       itens.push({ categoria, nome: nomeItem })
     }
@@ -203,19 +298,36 @@ Deno.serve(async (req) => {
     const admin = supabaseAdmin()
     const ip = ipDoRequest(req)
 
-    const { data: rateOk, error: rateError } = await admin.rpc('verificar_rate_limit', {
+    const { data: rateOkIp, error: rateErrorIp } = await admin.rpc('verificar_rate_limit', {
       p_chave: `enviar-montagem:${slug}:${ip}`,
-      p_limite: RATE_LIMIT,
+      p_limite: RATE_LIMIT_IP,
       p_janela_segundos: RATE_JANELA_SEG,
     })
-
-    if (rateError) {
-      console.error('enviar-montagem rate', rateError)
-      return jsonResponse({ error: 'Não foi possível processar o envio.' }, 500)
+    if (rateErrorIp) {
+      console.error('enviar-montagem rate ip', rateErrorIp)
+      return json({ error: 'Não foi possível processar o envio.' }, 500)
+    }
+    if (!rateOkIp) {
+      return json(
+        { error: 'Muitas tentativas. Aguarde um minuto e tente novamente.' },
+        429,
+      )
     }
 
-    if (!rateOk) {
-      return jsonResponse(
+    const { data: rateOkSlug, error: rateErrorSlug } = await admin.rpc(
+      'verificar_rate_limit',
+      {
+        p_chave: `enviar-montagem:slug:${slug}`,
+        p_limite: RATE_LIMIT_SLUG,
+        p_janela_segundos: RATE_JANELA_SEG,
+      },
+    )
+    if (rateErrorSlug) {
+      console.error('enviar-montagem rate slug', rateErrorSlug)
+      return json({ error: 'Não foi possível processar o envio.' }, 500)
+    }
+    if (!rateOkSlug) {
+      return json(
         { error: 'Muitas tentativas. Aguarde um minuto e tente novamente.' },
         429,
       )
@@ -229,11 +341,11 @@ Deno.serve(async (req) => {
 
     if (clienteError) {
       console.error('enviar-montagem cliente', clienteError)
-      return jsonResponse({ error: 'Não foi possível localizar o estabelecimento.' }, 500)
+      return json({ error: 'Não foi possível localizar o estabelecimento.' }, 500)
     }
 
     if (!cliente?.email) {
-      return jsonResponse({ error: 'Estabelecimento não encontrado.' }, 404)
+      return json({ error: 'Estabelecimento não encontrado.' }, 404)
     }
 
     const { data: temAcesso, error: acessoError } = await admin.rpc('cliente_tem_acesso', {
@@ -242,11 +354,16 @@ Deno.serve(async (req) => {
 
     if (acessoError) {
       console.error('enviar-montagem acesso', acessoError)
-      return jsonResponse({ error: 'Não foi possível validar o estabelecimento.' }, 500)
+      return json({ error: 'Não foi possível validar o estabelecimento.' }, 500)
     }
 
     if (!temAcesso) {
-      return jsonResponse({ error: 'Montagem indisponível para este endereço.' }, 404)
+      return json({ error: 'Montagem indisponível para este endereço.' }, 404)
+    }
+
+    const itensValidos = await validarItensNoCatalogo(admin, cliente.id, itens)
+    if (!itensValidos) {
+      return json({ error: 'Itens da montagem não conferem com o catálogo.' }, 400)
     }
 
     if (idempotencyKey) {
@@ -260,10 +377,9 @@ Deno.serve(async (req) => {
         .maybeSingle()
 
       if (existente?.email_status === 'sent') {
-        return jsonResponse({ ok: true, deduplicated: true })
+        return json({ ok: true, deduplicated: true })
       }
 
-      // Retry só com dados já persistidos — nunca com o body do request atual.
       if (existente && existente.email_status !== 'sent') {
         const itensDb = Array.isArray(existente.itens)
           ? (existente.itens as { categoria: string; nome: string }[])
@@ -283,9 +399,9 @@ Deno.serve(async (req) => {
           linkMontagem: String(existente.link_montagem ?? ''),
         })
         if (!reenviado) {
-          return jsonResponse({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
+          return json({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
         }
-        return jsonResponse({ ok: true })
+        return json({ ok: true })
       }
     }
 
@@ -294,11 +410,11 @@ Deno.serve(async (req) => {
       .insert({
         cliente_id: cliente.id,
         visitante_nome: nome,
-        visitante_email: email,
+        visitante_email: email || '—',
         visitante_whatsapp: whatsapp,
-        visitante_endereco: endereco,
-        visitante_cidade: cidade,
-        visitante_estado: estado,
+        visitante_endereco: endereco || '—',
+        visitante_cidade: cidade || '—',
+        visitante_estado: estado || '—',
         itens,
         link_montagem: linkMontagem,
         email_status: 'pending',
@@ -309,10 +425,10 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       if (insertError.code === '23505' && idempotencyKey) {
-        return jsonResponse({ ok: true, deduplicated: true })
+        return json({ ok: true, deduplicated: true })
       }
       console.error('enviar-montagem insert', insertError)
-      return jsonResponse({ error: 'Não foi possível salvar a montagem.' }, 500)
+      return json({ error: 'Não foi possível salvar a montagem.' }, 500)
     }
 
     const enviado = await enviarEmailEAtualizar({
@@ -321,27 +437,27 @@ Deno.serve(async (req) => {
       clienteEmail: cliente.email,
       clienteNome: cliente.nome,
       nome,
-      email,
+      email: email || '(não informado)',
       whatsapp,
-      endereco,
-      cidade,
-      estado,
+      endereco: endereco || '(não informado)',
+      cidade: cidade || '(não informado)',
+      estado: estado || '—',
       itens,
       linkMontagem,
     })
 
+    // Lead já está no CRM; falha de e-mail não deve bloquear WhatsApp / sucesso do visitante.
     if (!enviado) {
-      return jsonResponse({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
+      console.error('enviar-montagem: lead salvo, e-mail falhou', inserida.id)
+      return json({ ok: true, emailEnviado: false })
     }
 
-    return jsonResponse({ ok: true })
+    return json({ ok: true, emailEnviado: true })
   } catch (err) {
     console.error('enviar-montagem', err)
-    return jsonResponse({ error: 'Erro interno' }, 500)
+    return json({ error: 'Erro interno' }, 500)
   }
 })
-
-type AdminClient = ReturnType<typeof supabaseAdmin>
 
 async function enviarEmailEAtualizar(args: {
   admin: AdminClient
@@ -407,20 +523,24 @@ async function enviarEmailEAtualizar(args: {
       <p><strong>Link:</strong> <a href="${escaparHtml(args.linkMontagem)}">${escaparHtml(args.linkMontagem)}</a></p>
     `
 
+  const payloadEmail: Record<string, unknown> = {
+    from: resendFrom,
+    to: [args.clienteEmail],
+    subject: `Nova montagem — ${args.nome}`,
+    text: textoPlano,
+    html,
+  }
+  if (args.email.includes('@')) {
+    payloadEmail.reply_to = args.email
+  }
+
   const resendRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${resendKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from: resendFrom,
-      to: [args.clienteEmail],
-      subject: `Nova montagem — ${args.nome}`,
-      text: textoPlano,
-      html,
-      reply_to: args.email,
-    }),
+    body: JSON.stringify(payloadEmail),
   })
 
   if (!resendRes.ok) {

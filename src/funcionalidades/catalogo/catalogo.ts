@@ -6,7 +6,7 @@ import type {
   SelecaoCategoria,
 } from '../../compartilhado/tipos'
 
-const CODIGOS_MULTI = new Set(['talher', 'taca'])
+const CODIGOS_MULTI = new Set(['talher'])
 
 function codigoCamada(categoria: Pick<Categoria, 'id' | 'codigo'>): string {
   return categoria.codigo ?? categoria.id

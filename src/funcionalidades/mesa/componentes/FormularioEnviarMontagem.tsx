@@ -62,6 +62,11 @@ const vazio: DadosVisitanteMontagem = {
   estado: '',
 }
 
+type PosEnvioWa = {
+  url: string
+  texto: string
+} | null
+
 export function FormularioEnviarMontagem({
   aberto,
   slug,
@@ -80,6 +85,8 @@ export function FormularioEnviarMontagem({
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [lgpdAceito, setLgpdAceito] = useState(false)
+  const [enderecoCompleto, setEnderecoCompleto] = useState(false)
+  const [posEnvioWa, setPosEnvioWa] = useState<PosEnvioWa>(null)
 
   const adminDigitos = whatsappAdmin.replace(/\D/g, '')
   const temWhatsappAdmin = adminDigitos.length >= 12
@@ -91,6 +98,8 @@ export function FormularioEnviarMontagem({
     setErro(null)
     setEnviando(false)
     setLgpdAceito(false)
+    setEnderecoCompleto(false)
+    setPosEnvioWa(null)
     rastrear('send_opened', { slug })
     window.setTimeout(() => primeiroCampoRef.current?.focus(), 0)
   }, [aberto, slug])
@@ -138,8 +147,18 @@ export function FormularioEnviarMontagem({
     setForm((anterior) => ({ ...anterior, [campo]: valor }))
   }
 
+  async function copiarTexto(texto: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(texto)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   async function concluirEnvio() {
     setErro(null)
+    setPosEnvioWa(null)
 
     const visitante: DadosVisitanteMontagem = {
       nome: form.nome.trim(),
@@ -150,26 +169,26 @@ export function FormularioEnviarMontagem({
       estado: form.estado.trim().toUpperCase(),
     }
 
-    if (
-      !visitante.nome ||
-      !visitante.email ||
-      !visitante.whatsapp ||
-      !visitante.endereco ||
-      !visitante.cidade ||
-      !visitante.estado
-    ) {
-      setErro('Preencha todos os campos.')
+    if (!visitante.nome || !visitante.whatsapp) {
+      setErro('Informe seu nome e WhatsApp.')
       return
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(visitante.email)) {
-      setErro('Informe um e-mail válido.')
+    if (visitante.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(visitante.email)) {
+      setErro('Informe um e-mail válido ou deixe em branco.')
       return
     }
 
     if (visitante.whatsapp.length < 12) {
       setErro('Informe um WhatsApp válido com DDD.')
       return
+    }
+
+    if (enderecoCompleto) {
+      if (!visitante.endereco || !visitante.cidade || !visitante.estado) {
+        setErro('Preencha endereço, cidade e estado, ou oculte o endereço.')
+        return
+      }
     }
 
     if (!lgpdAceito) {
@@ -202,26 +221,21 @@ export function FormularioEnviarMontagem({
           linkMontagem,
           nomeEstabelecimento,
         })
-        const janela = window.open(
-          urlWhatsAppMontagem(adminDigitos, texto),
-          '_blank',
-          'noopener,noreferrer',
-        )
+        const url = urlWhatsAppMontagem(adminDigitos, texto)
+        const janela = window.open(url, '_blank', 'noopener,noreferrer')
         if (!janela) {
           rastrear('wa_blocked', { slug })
-          aoSucesso(
-            'Montagem registrada. Permita pop-ups para abrir o WhatsApp.',
-          )
-        } else {
-          rastrear('wa_opened', { slug })
-          aoSucesso(
-            'WhatsApp aberto. Toque em Enviar na conversa para concluir.',
-          )
+          setPosEnvioWa({ url, texto })
+          setErro(null)
+          return
         }
+        rastrear('wa_opened', { slug })
+        aoSucesso('WhatsApp aberto. Toque em Enviar na conversa para concluir.')
+        aoFechar()
       } else {
         aoSucesso('Montagem enviada ao estabelecimento.')
+        aoFechar()
       }
-      aoFechar()
     } catch (e) {
       rastrear('send_fail', {
         slug,
@@ -242,6 +256,76 @@ export function FormularioEnviarMontagem({
     await concluirEnvio()
   }
 
+  if (posEnvioWa) {
+    return (
+      <div
+        className="enviar-montagem-backdrop"
+        role="presentation"
+        onClick={enviando ? undefined : aoFechar}
+      >
+        <div
+          ref={dialogRef}
+          className="enviar-montagem"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={tituloId}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 id={tituloId}>Montagem registrada</h2>
+          <p className="enviar-montagem__intro">
+            O pop-up do WhatsApp foi bloqueado. Abra o link ou copie a mensagem
+            para enviar ao estabelecimento.
+          </p>
+          <div className="enviar-montagem__acoes enviar-montagem__acoes--coluna">
+            <a
+              className="btn btn--primary"
+              href={posEnvioWa.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                rastrear('wa_opened', { slug, via: 'fallback' })
+                aoSucesso('WhatsApp aberto. Toque em Enviar na conversa.')
+                aoFechar()
+              }}
+            >
+              Abrir WhatsApp
+            </a>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => {
+                void copiarTexto(posEnvioWa.texto).then((ok) => {
+                  if (ok) {
+                    aoSucesso('Mensagem copiada. Cole no WhatsApp.')
+                  } else {
+                    setErro('Não foi possível copiar. Use Abrir WhatsApp.')
+                  }
+                })
+              }}
+            >
+              Copiar mensagem
+            </button>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => {
+                aoSucesso('Montagem registrada no estabelecimento.')
+                aoFechar()
+              }}
+            >
+              Fechar
+            </button>
+          </div>
+          {erro && (
+            <p className="enviar-montagem__erro" role="alert">
+              {erro}
+            </p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className="enviar-montagem-backdrop"
@@ -260,8 +344,8 @@ export function FormularioEnviarMontagem({
         <h2 id={tituloId}>Enviar montagem</h2>
         <p className="enviar-montagem__intro">
           {temWhatsappAdmin
-            ? 'Preencha seus dados. Em seguida abrimos o WhatsApp com a montagem pronta — é só tocar em Enviar.'
-            : 'Preencha seus dados. A montagem será enviada ao estabelecimento.'}
+            ? 'Nome e WhatsApp bastam. Em seguida abrimos o WhatsApp com a montagem.'
+            : 'Nome e WhatsApp bastam. A montagem será enviada ao estabelecimento.'}
         </p>
 
         <form className="enviar-montagem__form" onSubmit={(e) => void aoEnviar(e)}>
@@ -280,20 +364,6 @@ export function FormularioEnviarMontagem({
           </label>
 
           <label className="enviar-montagem__campo">
-            <span>E-mail</span>
-            <input
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={(e) => atualizar('email', e.target.value)}
-              disabled={enviando}
-              required
-              maxLength={200}
-            />
-          </label>
-
-          <label className="enviar-montagem__campo">
             <span>Seu WhatsApp</span>
             <input
               name="whatsapp"
@@ -308,51 +378,77 @@ export function FormularioEnviarMontagem({
           </label>
 
           <label className="enviar-montagem__campo">
-            <span>Endereço</span>
+            <span>E-mail (opcional)</span>
             <input
-              name="endereco"
-              autoComplete="street-address"
-              value={form.endereco}
-              onChange={(e) => atualizar('endereco', e.target.value)}
+              name="email"
+              type="email"
+              autoComplete="email"
+              value={form.email}
+              onChange={(e) => atualizar('email', e.target.value)}
               disabled={enviando}
-              required
               maxLength={200}
             />
           </label>
 
-          <div className="enviar-montagem__linha">
-            <label className="enviar-montagem__campo">
-              <span>Cidade</span>
-              <input
-                name="cidade"
-                autoComplete="address-level2"
-                value={form.cidade}
-                onChange={(e) => atualizar('cidade', e.target.value)}
-                disabled={enviando}
-                required
-                maxLength={100}
-              />
-            </label>
+          <button
+            type="button"
+            className="enviar-montagem__toggle"
+            onClick={() => setEnderecoCompleto((v) => !v)}
+            disabled={enviando}
+            aria-expanded={enderecoCompleto}
+          >
+            {enderecoCompleto
+              ? 'Ocultar endereço de entrega'
+              : 'Incluir endereço de entrega (opcional)'}
+          </button>
 
-            <label className="enviar-montagem__campo enviar-montagem__campo--uf">
-              <span>Estado</span>
-              <select
-                name="estado"
-                autoComplete="address-level1"
-                value={form.estado}
-                onChange={(e) => atualizar('estado', e.target.value)}
-                disabled={enviando}
-                required
-              >
-                <option value="">UF</option>
-                {UFS.map((uf) => (
-                  <option key={uf} value={uf}>
-                    {uf}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          {enderecoCompleto && (
+            <>
+              <label className="enviar-montagem__campo">
+                <span>Endereço</span>
+                <input
+                  name="endereco"
+                  autoComplete="street-address"
+                  value={form.endereco}
+                  onChange={(e) => atualizar('endereco', e.target.value)}
+                  disabled={enviando}
+                  maxLength={200}
+                />
+              </label>
+
+              <div className="enviar-montagem__linha">
+                <label className="enviar-montagem__campo">
+                  <span>Cidade</span>
+                  <input
+                    name="cidade"
+                    autoComplete="address-level2"
+                    value={form.cidade}
+                    onChange={(e) => atualizar('cidade', e.target.value)}
+                    disabled={enviando}
+                    maxLength={100}
+                  />
+                </label>
+
+                <label className="enviar-montagem__campo enviar-montagem__campo--uf">
+                  <span>Estado</span>
+                  <select
+                    name="estado"
+                    autoComplete="address-level1"
+                    value={form.estado}
+                    onChange={(e) => atualizar('estado', e.target.value)}
+                    disabled={enviando}
+                  >
+                    <option value="">UF</option>
+                    {UFS.map((uf) => (
+                      <option key={uf} value={uf}>
+                        {uf}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </>
+          )}
 
           <label className="enviar-montagem__check">
             <input

@@ -36,6 +36,17 @@ export const TACA_OFFSET_X_PCT = 6
 /** Offset acima da borda do prato para a 1ª taça (Y). */
 export const TACA_OFFSET_Y_PCT = 14
 
+/** Extra com lugar americano (retângulo do jogo). */
+export const TACA_EXTRA_LUGAR_X_PCT = 4
+export const TACA_EXTRA_LUGAR_Y_PCT = 8
+
+/**
+ * Extra com sousplat: afasta um pouco para a haste/caixa da taça
+ * não invadir o disco (sem empurrar longe demais).
+ */
+export const TACA_EXTRA_SOUSPLAT_X_PCT = 4
+export const TACA_EXTRA_SOUSPLAT_Y_PCT = 5
+
 /** Passo diagonal entre taças sucessivas. */
 export const TACA_PASSO_X_PCT = 8
 export const TACA_PASSO_Y_PCT = 6
@@ -234,13 +245,13 @@ export function posicionarTalheres(
 
 /**
  * Taças: menor comprimento mais perto do prato; desempate = ordem de seleção.
- * Âncora no centro, fora do disco do prato (sem overlap).
- * Com lugar americano, offsets extras para a taça ficar fora do jogo.
+ * Âncora no centro, fora do disco do prato/sousplat (sem overlap).
+ * Com lugar americano ou sousplat, offsets extras para a taça ficar fora do jogo.
  */
 export function posicionarTacas(
   itens: ItemMesa[],
   raioPratoPct: number = 32,
-  opcoes?: { comLugarAmericano?: boolean },
+  opcoes?: { comLugarAmericano?: boolean; comSousplat?: boolean },
 ): TacaPosicionada[] {
   const comDims = itens.map((item, ordem) => {
     const dims = dimensoesItem(item, 'taca')
@@ -252,9 +263,13 @@ export function posicionarTacas(
   })
 
   const offsetX =
-    TACA_OFFSET_X_PCT + (opcoes?.comLugarAmericano ? 4 : 0)
+    TACA_OFFSET_X_PCT +
+    (opcoes?.comLugarAmericano ? TACA_EXTRA_LUGAR_X_PCT : 0) +
+    (opcoes?.comSousplat ? TACA_EXTRA_SOUSPLAT_X_PCT : 0)
   const offsetY =
-    TACA_OFFSET_Y_PCT + (opcoes?.comLugarAmericano ? 8 : 0)
+    TACA_OFFSET_Y_PCT +
+    (opcoes?.comLugarAmericano ? TACA_EXTRA_LUGAR_Y_PCT : 0) +
+    (opcoes?.comSousplat ? TACA_EXTRA_SOUSPLAT_Y_PCT : 0)
 
   return comDims.map(({ item, dims }, i) => ({
     item,

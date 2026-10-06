@@ -1,4 +1,4 @@
-import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
+import { corsHeadersPara, jsonResponseComCors } from '../_shared/cors.ts'
 import {
   garantirCustomerStripe,
   priceId,
@@ -9,17 +9,17 @@ import { obterClienteDoUsuario, supabaseAdmin } from '../_shared/supabase.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeadersPara(req) })
   }
 
   if (req.method !== 'POST') {
-    return jsonResponse({ error: 'Método não permitido' }, 405)
+    return jsonResponseComCors(req, { error: 'Método não permitido' }, 405)
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return jsonResponse({ error: 'Não autenticado' }, 401)
+      return jsonResponseComCors(req, { error: 'Não autenticado' }, 401)
     }
 
     const { cliente } = await obterClienteDoUsuario(authHeader)
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
         .eq('id', cliente.id)
       if (error) {
         console.error('Falha ao salvar stripe_customer_id', error)
-        return jsonResponse({ error: 'Não foi possível preparar a cobrança' }, 500)
+        return jsonResponseComCors(req, { error: 'Não foi possível preparar a cobrança' }, 500)
       }
     }
 
@@ -63,14 +63,14 @@ Deno.serve(async (req) => {
     })
 
     if (!session.url) {
-      return jsonResponse({ error: 'Checkout sem URL' }, 500)
+      return jsonResponseComCors(req, { error: 'Checkout sem URL' }, 500)
     }
 
-    return jsonResponse({ url: session.url })
+    return jsonResponseComCors(req, { url: session.url })
   } catch (err) {
     if (err instanceof Response) return err
     const msg = err instanceof Error ? err.message : String(err)
     console.error('criar-checkout', msg, err)
-    return jsonResponse({ error: 'Não foi possível iniciar o checkout' }, 500)
+    return jsonResponseComCors(req, { error: 'Não foi possível iniciar o checkout' }, 500)
   }
 })

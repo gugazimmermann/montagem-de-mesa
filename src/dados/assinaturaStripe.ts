@@ -72,7 +72,32 @@ async function chamarFuncaoBilling(nome: 'criar-checkout' | 'criar-portal'): Pro
     throw new Error(data?.error || 'Resposta inválida do serviço de cobrança.')
   }
 
+  assertUrlStripeSegura(data.url, nome)
   return data.url
+}
+
+/** Só aceita redirects Stripe oficiais (anti open-redirect). */
+export function assertUrlStripeSegura(
+  urlTexto: string,
+  contexto: 'criar-checkout' | 'criar-portal',
+): void {
+  let u: URL
+  try {
+    u = new URL(urlTexto)
+  } catch {
+    throw new Error('URL de cobrança inválida.')
+  }
+  if (u.protocol !== 'https:') {
+    throw new Error('URL de cobrança inválida.')
+  }
+  const host = u.hostname.toLowerCase()
+  const ok =
+    contexto === 'criar-checkout'
+      ? host === 'checkout.stripe.com' || host.endsWith('.stripe.com')
+      : host === 'billing.stripe.com' || host.endsWith('.stripe.com')
+  if (!ok) {
+    throw new Error('URL de cobrança não reconhecida.')
+  }
 }
 
 export async function iniciarCheckoutAssinatura(): Promise<string> {

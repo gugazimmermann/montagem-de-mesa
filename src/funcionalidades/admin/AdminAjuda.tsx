@@ -201,8 +201,11 @@ function PaginaLayoutMesa() {
       <h4>Ao redor</h4>
       <ul>
         <li>
-          <strong>Talheres</strong> e <strong>taças</strong> permitem{' '}
-          <em>vários itens</em> ao mesmo tempo (não é escolha única).
+          <strong>Talheres</strong> permitem <em>vários itens</em> ao mesmo
+          tempo (não é escolha única).
+        </li>
+        <li>
+          <strong>Taças</strong> são escolha única — uma por montagem.
         </li>
         <li>
           Garfos e colheres de mesa à <strong>esquerda</strong>; facas à{' '}
@@ -210,7 +213,7 @@ function PaginaLayoutMesa() {
           (horizontal).
         </li>
         <li>
-          Taças no canto <strong>superior direito</strong>, em diagonal.
+          A taça fica no canto <strong>superior direito</strong>.
         </li>
       </ul>
       <h4>Sousplat × lugar americano</h4>
@@ -299,10 +302,9 @@ function PaginaGuardanapoTacas() {
       </p>
       <h4>Taças</h4>
       <ul>
-        <li>Também é multi-seleção (água + vinho, por exemplo).</li>
+        <li>Escolha única — o visitante seleciona uma taça ou copo por vez.</li>
         <li>
-          A taça mais baixa (menor altura em cm) fica mais perto do prato; a mais
-          alta, mais afastada na diagonal.
+          Posição no canto <strong>superior direito</strong> do lugar.
         </li>
         <li>
           Prefira foto de perfil com a base na parte de baixo do quadro (veja
@@ -319,8 +321,8 @@ function PaginaMontagens() {
       <h3 id="ajuda-montagens">Página pública e montagens</h3>
       <p>
         Use Página pública para abrir o que seus clientes veem. Teste a montagem
-        como visitante: selecione várias peças e confira se talheres e taças
-        aparecem nos lugares certos.
+        como visitante: selecione várias peças e confira se talheres (vários) e a
+        taça aparecem nos lugares certos.
       </p>
       <ul>
         <li>

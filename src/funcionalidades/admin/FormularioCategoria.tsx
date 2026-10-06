@@ -9,6 +9,7 @@ import {
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
 import * as ui from './adminClasses'
+import { OPCOES_CODIGO_CATEGORIA } from './opcoesCodigoCategoria'
 
 export function FormularioCategoria() {
   const navegar = useNavigate()
@@ -16,6 +17,7 @@ export function FormularioCategoria() {
 
   const [rotulo, setRotulo] = useState('')
   const [descricao, setDescricao] = useState('')
+  const [codigo, setCodigo] = useState('sousplat')
   const [erro, setErro] = useState<string | null>(null)
   const [erroRotulo, setErroRotulo] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -25,6 +27,8 @@ export function FormularioCategoria() {
   }
 
   const clienteId = cliente.id
+  const dicaCodigo =
+    OPCOES_CODIGO_CATEGORIA.find((o) => o.valor === codigo)?.dica ?? ''
 
   async function salvarCategoria(evento: FormEvent) {
     evento.preventDefault()
@@ -42,6 +46,7 @@ export function FormularioCategoria() {
       const id = crypto.randomUUID()
       const nova: Categoria = {
         id,
+        codigo: codigo || null,
         rotulo: rotuloTrim,
         descricao: descricao.trim(),
       }
@@ -88,6 +93,26 @@ export function FormularioCategoria() {
                 {erroRotulo}
               </span>
             )}
+          </label>
+
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Tipo de layout na mesa</span>
+            <select
+              className={ui.fieldInput}
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+              disabled={enviando}
+              aria-describedby="dica-codigo-nova"
+            >
+              {OPCOES_CODIGO_CATEGORIA.map((op) => (
+                <option key={op.valor || 'generico'} value={op.valor}>
+                  {op.rotulo}
+                </option>
+              ))}
+            </select>
+            <span id="dica-codigo-nova" className={ui.fieldDica}>
+              {dicaCodigo} Define a posição na pré-visualização.
+            </span>
           </label>
 
           <label className={ui.field}>

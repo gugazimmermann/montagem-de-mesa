@@ -91,8 +91,18 @@ export async function aplicarSubscriptionNoCliente(
   }
 
   const admin = supabaseAdmin()
-  const { error } = await admin.from('clientes').update(patch).eq('id', clienteId)
+  let query = admin.from('clientes').update(patch).eq('id', clienteId)
+  if (customerId) {
+    // Evita aplicar assinatura a outro cliente se metadata estiver stale.
+    query = query.or(`stripe_customer_id.eq.${customerId},stripe_customer_id.is.null`)
+  }
+  const { data, error } = await query.select('id').maybeSingle()
   if (error) throw error
+  if (!data) {
+    throw new Error(
+      `Assinatura não aplicada: cliente ${clienteId} não bate com customer ${customerId}`,
+    )
+  }
   return patch
 }
 

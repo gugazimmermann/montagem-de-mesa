@@ -1,26 +1,26 @@
-import { corsHeaders, jsonResponse } from '../_shared/cors.ts'
+import { corsHeadersPara, jsonResponseComCors } from '../_shared/cors.ts'
 import { stripeClient } from '../_shared/stripe.ts'
 import { obterClienteDoUsuario, supabaseAdmin } from '../_shared/supabase.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeadersPara(req) })
   }
 
   if (req.method !== 'POST') {
-    return jsonResponse({ error: 'Método não permitido' }, 405)
+    return jsonResponseComCors(req, { error: 'Método não permitido' }, 405)
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return jsonResponse({ error: 'Não autenticado' }, 401)
+      return jsonResponseComCors(req, { error: 'Não autenticado' }, 401)
     }
 
     const { cliente } = await obterClienteDoUsuario(authHeader)
 
     if (!cliente.stripe_subscription_id) {
-      return jsonResponse(
+      return jsonResponseComCors(req, 
         { error: 'Nenhuma assinatura ativa para cancelar.' },
         400,
       )
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
       console.error('cancelar-assinatura update db', error)
     }
 
-    return jsonResponse({
+    return jsonResponseComCors(req, {
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       currentPeriodEnd,
       status: subscription.status,
@@ -54,6 +54,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     if (err instanceof Response) return err
     console.error('cancelar-assinatura', err)
-    return jsonResponse({ error: 'Erro interno' }, 500)
+    return jsonResponseComCors(req, { error: 'Erro interno' }, 500)
   }
 })

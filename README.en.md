@@ -158,12 +158,14 @@ UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — tri
 
 ## Resend (submit composition)
 
-On the public page (`/:slug`), the visitor submits name, email, WhatsApp, and address. The `enviar-montagem` function emails the shop admin and the app opens the shop’s WhatsApp.
+On the public page (`/:slug`), the visitor submits **name and WhatsApp** (email and address optional). The `enviar-montagem` function stores the lead in the CRM, tries to email the shop admin, and the app opens the shop’s WhatsApp.
 
 1. API key at [resend.com](https://resend.com) → `RESEND_API_KEY`.
-2. For tests, `RESEND_FROM` may use `onboarding@resend.dev`. In production, use a verified domain.
+2. For tests, `RESEND_FROM` may use `onboarding@resend.dev`. In production, **verify the domain** at [resend.com/domains](https://resend.com/domains).
 3. Set WhatsApp under `/admin/painel/cadastro`.
-4. History and lead CRM: `/admin/painel/montagens`.
+4. History and lead CRM: `/admin/painel/montagens` (new-lead badge in the admin shell).
+
+The lead is saved even if Resend fails (`email_status: failed`); use **resend** in history after fixing the sender.
 
 ## Seed and images
 
@@ -213,14 +215,15 @@ node scripts/gerar-catalogo-raffiner.mjs    # regenerate catalogo.json only
 
 On `/:slug`, visitors build a place setting with a live preview and PNG export:
 
-- **Cutlery and glassware** support **multiple items** at once (`?m=` URL with comma-separated ids).
-- Etiquette layout in [`layoutEtiqueta.ts`](src/funcionalidades/mesa/layoutEtiqueta.ts): forks/table spoons on the left, knives on the right, dessert utensils above (horizontal), glasses upper-right.
+- **Cutlery** supports **multiple items** at once (`?m=` URL with comma-separated ids). **Glassware** is single-select.
+- Etiquette layout in [`layoutEtiqueta.ts`](src/funcionalidades/mesa/layoutEtiqueta.ts): forks/table spoons on the left, knives on the right, dessert utensils above (horizontal), glass upper-right (nudged off the sousplat when present).
 - **Napkin** uses folded-PNG visual scale; **napkin ring** covers the wooden ring baked into napkin photos.
 - With a **placemat** (`lugar americano`), the place setting is recentered and lifted so the mat stays on the table; **charger** (`sousplat`) keeps the compact layout.
+- Actions: **Send**, **Download image**, **Clear**. The `?m=` link syncs in the URL automatically.
 
 ## Admin help
 
-The help modal in [`AdminAjuda.tsx`](src/funcionalidades/admin/AdminAjuda.tsx) uses page navigation (side on desktop, top on mobile): overview, profile, catalog, images, table layout, cutlery, napkin/glasses, public page, and subscription. It covers multi-select, name-based cutlery sides, napkin ring under the holder, and sousplat vs placemat. Examples live in `public/ajuda/`. The item form opens on **Images** (`secaoInicial`).
+The help modal in [`AdminAjuda.tsx`](src/funcionalidades/admin/AdminAjuda.tsx) uses page navigation (side on desktop, top on mobile): overview, profile, catalog, images, table layout, cutlery, napkin/glasses, public page, and subscription. It covers cutlery multi-select, name-based cutlery sides, napkin ring under the holder, and sousplat vs placemat. Examples live in `public/ajuda/`. The item form opens on **Images** (`secaoInicial`).
 
 ## Routes
 
@@ -302,7 +305,10 @@ After deploy: update Auth Site URL and Redirect URLs; publish Edge Functions and
 
 ## App conventions
 
-- Seed categories use a stable `codigo` (`sousplat`, `pratoRaso`, …) for the preview; the primary key is a UUID.
+- Seed categories (and admin-created ones) use a stable `codigo` (`sousplat`, `pratoRaso`, `talher`, `taca`, …) for the preview; the primary key is a UUID. Without `codigo`, the piece renders as a generic layer.
 - Items may have two photos: `imagem` on the table preview; `imagem_catalogo` (frontal) in the list/selector/admin.
-- Admin-created categories without `codigo` render as a generic preview layer (if they have an image).
 - Code folders and routes are in Portuguese; the admin UI is Portuguese as well.
+
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`): `npm run lint`, `npm test`, and `tsc -b` on push/PR to `main`.

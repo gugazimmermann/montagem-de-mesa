@@ -11,8 +11,10 @@ const BUCKET_LOGOS = 'logos'
 const BUCKET_ITENS = 'itens'
 export const TAMANHO_MAX_LOGO = 2 * 1024 * 1024
 export const TAMANHO_MAX_ITEM = 5 * 1024 * 1024
-/** TTL das URLs assinadas (1h). */
-export const TTL_URL_ASSINADA_SEG = 60 * 60
+/** TTL das URLs assinadas (4h). Queries de catálogo renovam antes do vencimento. */
+export const TTL_URL_ASSINADA_SEG = 4 * 60 * 60
+/** Intervalo sugerido para re-assinar mídias no client (antes do TTL). */
+export const INTERVALO_REASSINAR_MS = 3 * 60 * 60 * 1000
 
 /**
  * Logo na página: ~48px de altura / max 220px de largura.

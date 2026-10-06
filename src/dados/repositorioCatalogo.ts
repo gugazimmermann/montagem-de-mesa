@@ -31,6 +31,7 @@ export async function atualizarCategoria(
   const { data, error } = await supabase
     .from('categorias')
     .update({
+      codigo: categoria.codigo ?? null,
       rotulo: categoria.rotulo,
       descricao: categoria.descricao,
     })

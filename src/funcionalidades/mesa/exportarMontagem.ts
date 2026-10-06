@@ -212,6 +212,7 @@ function montarCamadas(
 
   const raioPratoPct = raioPratoVisualPct(ancoraCm, PREVIEW_SCALE_PRATO)
   const comLugarAmericano = Boolean(porCodigo.get('lugarAmericano')?.length)
+  const comSousplat = Boolean(sousplat)
 
   const ordem = ordenarCategoriasPorCamada(categorias)
   const camadas: CamadaExport[] = []
@@ -247,6 +248,7 @@ function montarCamadas(
     if (codigo === 'taca') {
       for (const pos of posicionarTacas(selecionados, raioPratoPct, {
         comLugarAmericano,
+        comSousplat,
       })) {
         camadas.push({
           item: pos.item,
@@ -300,15 +302,13 @@ function montarCamadas(
 }
 
 /**
- * Exporta a montagem como PNG (canvas: madeira + camadas com imagem ou cor).
- * Retorna aviso opcional (ex.: fotos que falharam por CORS).
+ * Gera PNG da montagem sem baixar. Retorna blob + aviso opcional.
  */
-export async function exportarMontagemPng(
+export async function gerarBlobMontagemPng(
   configuracao: ConfiguracaoMesa,
   categorias: Categoria[],
   itens: ItemMesa[],
-  nomeArquivo = 'montagem-de-mesa.png',
-): Promise<string | null> {
+): Promise<{ blob: Blob; aviso: string | null }> {
   const canvas = document.createElement('canvas')
   canvas.width = LARGURA
   canvas.height = ALTURA
@@ -409,10 +409,33 @@ export async function exportarMontagemPng(
   }
   if (!blob) throw new Error('Falha ao gerar imagem')
 
-  baixarBlob(blob, nomeArquivo)
+  return {
+    blob,
+    aviso:
+      imagensFalharam > 0
+        ? 'Algumas fotos não carregaram (CORS ou rede).'
+        : null,
+  }
+}
 
-  if (imagensFalharam > 0) {
-    return 'Imagem baixada, mas algumas fotos não carregaram (CORS ou rede).'
+/**
+ * Exporta a montagem como PNG (canvas: madeira + camadas com imagem ou cor).
+ * Retorna aviso opcional (ex.: fotos que falharam por CORS).
+ */
+export async function exportarMontagemPng(
+  configuracao: ConfiguracaoMesa,
+  categorias: Categoria[],
+  itens: ItemMesa[],
+  nomeArquivo = 'montagem-de-mesa.png',
+): Promise<string | null> {
+  const { blob, aviso } = await gerarBlobMontagemPng(
+    configuracao,
+    categorias,
+    itens,
+  )
+  baixarBlob(blob, nomeArquivo)
+  if (aviso) {
+    return `Imagem baixada, mas ${aviso.toLowerCase()}`
   }
   return null
 }

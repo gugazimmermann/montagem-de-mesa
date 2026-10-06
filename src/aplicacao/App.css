@@ -229,8 +229,20 @@
   color: var(--text);
 }
 
-.setting-summary--compact {
-  display: none;
+.setting-summary--compact__count {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.setting-summary--compact__chips {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .app__picker {
@@ -355,7 +367,7 @@
     min-height: 0;
   }
 
-  .setting-summary {
+  .setting-summary:not(.setting-summary--compact) {
     display: none;
   }
 

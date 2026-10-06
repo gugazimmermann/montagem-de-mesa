@@ -54,7 +54,7 @@ export interface ItemMesa {
   descricao?: string
 }
 
-/** Uma peça, várias (talher/taça) ou nenhuma. */
+/** Uma peça, várias (só talher) ou nenhuma. */
 export type SelecaoCategoria = string | string[] | null
 
 export type ConfiguracaoMesa = Record<string, SelecaoCategoria>

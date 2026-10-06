@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { rastrear } from '../compartilhado/observabilidade'
 import { carregarCatalogoPublico } from '../dados/repositorioClientes'
+import { INTERVALO_REASSINAR_MS } from '../dados/storage'
 import App from './App'
 import './App.css'
 
@@ -14,6 +15,8 @@ export function PaginaCliente() {
     queryFn: () => carregarCatalogoPublico(slug!),
     enabled: Boolean(slug),
     staleTime: 45_000,
+    refetchInterval: INTERVALO_REASSINAR_MS,
+    refetchIntervalInBackground: false,
   })
 
   useEffect(() => {
@@ -64,7 +67,6 @@ export function PaginaCliente() {
   }
 
   if (!resultado.temAcesso) {
-    const email = resultado.email.trim()
     const wa = resultado.whatsapp.replace(/\D/g, '')
     return (
       <div className="app-shell app-shell--status">
@@ -74,14 +76,9 @@ export function PaginaCliente() {
         </p>
         <p>Fale com o estabelecimento para mais informações.</p>
         <div className="flex flex-wrap gap-2 justify-center">
-          {email ? (
-            <a className="btn btn--primary" href={`mailto:${email}`}>
-              Enviar e-mail
-            </a>
-          ) : null}
           {wa.length >= 12 ? (
             <a
-              className="btn btn--ghost"
+              className="btn btn--primary"
               href={`https://wa.me/${wa}`}
               target="_blank"
               rel="noopener noreferrer"

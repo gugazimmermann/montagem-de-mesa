@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query'
 import type { DadosCliente } from '../../compartilhado/tipos'
 import { carregarDadosCliente } from '../../dados/repositorioClientes'
+import { INTERVALO_REASSINAR_MS } from '../../dados/storage'
 
 export const catalogoQueryKey = (clienteId: string) =>
   ['catalogo', clienteId] as const
@@ -32,6 +33,8 @@ export function useDadosCliente(clienteId: string | undefined) {
     },
     enabled: Boolean(clienteId),
     staleTime: 45_000,
+    refetchInterval: INTERVALO_REASSINAR_MS,
+    refetchIntervalInBackground: false,
   })
 
   function setDados(

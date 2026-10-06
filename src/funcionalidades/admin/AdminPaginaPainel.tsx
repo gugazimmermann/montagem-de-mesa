@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { AdminAlerta, AdminBreadcrumb, AdminEstadoSkeleton } from './AdminFeedback'
+import { AdminBadgeMontagens } from './AdminBadgeMontagens'
 import { AdminBannerTrial } from './AdminBannerTrial'
 import * as ui from './adminClasses'
 
@@ -13,6 +14,8 @@ type PropsAdminPaginaPainel = {
   voltarRotulo?: string
   alerta?: ReactNode
   children: ReactNode
+  /** Exibe badge de leads novos (padrão: true). */
+  mostrarBadgeMontagens?: boolean
 }
 
 export function AdminPaginaPainel({
@@ -23,6 +26,7 @@ export function AdminPaginaPainel({
   voltarRotulo = 'Voltar',
   alerta,
   children,
+  mostrarBadgeMontagens = true,
 }: PropsAdminPaginaPainel) {
   const acoesFinais =
     acoes ??
@@ -44,7 +48,10 @@ export function AdminPaginaPainel({
           )}
           <h1 className={ui.painelTitulo}>{titulo}</h1>
         </div>
-        {acoesFinais ? <div className={ui.painelAcoes}>{acoesFinais}</div> : null}
+        <div className={ui.painelAcoes}>
+          {mostrarBadgeMontagens ? <AdminBadgeMontagens /> : null}
+          {acoesFinais}
+        </div>
       </header>
       {alerta ? <div className={ui.alertaStack}>{alerta}</div> : null}
       {children}

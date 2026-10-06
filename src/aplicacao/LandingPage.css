@@ -31,9 +31,9 @@
   flex-direction: column;
   justify-content: center;
   gap: 1.25rem;
-  width: min(40rem, 100%);
+  width: min(52rem, 100%);
   margin: 0 auto;
-  padding: clamp(2rem, 8vw, 5rem) 1.5rem;
+  padding: clamp(2rem, 6vw, 4rem) 1.5rem 1.5rem;
   animation: landing-in 0.7s ease-out both;
 }
 
@@ -68,8 +68,78 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   animation: landing-in 0.7s ease-out 0.22s both;
+}
+
+.landing__visual {
+  margin: 0.75rem -1.5rem 0;
+  width: calc(100% + 3rem);
+  max-width: none;
+  animation: landing-in 0.8s ease-out 0.28s both;
+}
+
+.landing__visual img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(48vh, 28rem);
+  object-fit: cover;
+  object-position: center;
+  border-block: 1px solid var(--border);
+}
+
+.landing__how {
+  position: relative;
+  z-index: 1;
+  width: min(52rem, 100%);
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.landing__how h2 {
+  margin: 0 0 1rem;
+  font-family: var(--font-display, inherit);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.landing__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 720px) {
+  .landing__steps {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.landing__steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.landing__steps strong {
+  font-size: 0.95rem;
+}
+
+.landing__steps span {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.landing__pricing {
+  margin: 1.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
 }
 
 .landing__foot {
@@ -95,7 +165,8 @@
 @media (prefers-reduced-motion: reduce) {
   .landing__hero,
   .landing__lead,
-  .landing__ctas {
+  .landing__ctas,
+  .landing__visual {
     animation: none;
   }
 }

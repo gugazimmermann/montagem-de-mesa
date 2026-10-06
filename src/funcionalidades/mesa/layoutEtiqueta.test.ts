@@ -180,6 +180,28 @@ describe('posicionarTacas', () => {
       5,
     )
   })
+
+  it('com sousplat afasta a taça para fora do disco', () => {
+    const itemTaca = item({
+      id: 't',
+      nome: 'Taça Água',
+      categoria: 'taca',
+      comprimento: 14,
+      largura: 10,
+    })
+    const sem = posicionarTacas([itemTaca], raio)
+    const com = posicionarTacas([itemTaca], raio, { comSousplat: true })
+    expect(com[0]!.posicao.topPct).toBeLessThan(sem[0]!.posicao.topPct)
+    expect(com[0]!.posicao.leftPct).toBeGreaterThan(sem[0]!.posicao.leftPct)
+    expect(com[0]!.posicao.leftPct).toBeCloseTo(
+      LAYER_LEFT_PCT + raio + TACA_OFFSET_X_PCT + 4,
+      5,
+    )
+    expect(com[0]!.posicao.topPct).toBeCloseTo(
+      LAYER_TOP_PCT - raio - (TACA_OFFSET_Y_PCT + 5),
+      5,
+    )
+  })
 })
 
 describe('raioPratoVisualPct', () => {
@@ -208,6 +230,7 @@ describe('posicionarPortaGuardanapo', () => {
 describe('seleção multi e URL', () => {
   it('alterna IDs em categorias multi', () => {
     expect(ehCategoriaMulti('talher')).toBe(true)
+    expect(ehCategoriaMulti('taca')).toBe(false)
     expect(ehCategoriaMulti('sousplat')).toBe(false)
     let s = aplicarSelecao(null, 'a', true)
     expect(idsSelecionados(s)).toEqual(['a'])
@@ -215,6 +238,13 @@ describe('seleção multi e URL', () => {
     expect(idsSelecionados(s)).toEqual(['a', 'b'])
     s = aplicarSelecao(s, 'a', true)
     expect(idsSelecionados(s)).toEqual(['b'])
+  })
+
+  it('taça é seleção única', () => {
+    let s = aplicarSelecao(null, 't1', false)
+    expect(s).toBe('t1')
+    s = aplicarSelecao(s, 't2', false)
+    expect(s).toBe('t2')
   })
 
   it('serializa e lê vários talheres', () => {

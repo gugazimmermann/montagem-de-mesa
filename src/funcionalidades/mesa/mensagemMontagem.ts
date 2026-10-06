@@ -23,17 +23,19 @@ export function montarTextoMontagem(params: {
     titulo,
     '',
     `Nome: ${visitante.nome}`,
-    `E-mail: ${visitante.email}`,
+    visitante.email ? `E-mail: ${visitante.email}` : null,
     `WhatsApp: ${visitante.whatsapp}`,
-    `Endereço: ${visitante.endereco}`,
-    `Cidade: ${visitante.cidade}`,
-    `Estado: ${visitante.estado}`,
+    visitante.endereco ? `Endereço: ${visitante.endereco}` : null,
+    visitante.cidade ? `Cidade: ${visitante.cidade}` : null,
+    visitante.estado ? `Estado: ${visitante.estado}` : null,
     '',
     'Itens:',
     linhasItens,
     '',
     `Link: ${linkMontagem}`,
-  ].join('\n')
+  ]
+    .filter((linha) => linha != null)
+    .join('\n')
 }
 
 export function urlWhatsAppMontagem(

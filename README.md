@@ -96,6 +96,8 @@ Confirmação de cadastro → `/admin`; reset de senha → `/admin/redefinir-sen
 2. Redirect URLs apenas do seu domínio.
 3. Bot protection / rate limits no Auth quando disponível.
 4. Catálogo e Storage são leitura pública só com assinatura/trial ativos (`cliente_tem_acesso`).
+5. `SITE_URL` nas Edge Functions alinhado ao front (CORS de `enviar-montagem` / billing).
+6. Domínio Resend verificado em produção; não expor service role / Stripe secret no Vite.
 
 ### Schema e migrations
 
@@ -158,12 +160,14 @@ UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — tri
 
 ## Resend (enviar montagem)
 
-Na montagem pública (`/:slug`), o visitante envia nome, e-mail, WhatsApp e endereço. A function `enviar-montagem` notifica o admin por e-mail e o app abre o WhatsApp do estabelecimento.
+Na montagem pública (`/:slug`), o visitante envia **nome e WhatsApp** (e-mail e endereço opcionais). A function `enviar-montagem` grava o lead no CRM, tenta notificar o admin por e-mail e o app abre o WhatsApp do estabelecimento.
 
 1. API key em [resend.com](https://resend.com) → `RESEND_API_KEY`.
-2. Em testes, `RESEND_FROM` pode usar `onboarding@resend.dev`. Em produção, use domínio verificado.
+2. Em testes, `RESEND_FROM` pode usar `onboarding@resend.dev`. Em produção, **verifique o domínio** em [resend.com/domains](https://resend.com/domains).
 3. Cadastre o WhatsApp em `/admin/painel/cadastro`.
-4. Histórico e CRM de leads: `/admin/painel/montagens`.
+4. Histórico e CRM de leads: `/admin/painel/montagens` (badge de novos no painel).
+
+O lead é salvo mesmo se o Resend falhar (`email_status: failed`); use **reenviar** no histórico após corrigir o remetente.
 
 ## Seed e imagens
 
@@ -213,14 +217,15 @@ node scripts/gerar-catalogo-raffiner.mjs    # só regenera catalogo.json
 
 Na página `/:slug`, o visitante monta o lugar à mesa com pré-visualização em tempo real e export PNG:
 
-- **Talheres e taças** aceitam **vários itens** ao mesmo tempo (URL `?m=` com ids separados por vírgula).
-- Posicionamento por etiqueta em [`layoutEtiqueta.ts`](src/funcionalidades/mesa/layoutEtiqueta.ts): garfos/colheres de mesa à esquerda, facas à direita, sobremesa acima (horizontal), taças no canto superior direito.
+- **Talheres** aceitam **vários itens** ao mesmo tempo (URL `?m=` com ids separados por vírgula). **Taças** são escolha única.
+- Posicionamento por etiqueta em [`layoutEtiqueta.ts`](src/funcionalidades/mesa/layoutEtiqueta.ts): garfos/colheres de mesa à esquerda, facas à direita, sobremesa acima (horizontal), taça no canto superior direito (afastada do sousplat quando houver).
 - **Guardanapo** usa escala visual do PNG dobrado; **porta-guardanapo** cobre o anel de madeira embutido na foto do guardanapo.
 - Com **lugar americano**, o lugar é recentrado e elevado para o jogo não sair da mesa; com **sousplat** o layout compacto permanece.
+- Ações: **Enviar montagem**, **Baixar imagem**, **Limpar**. O link `?m=` sincroniza na URL automaticamente.
 
 ## Ajuda do painel
 
-O modal de ajuda em [`AdminAjuda.tsx`](src/funcionalidades/admin/AdminAjuda.tsx) usa navegação por páginas (lateral no desktop, topo no mobile): visão geral, cadastro, catálogo, imagens, layout da mesa, talheres, guardanapo/taças, página pública e assinatura. Explica multi-seleção, nomes que definem o lado dos talheres, porta sobre o anel e diferenças sousplat vs lugar americano. Exemplos em `public/ajuda/`. O formulário de item abre direto em **Imagens** (`secaoInicial`).
+O modal de ajuda em [`AdminAjuda.tsx`](src/funcionalidades/admin/AdminAjuda.tsx) usa navegação por páginas (lateral no desktop, topo no mobile): visão geral, cadastro, catálogo, imagens, layout da mesa, talheres, guardanapo/taças, página pública e assinatura. Explica multi-seleção de talheres, nomes que definem o lado dos talheres, porta sobre o anel e diferenças sousplat vs lugar americano. Exemplos em `public/ajuda/`. O formulário de item abre direto em **Imagens** (`secaoInicial`).
 
 ## Rotas
 
@@ -302,7 +307,10 @@ Após o deploy: atualize Site URL e Redirect URLs no Auth; publique as Edge Func
 
 ## Convenções do app
 
-- Categorias do seed usam `codigo` estável (`sousplat`, `pratoRaso`, …) para o preview; o PK é UUID.
+- Categorias do seed (e as criadas no admin) usam `codigo` estável (`sousplat`, `pratoRaso`, `talher`, `taca`, …) para o preview; o PK é UUID. Sem `codigo`, a peça aparece como camada genérica.
 - Itens podem ter duas fotos: `imagem` no preview da mesa; `imagem_catalogo` (frontal) na lista/seletor/admin.
-- Categorias criadas no admin sem `codigo` aparecem no preview como camada genérica (se tiverem imagem).
 - Pastas e rotas do código estão em português; UI do admin também.
+
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`): `npm run lint`, `npm test` e `tsc -b` em push/PR para `main`.

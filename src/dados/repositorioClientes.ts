@@ -367,7 +367,7 @@ export async function carregarCatalogoPublico(
       nome: typeof payload.nome === 'string' ? payload.nome : null,
       clienteId: payload.cliente?.id ?? null,
       whatsapp: payload.cliente?.whatsapp ?? '',
-      email: payload.cliente?.email ?? '',
+      email: '',
       dados: null,
     }
   }
@@ -422,7 +422,7 @@ export async function carregarCatalogoPublico(
     nome: dados.nome,
     clienteId: payload.cliente.id,
     whatsapp: payload.cliente.whatsapp ?? '',
-    email: payload.cliente.email ?? '',
+    email: '',
     dados: mesclarToalhasFixas(dados),
   }
 }

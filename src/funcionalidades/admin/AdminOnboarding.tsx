@@ -11,20 +11,33 @@ type Props = {
   aoAbrirAjuda?: () => void
 }
 
+const LEMBRAR_MS = 3 * 24 * 60 * 60 * 1000
+
 function chaveDismiss(clienteId: string) {
-  return `onboarding-dismiss:${clienteId}`
+  return `onboarding-dismiss-until:${clienteId}`
+}
+
+function estaDispensado(clienteId: string): boolean {
+  try {
+    const raw = localStorage.getItem(chaveDismiss(clienteId))
+    if (!raw) return false
+    if (raw === '1') {
+      const ate = Date.now() + LEMBRAR_MS
+      localStorage.setItem(chaveDismiss(clienteId), String(ate))
+      return true
+    }
+    const ate = Number(raw)
+    return Number.isFinite(ate) && Date.now() < ate
+  } catch {
+    return false
+  }
 }
 
 export function AdminOnboarding({ cliente, dados, aoAbrirAjuda }: Props) {
   const clienteId = cliente?.id
-  const [dismissed, setDismissed] = useState(() => {
-    if (!clienteId) return true
-    try {
-      return localStorage.getItem(chaveDismiss(clienteId)) === '1'
-    } catch {
-      return false
-    }
-  })
+  const [dismissed, setDismissed] = useState(() =>
+    clienteId ? estaDispensado(clienteId) : true,
+  )
 
   const passos = useMemo(() => {
     const temNome = Boolean(cliente && !nomeExibicaoPendente(cliente))
@@ -66,15 +79,15 @@ export function AdminOnboarding({ cliente, dados, aoAbrirAjuda }: Props) {
           ? `/admin/painel/categorias/${catsEditaveis[0]!.id}/itens/novo`
           : '/admin/painel/categorias/novo',
       },
-    ] as const
-  }, [cliente, cliente?.logo, cliente?.whatsapp, dados.categorias, dados.itens])
+    ]
+  }, [cliente, dados.categorias, dados.itens])
 
   const pendentes = useMemo(() => passos.filter((p) => !p.feito), [passos])
   if (!clienteId || dismissed || pendentes.length === 0) return null
 
-  function dispensar() {
+  function lembrarDepois() {
     try {
-      localStorage.setItem(chaveDismiss(clienteId!), '1')
+      localStorage.setItem(chaveDismiss(clienteId!), String(Date.now() + LEMBRAR_MS))
     } catch {
       // ignora storage
     }
@@ -91,8 +104,8 @@ export function AdminOnboarding({ cliente, dados, aoAbrirAjuda }: Props) {
               Saiba mais
             </button>
           ) : null}
-          <button type="button" className="btn btn--ghost" onClick={dispensar}>
-            Dispensar
+          <button type="button" className="btn btn--ghost" onClick={lembrarDepois}>
+            Lembrar em 3 dias
           </button>
         </div>
       </div>

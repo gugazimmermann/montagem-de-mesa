@@ -48,7 +48,7 @@ function CabecalhoAdmin({
 
 export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
   const { nome, logo, categorias, itens } = dados
-  const { configuracao, setConfiguracao, localizacao, navegar } = useMontagemNaUrl(
+  const { configuracao, setConfiguracao, localizacao } = useMontagemNaUrl(
     categorias,
     itens,
   )
@@ -61,7 +61,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
   const [itemAmpliado, setItemAmpliado] = useState<ItemMesa | null>(null)
   const [previewExpandido, setPreviewExpandido] = useState(false)
   const [configAnterior, setConfigAnterior] = useState<ConfiguracaoMesa | null>(null)
-  const [copiandoLink, setCopiandoLink] = useState(false)
   const [exportando, setExportando] = useState(false)
   const [feedbackAcao, setFeedbackAcao] = useState<string | null>(null)
   const [enviarAberto, setEnviarAberto] = useState(false)
@@ -201,46 +200,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     document.getElementById('selecao-itens')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  async function copiarParaClipboard(texto: string): Promise<boolean> {
-    try {
-      await navigator.clipboard.writeText(texto)
-      return true
-    } catch {
-      try {
-        const area = document.createElement('textarea')
-        area.value = texto
-        area.setAttribute('readonly', '')
-        area.style.position = 'fixed'
-        area.style.left = '-9999px'
-        document.body.appendChild(area)
-        area.select()
-        const ok = document.execCommand('copy')
-        document.body.removeChild(area)
-        return ok
-      } catch {
-        return false
-      }
-    }
-  }
-
-  async function copiarLink() {
-    const caminho = urlComMontagem(localizacao.pathname, configuracao)
-    const absoluto = `${window.location.origin}${caminho}`
-    setCopiandoLink(true)
-    try {
-      const ok = await copiarParaClipboard(absoluto)
-      navegar(caminho, { replace: true })
-      if (ok) {
-        setFeedbackAcao('Link da montagem copiado.')
-        setAnuncio('Link da montagem copiado')
-      } else {
-        setFeedbackAcao('Não foi possível copiar o link. Copie da barra de endereço.')
-      }
-    } finally {
-      setCopiandoLink(false)
-    }
-  }
-
   async function baixarImagem() {
     if (!temSelecao(configuracao)) return
     setExportando(true)
@@ -352,15 +311,15 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
           )}
 
           {haSelecao && (
-            <div className="setting-summary" aria-live="polite">
+            <div className="setting-summary setting-summary--compact" aria-live="polite">
               <p className="setting-summary--compact__count">
                 {resumoSelecionado.length}{' '}
                 {resumoSelecionado.length === 1 ? 'item' : 'itens'}
                 {ultimoItem ? ` · ${ultimoItem.item}` : ''}
               </p>
               <ul className="setting-summary--compact__chips" aria-label="Itens selecionados">
-                {resumoSelecionado.map(({ categoria, item }) => (
-                  <li key={categoria}>
+                {resumoSelecionado.map(({ categoria, item }, idx) => (
+                  <li key={`${categoria}-${item}-${idx}`}>
                     <span className="setting-summary__cat">{categoria}</span>
                     <span className="setting-summary__item">{item}</span>
                   </li>
@@ -436,14 +395,6 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
             <button
               type="button"
               className="btn btn--ghost"
-              onClick={() => void copiarLink()}
-              disabled={!haSelecao || copiandoLink}
-            >
-              {copiandoLink ? 'Copiando…' : 'Copiar link'}
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost"
               onClick={() => void baixarImagem()}
               disabled={!haSelecao || exportando}
             >
@@ -474,7 +425,13 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
       </main>
 
       {enviarAberto && haSelecaoAlemToalha && (
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            <div className="enviar-montagem-backdrop" role="status">
+              <p className="enviar-montagem">Carregando formulário…</p>
+            </div>
+          }
+        >
           <FormularioEnviarMontagem
             aberto
             slug={slug}

@@ -12,6 +12,7 @@ import {
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
 import * as ui from './adminClasses'
+import { OPCOES_CODIGO_CATEGORIA } from './opcoesCodigoCategoria'
 import { useDadosCliente } from './useDadosCliente'
 import { useFlashLocation } from './useFlashLocation'
 
@@ -25,6 +26,7 @@ export function EditarCategoria() {
 
   const [rotulo, setRotulo] = useState('')
   const [descricao, setDescricao] = useState('')
+  const [codigo, setCodigo] = useState('')
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [erroRotulo, setErroRotulo] = useState<string | null>(null)
@@ -47,6 +49,7 @@ export function EditarCategoria() {
     if (cat) {
       setRotulo(cat.rotulo)
       setDescricao(cat.descricao)
+      setCodigo(cat.codigo ?? '')
     }
   }, [dados, categoriaId])
 
@@ -83,6 +86,7 @@ export function EditarCategoria() {
     try {
       await atualizarCategoria(idCliente, {
         id: idCategoria,
+        codigo: codigo || null,
         rotulo: rotuloTrim,
         descricao: descricao.trim(),
       })
@@ -90,7 +94,12 @@ export function EditarCategoria() {
         ...dadosAtuais,
         categorias: dadosAtuais.categorias.map((c) =>
           c.id === idCategoria
-            ? { ...c, rotulo: rotuloTrim, descricao: descricao.trim() }
+            ? {
+                ...c,
+                codigo: codigo || null,
+                rotulo: rotuloTrim,
+                descricao: descricao.trim(),
+              }
             : c,
         ),
       })
@@ -172,6 +181,31 @@ export function EditarCategoria() {
                 {erroRotulo}
               </span>
             )}
+          </label>
+
+          <label className={ui.field}>
+            <span className={ui.fieldLabel}>Tipo de layout na mesa</span>
+            <select
+              className={ui.fieldInput}
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+              disabled={salvando}
+              aria-describedby="dica-codigo-categoria"
+            >
+              {OPCOES_CODIGO_CATEGORIA.map((op) => (
+                <option key={op.valor || 'generico'} value={op.valor}>
+                  {op.rotulo}
+                </option>
+              ))}
+              {codigo &&
+              !OPCOES_CODIGO_CATEGORIA.some((o) => o.valor === codigo) ? (
+                <option value={codigo}>{codigo}</option>
+              ) : null}
+            </select>
+            <span id="dica-codigo-categoria" className={ui.fieldDica}>
+              {OPCOES_CODIGO_CATEGORIA.find((o) => o.valor === codigo)?.dica ??
+                'Define a posição na pré-visualização.'}
+            </span>
           </label>
 
           <label className={ui.field}>
