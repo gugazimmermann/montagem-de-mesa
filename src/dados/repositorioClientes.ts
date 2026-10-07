@@ -6,6 +6,7 @@ import type {
   PadraoTecido,
   StatusAssinatura,
 } from '../compartilhado/tipos'
+import { normalizarHexCor } from '../compartilhado/identidadeLoja'
 import { CadastroErro } from './erros'
 import { mesclarToalhasFixas } from './categoriasFixas'
 import { resolverUrlsAssinadasEmLote } from './storage'
@@ -52,7 +53,7 @@ export {
 } from './repositorioAuth'
 
 export const CAMPOS_CLIENTE =
-  'id, slug, email, nome, logo, whatsapp, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id, updated_at'
+  'id, slug, email, nome, logo, whatsapp, cor_marca, cor_fundo, subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id, updated_at'
 
 export type ClienteRow = {
   id: string
@@ -61,6 +62,8 @@ export type ClienteRow = {
   nome: string
   logo: string
   whatsapp?: string | null
+  cor_marca?: string | null
+  cor_fundo?: string | null
   subscription_status?: string | null
   trial_ends_at?: string | null
   current_period_end?: string | null
@@ -113,6 +116,8 @@ export function mapCliente(row: ClienteRow): Cliente {
     nome: row.nome,
     logo: row.logo,
     whatsapp: row.whatsapp ?? '',
+    corMarca: row.cor_marca ?? '',
+    corFundo: row.cor_fundo ?? '',
     subscriptionStatus: mapStatus(row.subscription_status),
     trialEndsAt: row.trial_ends_at ?? null,
     currentPeriodEnd: row.current_period_end ?? null,
@@ -158,7 +163,7 @@ export async function obterClientePorId(id: string): Promise<Cliente | null> {
 
   const { data, error } = await supabase
     .from('clientes_publicos')
-    .select('id, slug, nome, logo, whatsapp')
+    .select('id, slug, nome, logo, whatsapp, cor_marca, cor_fundo')
     .eq('id', id)
     .maybeSingle()
 
@@ -174,7 +179,7 @@ export async function obterClientePorId(id: string): Promise<Cliente | null> {
 export async function obterClientePorSlug(slug: string): Promise<Cliente | null> {
   const { data, error } = await supabase
     .from('clientes_publicos')
-    .select('id, slug, nome, logo, whatsapp')
+    .select('id, slug, nome, logo, whatsapp, cor_marca, cor_fundo')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -286,6 +291,8 @@ export async function carregarDadosCliente(
   const dados = await assinarMidiasDadosCliente({
     nome: cliente.nome,
     logo: cliente.logo,
+    corMarca: cliente.corMarca,
+    corFundo: cliente.corFundo,
     categorias: (catsRes.data ?? []).map(mapCategoria),
     itens,
   })
@@ -300,6 +307,8 @@ export type CatalogoPublicoCarregado = {
   clienteId: string | null
   whatsapp: string
   email: string
+  corMarca: string
+  corFundo: string
   dados: DadosCliente | null
 }
 
@@ -314,6 +323,8 @@ type CatalogoPublicoRpc = {
     logo?: string
     whatsapp?: string
     email?: string
+    cor_marca?: string
+    cor_fundo?: string
   } | null
   categorias?: Array<{
     id: string
@@ -356,6 +367,8 @@ export async function carregarCatalogoPublico(
       clienteId: null,
       whatsapp: '',
       email: '',
+      corMarca: '',
+      corFundo: '',
       dados: null,
     }
   }
@@ -368,6 +381,8 @@ export async function carregarCatalogoPublico(
       clienteId: payload.cliente?.id ?? null,
       whatsapp: payload.cliente?.whatsapp ?? '',
       email: '',
+      corMarca: payload.cliente?.cor_marca ?? '',
+      corFundo: payload.cliente?.cor_fundo ?? '',
       dados: null,
     }
   }
@@ -380,6 +395,8 @@ export async function carregarCatalogoPublico(
       clienteId: null,
       whatsapp: '',
       email: '',
+      corMarca: '',
+      corFundo: '',
       dados: null,
     }
   }
@@ -412,6 +429,8 @@ export async function carregarCatalogoPublico(
   const dados = await assinarMidiasDadosCliente({
     nome: payload.cliente.nome ?? payload.nome ?? '',
     logo: payload.cliente.logo ?? '',
+    corMarca: payload.cliente.cor_marca ?? '',
+    corFundo: payload.cliente.cor_fundo ?? '',
     categorias,
     itens,
   })
@@ -423,6 +442,8 @@ export async function carregarCatalogoPublico(
     clienteId: payload.cliente.id,
     whatsapp: payload.cliente.whatsapp ?? '',
     email: '',
+    corMarca: dados.corMarca,
+    corFundo: dados.corFundo,
     dados: mesclarToalhasFixas(dados),
   }
 }
@@ -483,12 +504,23 @@ export async function enderecoMontagemEmUso(
 
 export async function atualizarCadastro(
   clienteId: string,
-  dados: { nome: string; slug: string; logo: string; whatsapp?: string },
+  dados: {
+    nome: string
+    slug: string
+    logo: string
+    whatsapp?: string
+    corMarca?: string
+    corFundo?: string
+  },
 ): Promise<Cliente> {
   const nome = dados.nome.trim()
   const slug = gerarSlug(dados.slug.trim())
   const logo = dados.logo.trim()
   const whatsapp = normalizarWhatsapp(dados.whatsapp ?? '')
+  const corMarca =
+    dados.corMarca === undefined ? undefined : normalizarHexCor(dados.corMarca)
+  const corFundo =
+    dados.corFundo === undefined ? undefined : normalizarHexCor(dados.corFundo)
 
   if (!nome) throw new CadastroErro('Informe o nome do cliente.')
   if (!dados.slug.trim()) throw new CadastroErro('Informe o endereço da montagem.')
@@ -497,21 +529,31 @@ export async function atualizarCadastro(
       'Informe um WhatsApp válido com DDD, por exemplo (11) 99999-9999.',
     )
   }
+  if (dados.corMarca?.trim() && corMarca === '') {
+    throw new CadastroErro('Informe a cor de destaque no formato #RRGGBB.')
+  }
+  if (dados.corFundo?.trim() && corFundo === '') {
+    throw new CadastroErro('Informe a cor de fundo no formato #RRGGBB.')
+  }
   validarSlugMontagem(slug)
 
   if (await enderecoMontagemEmUso(slug, clienteId)) {
     throw new CadastroErro('Este endereço da montagem já está em uso.')
   }
 
+  const patch: Record<string, string> = {
+    nome,
+    slug,
+    logo,
+    whatsapp,
+    updated_at: new Date().toISOString(),
+  }
+  if (corMarca !== undefined) patch.cor_marca = corMarca
+  if (corFundo !== undefined) patch.cor_fundo = corFundo
+
   const { data, error } = await supabase
     .from('clientes')
-    .update({
-      nome,
-      slug,
-      logo,
-      whatsapp,
-      updated_at: new Date().toISOString(),
-    })
+    .update(patch)
     .eq('id', clienteId)
     .select(CAMPOS_CLIENTE)
     .single()

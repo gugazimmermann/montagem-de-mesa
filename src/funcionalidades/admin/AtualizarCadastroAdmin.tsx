@@ -1,5 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  COR_FUNDO_PADRAO,
+  COR_MARCA_PADRAO,
+  normalizarHexCor,
+  varsIdentidadeLoja,
+} from '../../compartilhado/identidadeLoja'
 import {
   atualizarCadastro,
   CadastroErro,
@@ -22,6 +28,112 @@ import { mapearErroCadastro, mapearErroUpload } from './adminUtils'
 import * as ui from './adminClasses'
 import { useObjectUrlPreview } from './useObjectUrlPreview'
 import { InputArquivo } from './InputArquivo'
+
+function PreviewIdentidade({
+  corMarca,
+  corFundo,
+}: {
+  corMarca: string
+  corFundo: string
+}) {
+  const vars = varsIdentidadeLoja(corMarca, corFundo)
+  const style = {
+    background: vars['--bg'] ?? COR_FUNDO_PADRAO,
+    color: vars['--text'] ?? '#1a2421',
+    borderColor: vars['--border'] ?? '#d5ddd8',
+    ['--accent' as string]: vars['--accent'] ?? COR_MARCA_PADRAO,
+    ['--on-accent' as string]: vars['--on-accent'] ?? '#fff',
+  } as CSSProperties
+
+  return (
+    <div
+      className="flex flex-wrap items-center gap-3 rounded-md border px-3 py-3"
+      style={style}
+      aria-label="Prévia das cores na montagem pública"
+    >
+      <span className="text-sm">Prévia na página pública</span>
+      <span
+        className="inline-flex min-h-9 items-center rounded-sm px-3 text-sm font-medium"
+        style={{
+          background: 'var(--accent)',
+          color: 'var(--on-accent)',
+        }}
+      >
+        Botão
+      </span>
+    </div>
+  )
+}
+
+function CampoCorLoja({
+  rotulo,
+  dica,
+  valor,
+  padrao,
+  disabled,
+  onChange,
+}: {
+  rotulo: string
+  dica: string
+  valor: string
+  padrao: string
+  disabled?: boolean
+  onChange: (hexOuVazio: string) => void
+}) {
+  const normalizado = normalizarHexCor(valor)
+  const efetivo = normalizado || padrao
+  const idDica = `cor-${rotulo.replace(/\s+/g, '-').toLowerCase()}-dica`
+
+  return (
+    <div className={ui.field}>
+      <span className={ui.fieldLabel}>{rotulo}</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="color"
+          aria-label={`${rotulo} (seletor)`}
+          value={efetivo}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value.toLowerCase())}
+          className="h-10 w-12 cursor-pointer rounded-sm border border-border bg-surface-solid p-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <input
+          className={`${ui.fieldInput} min-w-32 flex-1 font-mono uppercase`}
+          type="text"
+          inputMode="text"
+          spellCheck={false}
+          maxLength={7}
+          placeholder={padrao}
+          value={valor}
+          disabled={disabled}
+          onChange={(e) => {
+            const bruto = e.target.value.trim()
+            if (!bruto) {
+              onChange('')
+              return
+            }
+            const comHash = bruto.startsWith('#') ? bruto : `#${bruto}`
+            onChange(comHash.toLowerCase())
+          }}
+          aria-describedby={idDica}
+        />
+        {valor ? (
+          <button
+            type="button"
+            className="btn btn--ghost"
+            disabled={disabled}
+            onClick={() => onChange('')}
+          >
+            Padrão
+          </button>
+        ) : null}
+      </div>
+      <span id={idDica} className={ui.fieldDica}>
+        {dica}
+        {!valor ? ` Usando padrão ${padrao}.` : ''}
+      </span>
+    </div>
+  )
+}
 
 function limparHashUrl() {
   window.history.replaceState(null, '', window.location.pathname + window.location.search)
@@ -50,6 +162,8 @@ function FormularioAtualizarCadastro({
   const [email, setEmail] = useState(clienteAtual.email)
   const [whatsapp, setWhatsapp] = useState(() => formatarWhatsapp(clienteAtual.whatsapp))
   const [logo, setLogo] = useState(clienteAtual.logo)
+  const [corMarca, setCorMarca] = useState(clienteAtual.corMarca)
+  const [corFundo, setCorFundo] = useState(clienteAtual.corFundo)
   const [logoUrl, setLogoUrl] = useState<string | undefined>()
   const {
     arquivo: arquivoLogo,
@@ -71,12 +185,16 @@ function FormularioAtualizarCadastro({
     setEmail(clienteAtual.email)
     setWhatsapp(formatarWhatsapp(clienteAtual.whatsapp))
     setLogo(clienteAtual.logo)
+    setCorMarca(clienteAtual.corMarca)
+    setCorFundo(clienteAtual.corFundo)
   }, [
     clienteAtual.nome,
     clienteAtual.slug,
     clienteAtual.email,
     clienteAtual.whatsapp,
     clienteAtual.logo,
+    clienteAtual.corMarca,
+    clienteAtual.corFundo,
   ])
 
   // Path do Storage não serve como src; resolve URL assinada para o preview.
@@ -150,6 +268,8 @@ function FormularioAtualizarCadastro({
           setSlug(sessao.slug)
           setWhatsapp(formatarWhatsapp(sessao.whatsapp))
           setLogo(sessao.logo)
+          setCorMarca(sessao.corMarca)
+          setCorFundo(sessao.corFundo)
           setAvisoEmail(null)
           setEmailNovoPendente('')
           setErro(null)
@@ -232,6 +352,19 @@ function FormularioAtualizarCadastro({
       return
     }
 
+    const corMarcaNorm = normalizarHexCor(corMarca)
+    const corFundoNorm = normalizarHexCor(corFundo)
+    if (corMarca.trim() && !corMarcaNorm) {
+      setErro('Informe a cor de destaque no formato #RRGGBB.')
+      salvandoRef.current = false
+      return
+    }
+    if (corFundo.trim() && !corFundoNorm) {
+      setErro('Informe a cor de fundo no formato #RRGGBB.')
+      salvandoRef.current = false
+      return
+    }
+
     setSlug(slugNormalizado)
 
     setSalvando(true)
@@ -251,12 +384,16 @@ function FormularioAtualizarCadastro({
         slug: slugNormalizado,
         logo: logoFinal,
         whatsapp: whatsappNormalizado,
+        corMarca: corMarcaNorm,
+        corFundo: corFundoNorm,
       })
 
       definirCliente(atualizado)
       setLogo(logoFinal)
       setSlug(atualizado.slug)
       setWhatsapp(formatarWhatsapp(atualizado.whatsapp))
+      setCorMarca(atualizado.corMarca)
+      setCorFundo(atualizado.corFundo)
       if (previewLogo) {
         limparPreviewLogo()
       }
@@ -472,6 +609,26 @@ function FormularioAtualizarCadastro({
               <img src={logoExibida} alt={`Logo ${nome}`} />
             </div>
           )}
+
+          <CampoCorLoja
+            rotulo="Cor de destaque"
+            dica="Botões, abas e links na montagem pública."
+            valor={corMarca}
+            padrao={COR_MARCA_PADRAO}
+            disabled={salvando}
+            onChange={setCorMarca}
+          />
+
+          <CampoCorLoja
+            rotulo="Cor de fundo"
+            dica="Fundo da página pública de montagem."
+            valor={corFundo}
+            padrao={COR_FUNDO_PADRAO}
+            disabled={salvando}
+            onChange={setCorFundo}
+          />
+
+          <PreviewIdentidade corMarca={corMarca} corFundo={corFundo} />
 
           <div className={ui.painelFormAcoes}>
             <button type="submit" className="btn btn--primary" disabled={salvando}>

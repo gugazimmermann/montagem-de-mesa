@@ -83,6 +83,10 @@ export interface Cliente {
   logo: string
   /** Número WhatsApp com DDI 55 (somente dígitos). */
   whatsapp: string
+  /** Hex #RRGGBB da cor de destaque; vazio = padrão do produto. */
+  corMarca: string
+  /** Hex #RRGGBB do fundo da página pública; vazio = padrão do produto. */
+  corFundo: string
   subscriptionStatus: StatusAssinatura
   trialEndsAt: string | null
   currentPeriodEnd: string | null
@@ -157,6 +161,10 @@ export type StatusEmailMontagem = 'pending' | 'sent' | 'failed'
 export interface DadosCliente {
   nome: string
   logo: string
+  /** Hex #RRGGBB da cor de destaque; vazio = padrão do produto. */
+  corMarca: string
+  /** Hex #RRGGBB do fundo da página pública; vazio = padrão do produto. */
+  corFundo: string
   categorias: Categoria[]
   itens: ItemMesa[]
 }

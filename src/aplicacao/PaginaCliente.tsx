@@ -1,6 +1,10 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
+import {
+  aplicarIdentidadeLoja,
+  limparIdentidadeLoja,
+} from '../compartilhado/identidadeLoja'
 import { rastrear } from '../compartilhado/observabilidade'
 import { carregarCatalogoPublico } from '../dados/repositorioClientes'
 import { INTERVALO_REASSINAR_MS } from '../dados/storage'
@@ -18,6 +22,20 @@ export function PaginaCliente() {
     refetchInterval: INTERVALO_REASSINAR_MS,
     refetchIntervalInBackground: false,
   })
+
+  const corMarca = query.data?.corMarca ?? ''
+  const corFundo = query.data?.corFundo ?? ''
+
+  useEffect(() => {
+    if (!query.data?.existe) {
+      limparIdentidadeLoja()
+      return
+    }
+    aplicarIdentidadeLoja(corMarca, corFundo)
+    return () => {
+      limparIdentidadeLoja()
+    }
+  }, [query.data?.existe, corMarca, corFundo])
 
   useEffect(() => {
     if (query.data?.temAcesso && query.data.dados) {
