@@ -349,7 +349,7 @@ function PaginaAssinatura() {
         regularizar em Assinatura.
       </p>
       <ul>
-        <li>Assinar abre o Checkout Stripe.</li>
+        <li>Assinar mensal ou anual abre o Checkout Stripe.</li>
         <li>
           Com assinatura ativa, Gerenciar cobrança abre o portal (cartão, faturas,
           cancelamento).

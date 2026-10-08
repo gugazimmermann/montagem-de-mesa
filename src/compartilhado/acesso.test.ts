@@ -35,6 +35,21 @@ describe('clienteTemAcesso', () => {
     ).toBe(true)
   })
 
+  it('libera trialing da troca anual até currentPeriodEnd', () => {
+    expect(
+      clienteTemAcesso(
+        {
+          ...base,
+          subscriptionStatus: 'trialing',
+          trialEndsAt: '2026-09-01T00:00:00.000Z',
+          currentPeriodEnd: '2027-01-01T00:00:00.000Z',
+          stripeSubscriptionId: 'sub_anual',
+        },
+        agora,
+      ),
+    ).toBe(true)
+  })
+
   it('bloqueia trial expirado ou sem data', () => {
     expect(
       clienteTemAcesso(

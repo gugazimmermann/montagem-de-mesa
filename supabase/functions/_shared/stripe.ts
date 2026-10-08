@@ -21,6 +21,12 @@ export function priceId(): string {
   return id
 }
 
+export function priceIdAnual(): string {
+  const id = Deno.env.get('STRIPE_PRICE_ID_YEARLY')
+  if (!id) throw new Error('STRIPE_PRICE_ID_YEARLY não configurada')
+  return id
+}
+
 function customerInexistente(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false
   const e = err as { code?: string; type?: string; message?: string }

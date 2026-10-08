@@ -70,6 +70,7 @@ Supabase Dashboard → Edge Functions → Secrets (or `supabase secrets set` **w
 | `STRIPE_SECRET_KEY` | `sk_test_…` / `sk_live_…` |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_…` from the webhook endpoint |
 | `STRIPE_PRICE_ID` | `price_…` for the monthly plan |
+| `STRIPE_PRICE_ID_YEARLY` | `price_…` for the yearly plan |
 | `SITE_URL` | App origin (`http://localhost:5173` or production domain) |
 | `RESEND_API_KEY` | Resend API key |
 | `RESEND_FROM` | Sender (e.g. `Montagem de Mesa <onboarding@resend.dev>` for tests) |
@@ -128,6 +129,7 @@ supabase secrets set \
   STRIPE_SECRET_KEY=sk_test_... \
   STRIPE_WEBHOOK_SECRET=whsec_... \
   STRIPE_PRICE_ID=price_... \
+  STRIPE_PRICE_ID_YEARLY=price_... \
   SITE_URL=http://localhost:5173 \
   RESEND_API_KEY=re_... \
   RESEND_FROM='Montagem de Mesa <onboarding@resend.dev>'
@@ -146,7 +148,7 @@ supabase functions deploy enviar-montagem --no-verify-jwt
 ## Stripe
 
 1. Account at [dashboard.stripe.com](https://dashboard.stripe.com) with **Test mode**.
-2. Recurring monthly Product + Price → `STRIPE_PRICE_ID`.
+2. Recurring monthly Product + Price → `STRIPE_PRICE_ID`. Yearly price on the same product → `STRIPE_PRICE_ID_YEARLY`.
 3. API keys → `STRIPE_SECRET_KEY` (publishable key optional on the frontend).
 4. Customer Portal: enable card updates, cancel, and invoices.
 5. Webhook → `https://<PROJECT_REF>.supabase.co/functions/v1/stripe-webhook`  
@@ -154,7 +156,7 @@ supabase functions deploy enviar-montagem --no-verify-jwt
    Signing secret → `STRIPE_WEBHOOK_SECRET`.
 6. Test card: `4242 4242 4242 4242` ([docs](https://docs.stripe.com/testing)).
 
-UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/active, Subscribe; **Manage billing** only with a Stripe subscription; payment history only when invoices exist.
+UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/active, subscribe monthly or yearly; **Manage billing** only with a Stripe subscription; payment history only when invoices exist.
 
 ## Resend (submit composition)
 

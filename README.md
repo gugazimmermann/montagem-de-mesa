@@ -70,6 +70,7 @@ Dashboard Supabase → Edge Functions → Secrets (ou `supabase secrets set` **c
 | `STRIPE_SECRET_KEY` | `sk_test_…` / `sk_live_…` |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_…` do endpoint de webhook |
 | `STRIPE_PRICE_ID` | `price_…` do plano mensal |
+| `STRIPE_PRICE_ID_YEARLY` | `price_…` do plano anual |
 | `SITE_URL` | Origem do app (`http://localhost:5173` ou domínio de produção) |
 | `RESEND_API_KEY` | API key do Resend |
 | `RESEND_FROM` | Remetente (ex.: `Montagem de Mesa <onboarding@resend.dev>` em testes) |
@@ -130,6 +131,7 @@ supabase secrets set \
   STRIPE_SECRET_KEY=sk_test_... \
   STRIPE_WEBHOOK_SECRET=whsec_... \
   STRIPE_PRICE_ID=price_... \
+  STRIPE_PRICE_ID_YEARLY=price_... \
   SITE_URL=http://localhost:5173 \
   RESEND_API_KEY=re_... \
   RESEND_FROM='Montagem de Mesa <onboarding@resend.dev>'
@@ -148,7 +150,7 @@ supabase functions deploy enviar-montagem --no-verify-jwt
 ## Stripe
 
 1. Conta em [dashboard.stripe.com](https://dashboard.stripe.com) com **Test mode**.
-2. Product + Price recorrente mensal → `STRIPE_PRICE_ID`.
+2. Product + Price recorrente mensal → `STRIPE_PRICE_ID`. Price anual no mesmo produto → `STRIPE_PRICE_ID_YEARLY`.
 3. API keys → `STRIPE_SECRET_KEY` (publishable opcional no frontend).
 4. Customer Portal: ativar cartão, cancelar e faturas.
 5. Webhook → `https://<PROJECT_REF>.supabase.co/functions/v1/stripe-webhook`  
@@ -156,7 +158,7 @@ supabase functions deploy enviar-montagem --no-verify-jwt
    Signing secret → `STRIPE_WEBHOOK_SECRET`.
 6. Cartão de teste: `4242 4242 4242 4242` ([docs](https://docs.stripe.com/testing)).
 
-UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/ativa, Assinar; **Gerenciar cobrança** só com assinatura Stripe; histórico de pagamentos só quando há faturas.
+UI: [`/admin/assinatura`](src/funcionalidades/admin/AssinaturaAdmin.tsx) — trial/ativa, Assinar mensal ou anual; **Gerenciar cobrança** só com assinatura Stripe; histórico de pagamentos só quando há faturas.
 
 ## Resend (enviar montagem)
 

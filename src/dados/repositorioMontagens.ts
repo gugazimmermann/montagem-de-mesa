@@ -132,15 +132,39 @@ export async function listarMontagensEnviadas(
   }
 }
 
-export async function contarMontagensNovas(clienteId: string): Promise<number> {
-  const { count, error } = await supabase
+export async function contarMontagensNovas(
+  clienteId: string,
+  opcoes?: { criadasApos?: string | null },
+): Promise<number> {
+  let query = supabase
     .from('montagens_enviadas')
     .select('id', { count: 'exact', head: true })
     .eq('cliente_id', clienteId)
     .eq('lead_status', 'novo')
 
+  const criadasApos = opcoes?.criadasApos
+  if (criadasApos) query = query.gt('created_at', criadasApos)
+
+  const { count, error } = await query
   if (error) throw error
   return count ?? 0
+}
+
+export async function createdAtMontagemNovaMaisRecente(
+  clienteId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('montagens_enviadas')
+    .select('created_at')
+    .eq('cliente_id', clienteId)
+    .eq('lead_status', 'novo')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+  const createdAt = (data as { created_at?: string } | null)?.created_at
+  return createdAt ?? null
 }
 
 export async function atualizarLeadMontagem(

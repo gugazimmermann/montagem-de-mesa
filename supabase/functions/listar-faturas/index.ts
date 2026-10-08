@@ -1,3 +1,4 @@
+import type Stripe from 'https://esm.sh/stripe@17.7.0?target=deno'
 import { corsHeadersPara, jsonResponseComCors } from '../_shared/cors.ts'
 import { stripeClient } from '../_shared/stripe.ts'
 import {
@@ -27,6 +28,7 @@ Deno.serve(async (req) => {
       return jsonResponseComCors(req, {
         faturas: [],
         assinatura: null,
+        intervalo: null,
       })
     }
 
@@ -61,7 +63,45 @@ Deno.serve(async (req) => {
       limit: 24,
     })
 
-    const faturas = invoices.data.map((inv) => {
+    const cobrancas = await stripe.charges.list({
+      customer: clienteAtual.stripe_customer_id!,
+      limit: 100,
+    })
+    const estornadas = new Set<string>()
+    for (const cobranca of cobrancas.data) {
+      if (!cobranca.refunded) continue
+      estornadas.add(cobranca.id)
+      const intent =
+        typeof cobranca.payment_intent === 'string'
+          ? cobranca.payment_intent
+          : cobranca.payment_intent?.id
+      if (intent) estornadas.add(intent)
+      const faturaId =
+        typeof cobranca.invoice === 'string'
+          ? cobranca.invoice
+          : cobranca.invoice?.id
+      if (faturaId) estornadas.add(faturaId)
+    }
+
+    const faturas = invoices.data.flatMap((inv) => {
+      if (!inv.amount_paid) return []
+      const legado = inv as Stripe.Invoice & {
+        charge?: string | { id: string } | null
+        payment_intent?: string | { id: string } | null
+      }
+      const cobrancaId =
+        typeof legado.charge === 'string' ? legado.charge : legado.charge?.id
+      const intentId =
+        typeof legado.payment_intent === 'string'
+          ? legado.payment_intent
+          : legado.payment_intent?.id
+      if (
+        estornadas.has(inv.id) ||
+        (cobrancaId && estornadas.has(cobrancaId)) ||
+        (intentId && estornadas.has(intentId))
+      ) {
+        return []
+      }
       const linha = inv.lines?.data?.[0]
       const bruta =
         linha?.description ?? inv.description ?? 'Assinatura'
@@ -95,6 +135,7 @@ Deno.serve(async (req) => {
       cancelAtPeriodEnd: boolean
       currentPeriodEnd: string | null
     } | null = null
+    let intervalo: 'mensal' | 'anual' | null = null
 
     if (clienteAtual.stripe_subscription_id) {
       try {
@@ -102,6 +143,7 @@ Deno.serve(async (req) => {
           clienteAtual.stripe_subscription_id,
         )
         assinatura = resumoDeSubscription(sub)
+        intervalo = intervaloDaAssinatura(sub)
       } catch (e) {
         console.error('listar-faturas subscription', e)
       }
@@ -110,6 +152,7 @@ Deno.serve(async (req) => {
     return jsonResponseComCors(req, {
       faturas,
       assinatura,
+      intervalo,
       subscriptionStatus: clienteAtual.subscription_status,
       stripeSubscriptionId: clienteAtual.stripe_subscription_id,
       currentPeriodEnd: clienteAtual.current_period_end,
@@ -120,3 +163,15 @@ Deno.serve(async (req) => {
     return jsonResponseComCors(req, { error: 'Erro interno' }, 500)
   }
 })
+
+function intervaloDaAssinatura(
+  sub: Stripe.Subscription,
+): 'mensal' | 'anual' | null {
+  const preco = sub.items.data[0]?.price?.id
+  if (!preco) return null
+  const mensal = Deno.env.get('STRIPE_PRICE_ID')
+  const anual = Deno.env.get('STRIPE_PRICE_ID_YEARLY')
+  if (mensal && preco === mensal) return 'mensal'
+  if (anual && preco === anual) return 'anual'
+  return null
+}

@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type {
   MontagemEnviada,
   StatusLeadMontagem,
@@ -8,6 +8,7 @@ import { formatarWhatsapp } from '../../dados/repositorioClientes'
 import {
   atualizarLeadMontagem,
   contarMontagensNovas,
+  createdAtMontagemNovaMaisRecente,
   listarMontagensEnviadas,
   MONTAGENS_PAGE_SIZE,
   reenviarEmailMontagem,
@@ -20,6 +21,7 @@ import {
   AdminPainelCarregando,
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
+import { marcarMontagensVistas } from './montagensVistas'
 import { montagensQueryKey, useDadosCliente } from './useDadosCliente'
 import * as ui from './adminClasses'
 
@@ -81,6 +83,7 @@ export function HistoricoMontagensAdmin() {
   const [feedback, setFeedback] = useState<string | null>(null)
   const [erroAcao, setErroAcao] = useState<string | null>(null)
   const [notasLocais, setNotasLocais] = useState<Record<string, string>>({})
+  const [marcaPronta, setMarcaPronta] = useState(false)
 
   const filtros = useMemo(
     () => ({ busca: buscaAplicada, leadStatus: filtroStatus }),
@@ -114,8 +117,27 @@ export function HistoricoMontagensAdmin() {
     staleTime: 30_000,
   })
 
+  useEffect(() => {
+    if (!clienteId || !query.isSuccess) return
+    let cancelado = false
+    void createdAtMontagemNovaMaisRecente(clienteId)
+      .then((ate) => {
+        if (cancelado) return
+        if (ate) marcarMontagensVistas(clienteId, ate)
+      })
+      .catch(() => {
+        // A lista segue visível; a badge permanece até a próxima abertura.
+      })
+      .finally(() => {
+        if (!cancelado) setMarcaPronta(true)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [clienteId, query.isSuccess, query.dataUpdatedAt])
+
   if (!clienteId) return <AdminSessaoInvalida />
-  if (query.isLoading || carregandoCatalogo) {
+  if (query.isLoading || carregandoCatalogo || (query.isSuccess && !marcaPronta)) {
     return <AdminPainelCarregando mensagem="Carregando montagens…" />
   }
 

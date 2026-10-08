@@ -15,6 +15,7 @@ import {
   AdminPainelCarregando,
   AdminSessaoInvalida,
 } from './AdminPaginaPainel'
+import { useMontagensVistoAte } from './montagensVistas'
 import { montagensQueryKey, useDadosCliente } from './useDadosCliente'
 import { useFlashLocation } from './useFlashLocation'
 import * as ui from './adminClasses'
@@ -36,11 +37,12 @@ export function PainelAdmin() {
   const [excluindo, setExcluindo] = useState(false)
   const [reordenando, setReordenando] = useState(false)
 
+  const vistoAte = useMontagensVistoAte(clienteId)
   const queryNovos = useQuery({
     queryKey: clienteId
-      ? [...montagensQueryKey(clienteId), 'count-novos']
+      ? [...montagensQueryKey(clienteId), 'count-nao-vistas', vistoAte]
       : ['montagens', 'none', 'count'],
-    queryFn: () => contarMontagensNovas(clienteId!),
+    queryFn: () => contarMontagensNovas(clienteId!, { criadasApos: vistoAte }),
     enabled: Boolean(clienteId),
     staleTime: 30_000,
   })

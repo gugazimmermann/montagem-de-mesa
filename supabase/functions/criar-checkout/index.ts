@@ -2,6 +2,7 @@ import { corsHeadersPara, jsonResponseComCors } from '../_shared/cors.ts'
 import {
   garantirCustomerStripe,
   priceId,
+  priceIdAnual,
   siteUrl,
   stripeClient,
 } from '../_shared/stripe.ts'
@@ -21,6 +22,9 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return jsonResponseComCors(req, { error: 'Não autenticado' }, 401)
     }
+
+    const intervalo = await intervaloPedido(req)
+    if (intervalo instanceof Response) return intervalo
 
     const { cliente } = await obterClienteDoUsuario(authHeader)
     const stripe = stripeClient()
@@ -51,7 +55,7 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
-      line_items: [{ price: priceId(), quantity: 1 }],
+      line_items: [{ price: intervalo === 'anual' ? priceIdAnual() : priceId(), quantity: 1 }],
       success_url: `${base}/admin/assinatura?checkout=sucesso`,
       cancel_url: `${base}/admin/assinatura?checkout=cancelado`,
       client_reference_id: cliente.id,
@@ -74,3 +78,25 @@ Deno.serve(async (req) => {
     return jsonResponseComCors(req, { error: 'Não foi possível iniciar o checkout' }, 500)
   }
 })
+
+/** Sem corpo ou `mensal` → plano mensal. `anual` → plano anual. Outro valor → 400. */
+async function intervaloPedido(req: Request): Promise<'mensal' | 'anual' | Response> {
+  const texto = await req.text()
+  if (!texto.trim()) return 'mensal'
+
+  let body: unknown
+  try {
+    body = JSON.parse(texto)
+  } catch {
+    return jsonResponseComCors(req, { error: 'Corpo inválido' }, 400)
+  }
+
+  if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+    return jsonResponseComCors(req, { error: 'Corpo inválido' }, 400)
+  }
+
+  const intervalo = 'intervalo' in body ? body.intervalo : undefined
+  if (intervalo == null || intervalo === 'mensal') return 'mensal'
+  if (intervalo === 'anual') return 'anual'
+  return jsonResponseComCors(req, { error: 'Intervalo de assinatura inválido' }, 400)
+}

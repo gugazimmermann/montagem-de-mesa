@@ -2,18 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { contarMontagensNovas } from '../../dados/repositorioMontagens'
 import { useAuth } from '../autenticacao'
+import { useMontagensVistoAte } from './montagensVistas'
 import { montagensQueryKey } from './useDadosCliente'
 
 /** Badge de leads novos — aparece em qualquer página do painel. */
 export function AdminBadgeMontagens() {
   const { cliente } = useAuth()
   const clienteId = cliente?.id
+  const vistoAte = useMontagensVistoAte(clienteId)
 
   const query = useQuery({
     queryKey: clienteId
-      ? [...montagensQueryKey(clienteId), 'count-novos']
+      ? [...montagensQueryKey(clienteId), 'count-nao-vistas', vistoAte]
       : ['montagens', 'none', 'count'],
-    queryFn: () => contarMontagensNovas(clienteId!),
+    queryFn: () => contarMontagensNovas(clienteId!, { criadasApos: vistoAte }),
     enabled: Boolean(clienteId),
     staleTime: 30_000,
     refetchInterval: 60_000,

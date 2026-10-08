@@ -10,12 +10,17 @@ import {
   abrirPortalAssinatura,
   assinaturaPagaAtiva,
   cancelarAssinatura,
-  formatarValorFatura,
+  confirmarTrocaAnual,
   formatarDescricaoFaturaPtBr,
+  formatarValorFatura,
   iniciarCheckoutAssinatura,
   listarFaturasPagas,
+  previaTrocaAnual,
+  sincronizarAssinatura,
   statusEfetivoAssinatura,
   sincronizarAssinaturaComRetry,
+  type IntervaloAssinatura,
+  type PreviaTrocaAnual,
   type AssinaturaStripeResumo,
   type FaturaPaga,
 } from '../../dados/assinaturaStripe'
@@ -77,6 +82,23 @@ function mapStatusLocal(status: string): StatusAssinatura {
   }
 }
 
+function textoTrocaAnual(previa: PreviaTrocaAnual): string {
+  const inicio = formatarData(previa.inicioAnual)
+  const ate = formatarData(previa.fim)
+  const renovacao = formatarValorFatura(53892, 'BRL')
+  if (previa.aCobrarCentavos === 0) {
+    return `O mês já pago segue até ${inicio}. O plano anual vale até ${ate}, sem cobrança agora. A renovação de ${renovacao} ocorre nessa data.`
+  }
+  const cobrar = formatarValorFatura(previa.aCobrarCentavos, 'BRL')
+  return `O mês já pago segue até ${inicio}. O plano anual vai até ${ate}. A cobrar agora: ${cobrar}, o valor proporcional desse trecho. A renovação de ${renovacao} ocorre em ${ate}.`
+}
+
+function checkoutEmAndamento(
+  acao: 'checkout-mensal' | 'checkout-anual' | 'portal' | 'cancelar' | 'troca' | null,
+): boolean {
+  return acao === 'checkout-mensal' || acao === 'checkout-anual'
+}
+
 export function AssinaturaAdmin() {
   const navegar = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -84,7 +106,7 @@ export function AssinaturaAdmin() {
   const [erro, setErro] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
   const [acaoOcupada, setAcaoOcupada] = useState<
-    null | 'checkout' | 'portal' | 'cancelar'
+    null | 'checkout-mensal' | 'checkout-anual' | 'portal' | 'cancelar' | 'troca'
   >(null)
   const [atualizandoAposCheckout, setAtualizandoAposCheckout] = useState(false)
   const [confirmarCancelar, setConfirmarCancelar] = useState(false)
@@ -93,6 +115,11 @@ export function AssinaturaAdmin() {
   const [resumoStripe, setResumoStripe] = useState<AssinaturaStripeResumo | null>(
     null,
   )
+  const [intervaloPlano, setIntervaloPlano] = useState<
+    'mensal' | 'anual' | null
+  >(null)
+  const [previaTroca, setPreviaTroca] = useState<PreviaTrocaAnual | null>(null)
+  const [confirmarTroca, setConfirmarTroca] = useState(false)
   const checkoutProcessadoRef = useRef<string | null>(null)
   const carregarHistoricoRef = useRef<() => Promise<void>>(async () => {})
   const checkoutTimeoutRef = useRef<number | null>(null)
@@ -107,6 +134,7 @@ export function AssinaturaAdmin() {
     if (!cliente?.stripeCustomerId) {
       setFaturas([])
       setResumoStripe(null)
+      setIntervaloPlano(null)
       setCarregandoHistorico(false)
       return
     }
@@ -116,6 +144,7 @@ export function AssinaturaAdmin() {
       const resultado = await listarFaturasPagas()
       setFaturas(resultado.faturas)
       setResumoStripe(resultado.assinatura)
+      setIntervaloPlano(resultado.intervalo)
 
       // listar-faturas pode ter sincronizado o DB; atualiza sessão se mudou
       if (
@@ -127,6 +156,7 @@ export function AssinaturaAdmin() {
     } catch (e) {
       console.error('histórico de faturas', e)
       setFaturas([])
+      setIntervaloPlano(null)
     } finally {
       setCarregandoHistorico(false)
     }
@@ -142,10 +172,10 @@ export function AssinaturaAdmin() {
     void carregarHistorico()
   }, [carregarHistorico])
 
-  // Voltar do Stripe (bfcache / back) deixa acaoOcupada preso em "checkout".
+  // Voltar do Stripe (bfcache / back) deixa acaoOcupada preso no checkout.
   useEffect(() => {
     function aoPageShow() {
-      setAcaoOcupada((atual) => (atual === 'checkout' ? null : atual))
+      setAcaoOcupada((atual) => (checkoutEmAndamento(atual) ? null : atual))
     }
     window.addEventListener('pageshow', aoPageShow)
     return () => {
@@ -203,12 +233,12 @@ export function AssinaturaAdmin() {
     }
   }, [params, setParams, refrescarCliente, navegar])
 
-  async function aoAssinar() {
+  async function aoAssinar(intervalo: IntervaloAssinatura) {
     setErro(null)
     setOk(null)
-    setAcaoOcupada('checkout')
+    setAcaoOcupada(intervalo === 'anual' ? 'checkout-anual' : 'checkout-mensal')
     try {
-      const url = await iniciarCheckoutAssinatura()
+      const url = await iniciarCheckoutAssinatura(intervalo)
       window.location.assign(url)
       // Se a navegação não descarregar a página (bloqueio / bfcache), libera os botões.
       if (checkoutTimeoutRef.current != null) {
@@ -216,7 +246,7 @@ export function AssinaturaAdmin() {
       }
       checkoutTimeoutRef.current = window.setTimeout(() => {
         checkoutTimeoutRef.current = null
-        setAcaoOcupada((atual) => (atual === 'checkout' ? null : atual))
+        setAcaoOcupada((atual) => (checkoutEmAndamento(atual) ? null : atual))
       }, 2500)
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível abrir o checkout.')
@@ -277,6 +307,44 @@ export function AssinaturaAdmin() {
     }
   }
 
+  async function aoPedirTrocaAnual() {
+    setErro(null)
+    setOk(null)
+    setAcaoOcupada('troca')
+    try {
+      const previa = await previaTrocaAnual()
+      setPreviaTroca(previa)
+      setConfirmarTroca(true)
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível calcular a troca.')
+    } finally {
+      setAcaoOcupada(null)
+    }
+  }
+
+  async function aoConfirmarTrocaAnual() {
+    if (acaoOcupada) return
+    setErro(null)
+    setOk(null)
+    setAcaoOcupada('troca')
+    try {
+      const previa = await confirmarTrocaAnual()
+      await sincronizarAssinatura()
+      await refrescarCliente()
+      setIntervaloPlano('anual')
+      setConfirmarTroca(false)
+      setPreviaTroca(null)
+      setOk(
+        `Plano anual ativo até ${formatarData(previa.fim)}. A diferença foi lançada na cobrança.`,
+      )
+      void carregarHistoricoRef.current()
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível mudar para o plano anual.')
+    } finally {
+      setAcaoOcupada(null)
+    }
+  }
+
   async function aoSair() {
     await sair()
     navegar('/admin', { replace: true })
@@ -307,6 +375,7 @@ export function AssinaturaAdmin() {
     subscriptionStatus: statusEfetivoLocal,
     trialEndsAt: cliente.trialEndsAt,
     currentPeriodEnd: periodoFim ?? cliente.currentPeriodEnd,
+    stripeSubscriptionId: cliente.stripeSubscriptionId,
   })
   const diasTrial = diasRestantesTrial({
     subscriptionStatus: statusEfetivoLocal,
@@ -316,13 +385,15 @@ export function AssinaturaAdmin() {
     subscriptionStatus: statusEfetivoLocal,
     currentPeriodEnd: periodoFim ?? cliente.currentPeriodEnd,
   })
-  const mostrarTrial = statusEfetivo === 'trialing' && !pagaAtiva
-  const mostrarAssinar = !temAcesso || mostrarTrial
+  const mostrarTrial = statusEfetivo === 'trialing' && !pagaAtiva && !temSubscription
+  const mostrarAssinar = (!temAcesso || mostrarTrial) && !temSubscription
+  const mostrarTrocaAnual =
+    intervaloPlano === 'mensal' && temSubscription && statusEfetivo !== 'canceled'
   /** Portal só com assinatura Stripe; customer criado no checkout abandonado não conta. */
   const mostrarPortal = temStripe && temSubscription
   const podeCancelar =
     temSubscription &&
-    pagaAtiva &&
+    (pagaAtiva || statusEfetivo === 'trialing') &&
     !cancelamentoAgendado &&
     statusEfetivo !== 'canceled'
 
@@ -398,7 +469,13 @@ export function AssinaturaAdmin() {
           <dl className={ui.assinaturaLista}>
             <div className={ui.assinaturaListaItem}>
               <dt className={ui.assinaturaDt}>Status</dt>
-              <dd className={ui.assinaturaDd}>{rotuloStatus(statusEfetivo)}</dd>
+              <dd className={ui.assinaturaDd}>
+                {temSubscription && statusEfetivo === 'trialing'
+                  ? intervaloPlano === 'anual'
+                    ? 'Plano anual'
+                    : 'Plano mensal'
+                  : rotuloStatus(statusEfetivo)}
+              </dd>
             </div>
             {mostrarTrial ? (
               <div className={ui.assinaturaListaItem}>
@@ -430,13 +507,39 @@ export function AssinaturaAdmin() {
 
           <div className={ui.assinaturaAcoes}>
             {mostrarAssinar ? (
+              <>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={acaoOcupada !== null || atualizandoAposCheckout}
+                  onClick={() => void aoAssinar('mensal')}
+                >
+                  {acaoOcupada === 'checkout-mensal'
+                    ? 'Abrindo checkout…'
+                    : 'Assinar mensal — R$ 49,90/mês'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={acaoOcupada !== null || atualizandoAposCheckout}
+                  onClick={() => void aoAssinar('anual')}
+                >
+                  {acaoOcupada === 'checkout-anual'
+                    ? 'Abrindo checkout…'
+                    : 'Assinar anual — R$ 538,92/ano (10% de desconto)'}
+                </button>
+              </>
+            ) : null}
+            {mostrarTrocaAnual ? (
               <button
                 type="button"
                 className="btn btn--primary"
                 disabled={acaoOcupada !== null || atualizandoAposCheckout}
-                onClick={() => void aoAssinar()}
+                onClick={() => void aoPedirTrocaAnual()}
               >
-                {acaoOcupada === 'checkout' ? 'Abrindo checkout…' : 'Assinar agora'}
+                {acaoOcupada === 'troca' && !confirmarTroca
+                  ? 'Calculando troca…'
+                  : 'Mudar para o anual'}
               </button>
             ) : null}
             {mostrarPortal ? (
@@ -512,6 +615,23 @@ export function AssinaturaAdmin() {
           </section>
         ) : null}
       </AdminPaginaPainel>
+
+      <AdminConfirmacao
+        aberto={confirmarTroca}
+        titulo="Mudar para o plano anual?"
+        descricao={previaTroca ? textoTrocaAnual(previaTroca) : ''}
+        confirmarRotulo="Confirmar troca"
+        cancelarRotulo="Manter mensal"
+        processando={acaoOcupada === 'troca'}
+        processandoRotulo="Trocando…"
+        aoConfirmar={() => void aoConfirmarTrocaAnual()}
+        aoCancelar={() => {
+          if (acaoOcupada !== 'troca') {
+            setConfirmarTroca(false)
+            setPreviaTroca(null)
+          }
+        }}
+      />
 
       <AdminConfirmacao
         aberto={confirmarCancelar}

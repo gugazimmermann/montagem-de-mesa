@@ -19,5 +19,8 @@ verify_jwt = true
 [functions.sincronizar-assinatura]
 verify_jwt = true
 
+[functions.trocar-plano-anual]
+verify_jwt = true
+
 [functions.enviar-montagem]
 verify_jwt = false

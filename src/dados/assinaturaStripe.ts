@@ -32,6 +32,7 @@ export type SyncAssinaturaResultado = {
 type RespostaFaturas = {
   faturas?: FaturaPaga[]
   assinatura?: AssinaturaStripeResumo | null
+  intervalo?: 'mensal' | 'anual' | null
   subscriptionStatus?: string
   stripeSubscriptionId?: string | null
   currentPeriodEnd?: string | null
@@ -57,11 +58,23 @@ async function garantirSessao(): Promise<void> {
   }
 }
 
-async function chamarFuncaoBilling(nome: 'criar-checkout' | 'criar-portal'): Promise<string> {
+export type IntervaloAssinatura = 'mensal' | 'anual'
+
+export type PreviaTrocaAnual = {
+  inicioAnual: string
+  aCobrarCentavos: number
+  fim: string
+}
+
+async function chamarFuncaoBilling(
+  nome: 'criar-checkout' | 'criar-portal',
+  body?: { intervalo: IntervaloAssinatura },
+): Promise<string> {
   await garantirSessao()
 
   const { data, error } = await supabase.functions.invoke<RespostaUrl>(nome, {
     method: 'POST',
+    ...(body ? { body } : {}),
   })
 
   if (error) {
@@ -100,8 +113,45 @@ export function assertUrlStripeSegura(
   }
 }
 
-export async function iniciarCheckoutAssinatura(): Promise<string> {
-  return chamarFuncaoBilling('criar-checkout')
+export async function iniciarCheckoutAssinatura(
+  intervalo: IntervaloAssinatura = 'mensal',
+): Promise<string> {
+  return chamarFuncaoBilling('criar-checkout', { intervalo })
+}
+
+export async function previaTrocaAnual(): Promise<PreviaTrocaAnual> {
+  return chamarTrocaAnual(false)
+}
+
+export async function confirmarTrocaAnual(): Promise<PreviaTrocaAnual> {
+  return chamarTrocaAnual(true)
+}
+
+async function chamarTrocaAnual(confirmar: boolean): Promise<PreviaTrocaAnual> {
+  await garantirSessao()
+  const { data, error } = await supabase.functions.invoke<
+    PreviaTrocaAnual & { error?: string }
+  >('trocar-plano-anual', {
+    method: 'POST',
+    body: { confirmar },
+  })
+  if (error) {
+    let detalhe = error.message || 'Não foi possível mudar para o plano anual.'
+    const contexto = error as { context?: { json?: () => Promise<{ error?: string }> } }
+    if (typeof contexto.context?.json === 'function') {
+      try {
+        const corpo = await contexto.context.json()
+        if (corpo?.error) detalhe = corpo.error
+      } catch {
+        // corpo já lido ou não é JSON
+      }
+    }
+    throw new Error(detalhe)
+  }
+  if (!data || data.error || data.fim == null || data.inicioAnual == null) {
+    throw new Error(data?.error || 'Resposta inválida da troca de plano.')
+  }
+  return data
 }
 
 export async function abrirPortalAssinatura(): Promise<string> {
@@ -178,6 +228,7 @@ export async function sincronizarAssinaturaComRetry(
 export async function listarFaturasPagas(): Promise<{
   faturas: FaturaPaga[]
   assinatura: AssinaturaStripeResumo | null
+  intervalo: 'mensal' | 'anual' | null
   subscriptionStatus?: string
   stripeSubscriptionId?: string | null
   currentPeriodEnd?: string | null
@@ -200,6 +251,7 @@ export async function listarFaturasPagas(): Promise<{
   return {
     faturas: data?.faturas ?? [],
     assinatura: data?.assinatura ?? null,
+    intervalo: data?.intervalo ?? null,
     subscriptionStatus: data?.subscriptionStatus,
     stripeSubscriptionId: data?.stripeSubscriptionId,
     currentPeriodEnd: data?.currentPeriodEnd,
