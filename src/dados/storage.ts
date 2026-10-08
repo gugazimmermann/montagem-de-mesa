@@ -25,6 +25,9 @@ export const LOGO_QUALIDADE = 0.8
 /** Itens na pré-visualização da mesa. */
 export const ITEM_MAX_LADO_PX = 1600
 export const ITEM_QUALIDADE = 0.85
+/** Miniatura do seletor e da lista do admin. */
+export const ITEM_CATALOGO_MAX_LADO_PX = 320
+export const ITEM_CATALOGO_QUALIDADE = 0.8
 
 const MSG_FORMATO = 'Formato de imagem não suportado. Use WebP, PNG, JPEG ou GIF.'
 
@@ -352,9 +355,12 @@ export async function enviarImagemItemStorage(
   arquivo: File,
   variante: 'mesa' | 'catalogo' = 'mesa',
 ): Promise<string> {
+  const catalogo = variante === 'catalogo'
   const comprimido = await comprimirImagemParaUpload(arquivo, {
-    maxLado: ITEM_MAX_LADO_PX,
-    qualidade: ITEM_QUALIDADE,
+    maxLado: catalogo ? ITEM_CATALOGO_MAX_LADO_PX : ITEM_MAX_LADO_PX,
+    qualidade: catalogo ? ITEM_CATALOGO_QUALIDADE : ITEM_QUALIDADE,
+    preferirWebp: catalogo,
+    tamanhoOkBytes: catalogo ? 40 * 1024 : 800 * 1024,
   })
   validarImagem(comprimido, TAMANHO_MAX_ITEM, '5 MB')
 

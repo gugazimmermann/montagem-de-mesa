@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { ImagemEstavel } from '../../../../compartilhado/ImagemEstavel'
 import type { Categoria, ConfiguracaoMesa, ItemMesa } from '../../../../compartilhado/tipos'
 import { imagemMesaItem } from '../../../../compartilhado/tipos'
 import {
@@ -188,7 +189,7 @@ function CamadaSousplat({
       className={`layer layer--sized sousplat ${redondo ? 'layer--round' : ''} ${comImagem ? 'sousplat--image' : ''}`}
       style={{ ...estiloDimensionado(comDim), ...(!comImagem ? varsCores(item) : {}) }}
     >
-      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
+      {comImagem && <ImagemEstavel src={srcImagem!} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
@@ -232,7 +233,7 @@ function CamadaPrato({
       }
     >
       {comImagem ? (
-        <img src={srcImagem} alt="" draggable={false} />
+        <ImagemEstavel src={srcImagem!} alt="" draggable={false} />
       ) : (
         <div className="plate__inner" />
       )}
@@ -279,7 +280,7 @@ function CamadaFoto({
         } as CSSProperties
       }
     >
-      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
+      {comImagem && <ImagemEstavel src={srcImagem!} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
@@ -318,7 +319,7 @@ function CamadaTaca({
         } as CSSProperties
       }
     >
-      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
+      {comImagem && <ImagemEstavel src={srcImagem!} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }
@@ -345,7 +346,7 @@ function CamadaGenerica({
         ...(!comImagem ? varsCores(item) : {}),
       }}
     >
-      {comImagem && <img src={srcImagem} alt="" draggable={false} />}
+      {comImagem && <ImagemEstavel src={srcImagem!} alt="" draggable={false} />}
     </CamadaClicavel>
   )
 }

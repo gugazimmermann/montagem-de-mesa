@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { imagemCatalogoItem } from '../../compartilhado/tipos'
-import { atualizarCategoria, excluirItemDb, trocarOrdemItem } from '../../dados/repositorioClientes'
+import { criarItem, atualizarCategoria, excluirItemDb, trocarOrdemItem } from '../../dados/repositorioClientes'
+import { podeMover, passosTroca } from './arrasteOrdem'
 import { useAuth } from '../autenticacao'
 import { AmpliarImagem } from './AmpliarImagem'
 import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
@@ -132,6 +133,59 @@ export function EditarCategoria() {
     }
   }
 
+  async function moverItem(origemId: string, destinoId: string) {
+    if (reordenando || origemId === destinoId) return
+    const ids = itensCategoria.map((item) => item.id)
+    const from = ids.indexOf(origemId)
+    const to = ids.indexOf(destinoId)
+    if (!podeMover(from, to, () => false)) return
+    setReordenando(true)
+    setErro(null)
+    try {
+      const ordem = [...ids]
+      let atual = [...dadosAtuais.itens]
+      for (const [i, j] of passosTroca(from, to)) {
+        const idA = ordem[i]!
+        const idB = ordem[j]!
+        await trocarOrdemItem(idCliente, idCategoria, idA, idB)
+        ;[ordem[i], ordem[j]] = [idB, idA]
+        const posI = atual.findIndex((item) => item.id === idA)
+        const posJ = atual.findIndex((item) => item.id === idB)
+        if (posI >= 0 && posJ >= 0) {
+          const proximo = [...atual]
+          ;[proximo[posI], proximo[posJ]] = [proximo[posJ]!, proximo[posI]!]
+          atual = proximo
+        }
+      }
+      setDados({ ...dadosAtuais, itens: atual })
+    } catch {
+      setErro('Não foi possível reordenar.')
+    } finally {
+      setReordenando(false)
+    }
+  }
+
+  async function duplicarItem(itemId: string) {
+    const item = dadosAtuais.itens.find((atual) => atual.id === itemId)
+    if (!item || reordenando) return
+    setReordenando(true)
+    setErro(null)
+    try {
+      const copia = {
+        ...item,
+        id: crypto.randomUUID(),
+        nome: `Cópia de ${item.nome}`.slice(0, 120),
+      }
+      await criarItem(idCliente, copia)
+      setDados({ ...dadosAtuais, itens: [...dadosAtuais.itens, copia] })
+      setMensagem('Item duplicado.')
+    } catch {
+      setErro('Não foi possível duplicar o item.')
+    } finally {
+      setReordenando(false)
+    }
+  }
+
   return (
     <AdminPaginaPainel
       titulo={`${categoria.rotulo} (${itensCategoria.length} ${itensCategoria.length === 1 ? 'item' : 'itens'})`}
@@ -235,6 +289,9 @@ export function EditarCategoria() {
             Novo item
           </Link>
         </div>
+        <p className="m-0 mb-2 text-sm text-muted">
+          Arraste para reordenar. Duplicar copia nome, foto e medidas.
+        </p>
 
         {itensCategoria.length === 0 ? (
           <AdminEstadoVazio
@@ -256,7 +313,23 @@ export function EditarCategoria() {
               const proximo = itensCategoria[indice + 1]
               const src = imagemCatalogoItem(item)
               return (
-              <li key={item.id} className={ui.itensItem}>
+              <li
+                key={item.id}
+                className={ui.itensItem}
+                draggable={!reordenando}
+                onDragStart={(evento) => {
+                  evento.dataTransfer.setData('text/plain', item.id)
+                  evento.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={(evento) => {
+                  if (!reordenando) evento.preventDefault()
+                }}
+                onDrop={(evento) => {
+                  evento.preventDefault()
+                  const origem = evento.dataTransfer.getData('text/plain')
+                  if (origem) void moverItem(origem, item.id)
+                }}
+              >
                 {src ? (
                   <AmpliarImagem src={src} alt={item.nome} />
                 ) : (
@@ -352,6 +425,14 @@ export function EditarCategoria() {
                   >
                     Editar
                   </Link>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    disabled={reordenando}
+                    onClick={() => void duplicarItem(item.id)}
+                  >
+                    Duplicar
+                  </button>
                   <button
                     type="button"
                     className="btn btn--danger-soft"

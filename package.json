@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "seed:supabase": "node scripts/seed-supabase.mjs",
     "db:migrate": "node scripts/apply-migration.mjs",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -26,6 +26,8 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "@vitest/coverage-v8": "^3.2.7",
+    "happy-dom": "^20.0.2",
     "oxlint": "^1.71.0",
     "pg": "^8.22.0",
     "slugify": "^1.6.9",

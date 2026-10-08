@@ -129,10 +129,11 @@ Deno.serve(async (req) => {
         402,
       )
     }
-    const texto = detalhe
-      ? `Não foi possível mudar para o plano anual. ${detalhe}`
-      : 'Não foi possível mudar para o plano anual.'
-    return jsonResponseComCors(req, { error: texto.slice(0, 300) }, 500)
+    return jsonResponseComCors(
+      req,
+      { error: 'Não foi possível mudar para o plano anual.' },
+      500,
+    )
   }
 })
 

@@ -1,13 +1,16 @@
 import { useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import {
   aplicarIdentidadeLoja,
   limparIdentidadeLoja,
 } from '../compartilhado/identidadeLoja'
+import { aplicarMetaLoja, limparMetaLoja } from '../compartilhado/metaLoja'
 import { rastrear } from '../compartilhado/observabilidade'
+import type { CatalogoPublicoCarregado } from '../dados/repositorioClientes'
 import { carregarCatalogoPublico } from '../dados/repositorioClientes'
-import { INTERVALO_REASSINAR_MS } from '../dados/storage'
+import { registrarVisitaCatalogo } from '../dados/repositorioFunil'
+import { useRenovarUrlsAssinadas } from '../dados/useRenovarUrlsAssinadas'
 import App from './App'
 import './App.css'
 
@@ -19,8 +22,15 @@ export function PaginaCliente() {
     queryFn: () => carregarCatalogoPublico(slug!),
     enabled: Boolean(slug),
     staleTime: 45_000,
-    refetchInterval: INTERVALO_REASSINAR_MS,
-    refetchIntervalInBackground: false,
+  })
+
+  const queryClient = useQueryClient()
+  useRenovarUrlsAssinadas(query.data?.dados ?? null, (novos) => {
+    if (!slug) return
+    queryClient.setQueryData<CatalogoPublicoCarregado>(
+      ['catalogo-publico', slug],
+      (atual) => (atual?.dados ? { ...atual, dados: novos } : atual),
+    )
   })
 
   const corMarca = query.data?.corMarca ?? ''
@@ -37,14 +47,41 @@ export function PaginaCliente() {
     }
   }, [query.data?.existe, corMarca, corFundo])
 
+  const temCatalogo = Boolean(query.data?.temAcesso && query.data.dados)
+  const paywall = Boolean(query.data && !query.data.temAcesso && query.data.existe)
+
   useEffect(() => {
-    if (query.data?.temAcesso && query.data.dados) {
-      rastrear('catalog_loaded', { slug: slug ?? '' })
+    if (temCatalogo) rastrear('catalog_loaded', { slug: slug ?? '' })
+    if (paywall) rastrear('paywall_hit', { slug: slug ?? '', superficie: 'publica' })
+  }, [temCatalogo, paywall, slug])
+
+  useEffect(() => {
+    if (!slug || !query.data?.temAcesso || !query.data.dados) return
+    const dados = query.data.dados
+    aplicarMetaLoja({
+      nome: dados.nome,
+      descricao: `Monte o lugar à mesa de ${dados.nome}.`,
+      url: `${window.location.origin}/${slug}`,
+      imagem: dados.logo || undefined,
+    })
+    return () => {
+      limparMetaLoja()
     }
-    if (query.data && !query.data.temAcesso && query.data.existe) {
-      rastrear('paywall_hit', { slug: slug ?? '', superficie: 'publica' })
+  }, [slug, query.data?.temAcesso, query.data?.dados])
+
+  useEffect(() => {
+    if (!slug || !query.data?.temAcesso) return
+    const chave = `visita-catalogo:${slug}`
+    try {
+      if (sessionStorage.getItem(chave)) return
+      sessionStorage.setItem(chave, '1')
+    } catch {
+      return
     }
-  }, [query.data, slug])
+    void registrarVisitaCatalogo(slug).catch(() => {
+      // A contagem começa depois da migration; uma falha não bloqueia a página.
+    })
+  }, [slug, query.data?.temAcesso])
 
   if (!slug) {
     return (

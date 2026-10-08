@@ -54,6 +54,17 @@ export async function excluirCategoriaDb(
   categoriaId: string,
 ): Promise<void> {
   const agora = new Date().toISOString()
+
+  // Itens primeiro: se a categoria falhar, a exclusão pode ser repetida.
+  const { error: erroItens } = await supabase
+    .from('itens')
+    .update({ deleted_at: agora })
+    .eq('cliente_id', clienteId)
+    .eq('categoria_id', categoriaId)
+    .is('deleted_at', null)
+
+  if (erroItens) throw erroItens
+
   const { data, error } = await supabase
     .from('categorias')
     .update({ deleted_at: agora })
@@ -69,13 +80,6 @@ export async function excluirCategoriaDb(
       'Não foi possível excluir a categoria. Verifique sua assinatura ou tente novamente.',
     )
   }
-
-  await supabase
-    .from('itens')
-    .update({ deleted_at: agora })
-    .eq('cliente_id', clienteId)
-    .eq('categoria_id', categoriaId)
-    .is('deleted_at', null)
 }
 
 export async function criarItem(clienteId: string, item: ItemMesa): Promise<void> {

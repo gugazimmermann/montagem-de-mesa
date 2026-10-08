@@ -339,3 +339,19 @@ button.layer--clicavel:focus-visible {
   }
 }
 
+.preview-item-na-mesa {
+  margin-top: 0.75rem;
+}
+
+.preview-item-na-mesa .table-preview {
+  height: 280px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.preview-item-na-mesa .table-surface {
+  transform: scale(0.62);
+  transform-origin: top center;
+}
+

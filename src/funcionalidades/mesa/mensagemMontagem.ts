@@ -38,6 +38,29 @@ export function montarTextoMontagem(params: {
     .join('\n')
 }
 
+export function textoContatoLead(params: {
+  nomeLoja: string
+  visitanteNome: string
+  itens: { categoria: string; nome: string }[]
+  linkMontagem: string
+}): string {
+  const linhasItens =
+    params.itens.length === 0
+      ? '- (nenhum item)'
+      : params.itens.map((item) => `- ${item.categoria}: ${item.nome}`).join('\n')
+
+  return [
+    `Olá, ${params.visitanteNome}! Aqui é ${params.nomeLoja}.`,
+    'Vi a montagem que você enviou:',
+    '',
+    linhasItens,
+    params.linkMontagem ? '' : null,
+    params.linkMontagem ? `Link: ${params.linkMontagem}` : null,
+  ]
+    .filter((linha) => linha != null)
+    .join('\n')
+}
+
 export function urlWhatsAppMontagem(
   whatsappAdminDigitos: string,
   texto: string,

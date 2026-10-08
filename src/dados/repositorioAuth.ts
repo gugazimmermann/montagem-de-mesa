@@ -109,6 +109,41 @@ function validarSlugMontagem(
   }
 }
 
+const MSG_SENHA_VAZADA =
+  'Esta senha apareceu em vazamentos de dados. Escolha outra.'
+
+/** Resposta do Auth quando a senha está no HaveIBeenPwned ou é fraca demais. */
+export function mensagemSenhaRecusada(error: {
+  code?: string
+  message?: string
+  reasons?: string[]
+}): string | null {
+  const reasons = error.reasons ?? []
+  const msg = (error.message ?? '').toLowerCase()
+  if (
+    reasons.includes('pwned') ||
+    msg.includes('pwned') ||
+    msg.includes('leaked') ||
+    msg.includes('compromised') ||
+    msg.includes('known to be weak')
+  ) {
+    return MSG_SENHA_VAZADA
+  }
+  if (error.code === 'weak_password') {
+    return 'Escolha uma senha mais forte.'
+  }
+  return null
+}
+
+function lancarSeSenhaRecusada(error: {
+  code?: string
+  message?: string
+  reasons?: string[]
+}): void {
+  const mensagem = mensagemSenhaRecusada(error)
+  if (mensagem) throw new CadastroErro(mensagem)
+}
+
 function lancarSeRateLimit(error: { code?: string; message?: string }): void {
   const msg = (error.message ?? '').toLowerCase()
   if (error.code === 'over_email_send_rate_limit' || msg.includes('rate limit')) {
@@ -202,6 +237,7 @@ export async function cadastrar(dados: {
   })
 
   if (authError) {
+    lancarSeSenhaRecusada(authError)
     // Mensagem genérica: evita oráculo de e-mail para visitantes anônimos.
     throw new CadastroErro('Não foi possível criar a conta. Tente novamente.')
   }
@@ -269,6 +305,7 @@ export async function atualizarSenha(novaSenha: string): Promise<void> {
     data: { [META_PRECISA_REDEFINIR_SENHA]: false },
   })
   if (error) {
+    lancarSeSenhaRecusada(error)
     throw new CadastroErro('Não foi possível atualizar a senha. Tente novamente.')
   }
 

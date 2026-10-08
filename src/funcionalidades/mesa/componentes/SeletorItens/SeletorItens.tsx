@@ -1,4 +1,5 @@
-import { type CSSProperties, type KeyboardEvent, memo } from 'react'
+import { type CSSProperties, type KeyboardEvent, memo, useEffect } from 'react'
+import { ImagemEstavel } from '../../../../compartilhado/ImagemEstavel'
 import type { Categoria, ConfiguracaoMesa, IdCategoria, ItemMesa } from '../../../../compartilhado/tipos'
 import { imagemCatalogoItem } from '../../../../compartilhado/tipos'
 import { ehCategoriaFixa } from '../../../../dados/categoriasFixas'
@@ -20,12 +21,17 @@ interface PropsSeletorItens {
   aoSelecionar: (categoria: IdCategoria, idItem: string | null) => void
 }
 
-function AmostraItem({ item }: { item: ItemMesa }) {
+function AmostraItem({ item, prioridade }: { item: ItemMesa; prioridade: boolean }) {
   const src = imagemCatalogoItem(item)
   if (src) {
     return (
       <span className="item-card__swatch item-card__swatch--image" aria-hidden="true">
-        <img src={src} alt="" loading="lazy" />
+        <ImagemEstavel
+          src={src}
+          alt=""
+          loading={prioridade ? 'eager' : 'lazy'}
+          fetchPriority={prioridade ? 'high' : 'low'}
+        />
       </span>
     )
   }
@@ -58,6 +64,19 @@ export function SeletorItens({
 }: PropsSeletorItens) {
   const itensCategoria = obterItensPorCategoria(itens, categoriaAtiva)
   const metaAtiva = categorias.find((c) => c.id === categoriaAtiva)
+
+  useEffect(() => {
+    const indice = categorias.findIndex((c) => c.id === categoriaAtiva)
+    if (indice < 0 || categorias.length < 2) return
+    const proxima = categorias[(indice + 1) % categorias.length]
+    if (!proxima || proxima.id === categoriaAtiva) return
+    for (const item of obterItensPorCategoria(itens, proxima.id)) {
+      const src = imagemCatalogoItem(item)
+      if (!src) continue
+      const img = new Image()
+      img.src = src
+    }
+  }, [categoriaAtiva, categorias, itens])
   const selecaoAtiva = configuracao[categoriaAtiva]
   const idsAtivos = idsSelecionados(selecaoAtiva)
   const temSelecaoAtiva = temSelecaoNaCategoria(selecaoAtiva)
@@ -168,7 +187,7 @@ export function SeletorItens({
           <p className="item-picker__empty">Nenhum item nesta categoria.</p>
         ) : (
           <ul className="item-picker__grid">
-            {itensCategoria.map((item) => {
+            {itensCategoria.map((item, indice) => {
               const selecionado = idsAtivos.includes(item.id)
 
               return (
@@ -179,7 +198,7 @@ export function SeletorItens({
                     onClick={() => aoSelecionar(categoriaAtiva, item.id)}
                     aria-pressed={selecionado}
                   >
-                    <AmostraItem item={item} />
+                    <AmostraItem item={item} prioridade={indice < 6} />
                     <span className="item-card__body">
                       <span className="item-card__name">{item.nome}</span>
                       {item.descricao && (

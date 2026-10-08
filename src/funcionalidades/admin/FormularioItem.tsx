@@ -18,6 +18,7 @@ import { mapearErroUpload } from './adminUtils'
 import { useDadosCliente } from './useDadosCliente'
 import { useObjectUrlPreview } from './useObjectUrlPreview'
 import { InputArquivo } from './InputArquivo'
+import { PreviewItemNaMesa } from './PreviewItemNaMesa'
 
 const PADROES: { valor: PadraoTecido; rotulo: string }[] = [
   { valor: 'solid', rotulo: 'Liso' },
@@ -458,6 +459,26 @@ export function FormularioItem() {
               )}
             </div>
           </div>
+
+          {(imagemMesaExibida || imagemCatalogoExibida || formItem.nome.trim()) && (
+            <PreviewItemNaMesa
+              categoria={categoria}
+              item={{
+                id: itemExistente?.id ?? 'rascunho',
+                nome: formItem.nome.trim() || 'Item',
+                categoria: idCategoria,
+                imagem: imagemMesaExibida || undefined,
+                imagemCatalogo: imagemCatalogoExibida || undefined,
+                cores: {
+                  primaria: formItem.corPrimaria || COR_PADRAO,
+                },
+                largura: Number(formItem.largura) || undefined,
+                comprimento: Number(formItem.comprimento) || undefined,
+                padrao: (formItem.padrao || undefined) as ItemMesa['padrao'],
+                descricao: formItem.descricao.trim() || undefined,
+              }}
+            />
+          )}
 
           <div className={ui.painelFormAcoes}>
             <button type="submit" className="btn btn--primary" disabled={enviando}>

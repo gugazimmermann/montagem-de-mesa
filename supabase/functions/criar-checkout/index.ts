@@ -1,3 +1,4 @@
+import { statusBloqueiaNovoCheckout } from '../_shared/assinaturaAberta.ts'
 import { corsHeadersPara, jsonResponseComCors } from '../_shared/cors.ts'
 import {
   garantirCustomerStripe,
@@ -6,7 +7,9 @@ import {
   siteUrl,
   stripeClient,
 } from '../_shared/stripe.ts'
+import { aplicarSubscriptionNoCliente } from '../_shared/syncAssinatura.ts'
 import { obterClienteDoUsuario, supabaseAdmin } from '../_shared/supabase.ts'
+import type Stripe from 'https://esm.sh/stripe@17.7.0?target=deno'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -29,6 +32,20 @@ Deno.serve(async (req) => {
     const { cliente } = await obterClienteDoUsuario(authHeader)
     const stripe = stripeClient()
     const admin = supabaseAdmin()
+
+    const aberta = await assinaturaAberta(stripe, cliente)
+    if (aberta) {
+      try {
+        await aplicarSubscriptionNoCliente(cliente.id, aberta)
+      } catch (syncErr) {
+        console.error('criar-checkout sync assinatura existente', syncErr)
+      }
+      return jsonResponseComCors(
+        req,
+        { error: 'Esta conta já tem uma assinatura. Atualize a página para gerenciá-la.' },
+        409,
+      )
+    }
 
     const { customerId, precisouSalvar } = await garantirCustomerStripe(
       stripe,
@@ -78,6 +95,31 @@ Deno.serve(async (req) => {
     return jsonResponseComCors(req, { error: 'Não foi possível iniciar o checkout' }, 500)
   }
 })
+
+async function assinaturaAberta(
+  stripe: Stripe,
+  cliente: { stripe_customer_id: string | null; stripe_subscription_id: string | null },
+): Promise<Stripe.Subscription | null> {
+  if (cliente.stripe_customer_id) {
+    const lista = await stripe.subscriptions.list({
+      customer: cliente.stripe_customer_id,
+      status: 'all',
+      limit: 10,
+    })
+    return lista.data.find((sub) => statusBloqueiaNovoCheckout(sub.status)) ?? null
+  }
+
+  if (!cliente.stripe_subscription_id) return null
+
+  try {
+    const sub = await stripe.subscriptions.retrieve(cliente.stripe_subscription_id)
+    return statusBloqueiaNovoCheckout(sub.status) ? sub : null
+  } catch (err) {
+    const codigo = (err as { code?: string }).code
+    if (codigo === 'resource_missing') return null
+    throw err
+  }
+}
 
 /** Sem corpo ou `mensal` → plano mensal. `anual` → plano anual. Outro valor → 400. */
 async function intervaloPedido(req: Request): Promise<'mensal' | 'anual' | Response> {

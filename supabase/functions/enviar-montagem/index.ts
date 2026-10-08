@@ -3,7 +3,9 @@ import {
   jsonResponseComCors,
   origemPermitida,
 } from '../_shared/cors.ts'
+import { ipCliente } from '../_shared/ipCliente.ts'
 import { siteUrl } from '../_shared/stripe.ts'
+import { ehCategoriaToalha, ehToalhaPermitida } from '../_shared/toalhasPermitidas.ts'
 import { obterClienteDoUsuario, supabaseAdmin } from '../_shared/supabase.ts'
 
 type Visitante = {
@@ -65,11 +67,7 @@ function escaparHtml(valor: string): string {
 }
 
 function ipDoRequest(req: Request): string {
-  const cf = req.headers.get('cf-connecting-ip')
-  if (cf) return cf.trim()
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0]?.trim() || 'unknown'
-  return 'unknown'
+  return ipCliente(req.headers)
 }
 
 /** Sempre usa SITE_URL; só reaproveita `?m=` do cliente se for seguro. */
@@ -154,7 +152,10 @@ async function validarItensNoCatalogo(
     const catKey = item.categoria.trim().toLowerCase()
     if (!rotulosOk.has(catKey)) return false
 
-    if (catKey === 'toalha' || catKey === 'toalhas') continue
+    if (ehCategoriaToalha(catKey)) {
+      if (!ehToalhaPermitida(item.nome)) return false
+      continue
+    }
 
     const ids = catIdPorRotulo.get(catKey) ?? []
     const nomeKey = item.nome.trim().toLowerCase()
@@ -381,23 +382,7 @@ Deno.serve(async (req) => {
       }
 
       if (existente && existente.email_status !== 'sent') {
-        const itensDb = Array.isArray(existente.itens)
-          ? (existente.itens as { categoria: string; nome: string }[])
-          : []
-        const reenviado = await enviarEmailEAtualizar({
-          admin,
-          montagemId: existente.id,
-          clienteEmail: cliente.email,
-          clienteNome: cliente.nome,
-          nome: String(existente.visitante_nome ?? ''),
-          email: String(existente.visitante_email ?? ''),
-          whatsapp: String(existente.visitante_whatsapp ?? ''),
-          endereco: String(existente.visitante_endereco ?? ''),
-          cidade: String(existente.visitante_cidade ?? ''),
-          estado: String(existente.visitante_estado ?? ''),
-          itens: itensDb,
-          linkMontagem: String(existente.link_montagem ?? ''),
-        })
+        const reenviado = await reenviarLeadSalvo(admin, cliente, existente)
         if (!reenviado) {
           return json({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
         }
@@ -425,7 +410,26 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       if (insertError.code === '23505' && idempotencyKey) {
-        return json({ ok: true, deduplicated: true })
+        const { data: corrida } = await admin
+          .from('montagens_enviadas')
+          .select(
+            'id, email_status, visitante_nome, visitante_email, visitante_whatsapp, visitante_endereco, visitante_cidade, visitante_estado, itens, link_montagem',
+          )
+          .eq('cliente_id', cliente.id)
+          .eq('idempotency_key', idempotencyKey)
+          .maybeSingle()
+
+        if (corrida?.email_status === 'sent') {
+          return json({ ok: true, deduplicated: true })
+        }
+        if (corrida) {
+          const reenviado = await reenviarLeadSalvo(admin, cliente, corrida)
+          if (!reenviado) {
+            return json({ error: 'Falha ao enviar o e-mail. Tente novamente.' }, 502)
+          }
+          return json({ ok: true })
+        }
+        return json({ error: 'Não foi possível salvar a montagem.' }, 500)
       }
       console.error('enviar-montagem insert', insertError)
       return json({ error: 'Não foi possível salvar a montagem.' }, 500)
@@ -458,6 +462,42 @@ Deno.serve(async (req) => {
     return json({ error: 'Erro interno' }, 500)
   }
 })
+
+type LeadSalvo = {
+  id: string
+  visitante_nome: unknown
+  visitante_email: unknown
+  visitante_whatsapp: unknown
+  visitante_endereco: unknown
+  visitante_cidade: unknown
+  visitante_estado: unknown
+  itens: unknown
+  link_montagem: unknown
+}
+
+async function reenviarLeadSalvo(
+  admin: AdminClient,
+  cliente: { email: string; nome: string },
+  existente: LeadSalvo,
+): Promise<boolean> {
+  const itensDb = Array.isArray(existente.itens)
+    ? (existente.itens as { categoria: string; nome: string }[])
+    : []
+  return enviarEmailEAtualizar({
+    admin,
+    montagemId: existente.id,
+    clienteEmail: cliente.email,
+    clienteNome: cliente.nome,
+    nome: String(existente.visitante_nome ?? ''),
+    email: String(existente.visitante_email ?? ''),
+    whatsapp: String(existente.visitante_whatsapp ?? ''),
+    endereco: String(existente.visitante_endereco ?? ''),
+    cidade: String(existente.visitante_cidade ?? ''),
+    estado: String(existente.visitante_estado ?? ''),
+    itens: itensDb,
+    linkMontagem: String(existente.link_montagem ?? ''),
+  })
+}
 
 async function enviarEmailEAtualizar(args: {
   admin: AdminClient

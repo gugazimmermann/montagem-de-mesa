@@ -24,3 +24,6 @@ verify_jwt = true
 
 [functions.enviar-montagem]
 verify_jwt = false
+
+[functions.og-loja]
+verify_jwt = false

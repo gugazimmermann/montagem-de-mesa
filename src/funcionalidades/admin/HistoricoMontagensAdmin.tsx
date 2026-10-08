@@ -7,6 +7,7 @@ import type {
 import { formatarWhatsapp } from '../../dados/repositorioClientes'
 import {
   atualizarLeadMontagem,
+  contarLeadsNovosParados,
   contarMontagensNovas,
   createdAtMontagemNovaMaisRecente,
   listarMontagensEnviadas,
@@ -14,7 +15,15 @@ import {
   reenviarEmailMontagem,
 } from '../../dados/repositorioMontagens'
 import { linkAbrirMontagemAdmin } from '../mesa/montagemUrl'
+import { textoContatoLead, urlWhatsAppMontagem } from '../mesa/mensagemMontagem'
 import { useAuth } from '../autenticacao'
+import {
+  baixarCsv,
+  fimDoDiaLocal,
+  inicioDoDiaLocal,
+  leadNovoParado,
+  montagensParaCsv,
+} from './csvMontagens'
 import { AdminAlerta, AdminEstadoVazio } from './AdminFeedback'
 import {
   AdminPaginaPainel,
@@ -78,6 +87,11 @@ export function HistoricoMontagensAdmin() {
   const [filtroStatus, setFiltroStatus] = useState<StatusLeadMontagem | 'todos'>(
     'todos',
   )
+  const [desde, setDesde] = useState('')
+  const [ate, setAte] = useState('')
+  const [desdeAplicado, setDesdeAplicado] = useState('')
+  const [ateAplicado, setAteAplicado] = useState('')
+  const [exportando, setExportando] = useState(false)
   const [salvandoId, setSalvandoId] = useState<string | null>(null)
   const [reenviandoId, setReenviandoId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -86,8 +100,13 @@ export function HistoricoMontagensAdmin() {
   const [marcaPronta, setMarcaPronta] = useState(false)
 
   const filtros = useMemo(
-    () => ({ busca: buscaAplicada, leadStatus: filtroStatus }),
-    [buscaAplicada, filtroStatus],
+    () => ({
+      busca: buscaAplicada,
+      leadStatus: filtroStatus,
+      desde: inicioDoDiaLocal(desdeAplicado),
+      ate: fimDoDiaLocal(ateAplicado),
+    }),
+    [buscaAplicada, filtroStatus, desdeAplicado, ateAplicado],
   )
 
   const query = useInfiniteQuery({
@@ -100,6 +119,8 @@ export function HistoricoMontagensAdmin() {
         limit: MONTAGENS_PAGE_SIZE,
         busca: filtros.busca || undefined,
         leadStatus: filtros.leadStatus,
+        desde: filtros.desde,
+        ate: filtros.ate,
       }),
     initialPageParam: 0,
     getNextPageParam: (ultima, todas) =>
@@ -115,6 +136,16 @@ export function HistoricoMontagensAdmin() {
     queryFn: () => contarMontagensNovas(clienteId!),
     enabled: Boolean(clienteId),
     staleTime: 30_000,
+  })
+
+  const limiteParado = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const queryParados = useQuery({
+    queryKey: clienteId
+      ? [...montagensQueryKey(clienteId), 'parados', limiteParado.slice(0, 13)]
+      : ['montagens', 'none', 'parados'],
+    queryFn: () => contarLeadsNovosParados(clienteId!, limiteParado),
+    enabled: Boolean(clienteId),
+    staleTime: 60_000,
   })
 
   useEffect(() => {
@@ -215,6 +246,43 @@ export function HistoricoMontagensAdmin() {
   }
 
   const qtdNovos = queryNovos.data ?? 0
+  const qtdParados = queryParados.data ?? 0
+
+  function aplicarFiltros() {
+    setBuscaAplicada(busca.trim())
+    setDesdeAplicado(desde)
+    setAteAplicado(ate)
+  }
+
+  async function exportarCsv() {
+    if (!clienteId || exportando) return
+    setExportando(true)
+    setErroAcao(null)
+    try {
+      const todas: MontagemEnviada[] = []
+      let offset = 0
+      for (let pagina = 0; pagina < 20; pagina += 1) {
+        const lote = await listarMontagensEnviadas(clienteId, {
+          ...filtros,
+          offset,
+          limit: 200,
+        })
+        todas.push(...lote.itens)
+        if (!lote.temMais) break
+        offset += 200
+      }
+      baixarCsv(montagensParaCsv(todas), `montagens-${slug || 'loja'}.csv`)
+      setFeedback(
+        todas.length === 0
+          ? 'Nenhuma montagem para exportar.'
+          : 'Planilha baixada.',
+      )
+    } catch {
+      setErroAcao('Não foi possível exportar a planilha.')
+    } finally {
+      setExportando(false)
+    }
+  }
 
   return (
     <AdminPaginaPainel
@@ -253,6 +321,11 @@ export function HistoricoMontagensAdmin() {
               {qtdNovos === 1
                 ? 'Há 1 montagem nova aguardando atendimento.'
                 : `Há ${qtdNovos} montagens novas aguardando atendimento.`}
+              {qtdParados > 0
+                ? qtdParados === 1
+                  ? ' 1 está parada há mais de 24 h.'
+                  : ` ${qtdParados} estão paradas há mais de 24 h.`
+                : ''}
             </AdminAlerta>
           ) : null}
         </>
@@ -268,7 +341,7 @@ export function HistoricoMontagensAdmin() {
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') setBuscaAplicada(busca.trim())
+              if (e.key === 'Enter') aplicarFiltros()
             }}
           />
         </label>
@@ -289,13 +362,39 @@ export function HistoricoMontagensAdmin() {
             ))}
           </select>
         </label>
+        <label className={ui.field}>
+          <span className={ui.fieldLabel}>De</span>
+          <input
+            className={ui.fieldInput}
+            type="date"
+            value={desde}
+            onChange={(e) => setDesde(e.target.value)}
+          />
+        </label>
+        <label className={ui.field}>
+          <span className={ui.fieldLabel}>Até</span>
+          <input
+            className={ui.fieldInput}
+            type="date"
+            value={ate}
+            onChange={(e) => setAte(e.target.value)}
+          />
+        </label>
         <div className={ui.historicoFiltrosAcoes}>
           <button
             type="button"
             className="btn btn--primary"
-            onClick={() => setBuscaAplicada(busca.trim())}
+            onClick={aplicarFiltros}
           >
             Filtrar
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            disabled={exportando}
+            onClick={() => void exportarCsv()}
+          >
+            {exportando ? 'Exportando…' : 'Exportar CSV'}
           </button>
         </div>
       </div>
@@ -304,7 +403,7 @@ export function HistoricoMontagensAdmin() {
         <AdminEstadoVazio
           titulo="Nenhuma montagem ainda"
           descricao={
-            buscaAplicada || filtroStatus !== 'todos'
+            buscaAplicada || filtroStatus !== 'todos' || desdeAplicado || ateAplicado
               ? 'Nenhum resultado para estes filtros.'
               : 'Quando um visitante enviar a montagem pela página pública, ela aparecerá aqui com os dados de contato.'
           }
@@ -331,6 +430,9 @@ export function HistoricoMontagensAdmin() {
                         <span className={classeBadgeLead(m.leadStatus)}>
                           {LEAD_OPCOES.find((o) => o.valor === m.leadStatus)?.rotulo}
                         </span>
+                        {leadNovoParado(m.leadStatus, m.createdAt) ? (
+                          <span className={ui.historicoBadgeNovo}>há mais de 24 h</span>
+                        ) : null}
                       </h2>
                       <p className={ui.historicoMeta}>
                         {m.visitanteCidade}/{m.visitanteEstado} ·{' '}
@@ -352,6 +454,24 @@ export function HistoricoMontagensAdmin() {
                       >
                         Abrir montagem
                       </a>
+                      {m.visitanteWhatsapp.replace(/\D/g, '').length >= 12 ? (
+                        <a
+                          className="btn btn--ghost"
+                          href={urlWhatsAppMontagem(
+                            m.visitanteWhatsapp,
+                            textoContatoLead({
+                              nomeLoja: cliente?.nome ?? 'a loja',
+                              visitanteNome: m.visitanteNome,
+                              itens: m.itens,
+                              linkMontagem: hrefAbrirMontagem(m),
+                            }),
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          WhatsApp
+                        </a>
+                      ) : null}
                       <button
                         type="button"
                         className="btn btn--ghost"

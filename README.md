@@ -93,7 +93,7 @@ Confirmação de cadastro → `/admin`; reset de senha → `/admin/redefinir-sen
 
 ### Checklist de segurança
 
-1. **Authentication → Providers → Email** — confirmação de e-mail obrigatória; senha mínima **10** caracteres; preferir Secure password change.
+1. **Authentication → Providers → Email** — confirmação de e-mail obrigatória; senha mínima **10** caracteres; preferir Secure password change. **Prevent use of leaked passwords** (HaveIBeenPwned) exige plano Pro ou superior; no plano atual a API responde 402 e o aviso do linter permanece.
 2. Redirect URLs apenas do seu domínio.
 3. Bot protection / rate limits no Auth quando disponível.
 4. Catálogo e Storage são leitura pública só com assinatura/trial ativos (`cliente_tem_acesso`).

@@ -11,6 +11,8 @@ export const MONTAGENS_PAGE_SIZE = 50
 export type FiltrosMontagens = {
   busca?: string
   leadStatus?: StatusLeadMontagem | 'todos'
+  desde?: string
+  ate?: string
   offset?: number
   limit?: number
 }
@@ -113,6 +115,9 @@ export async function listarMontagensEnviadas(
     query = query.eq('lead_status', leadStatus)
   }
 
+  if (opcoes?.desde) query = query.gte('created_at', opcoes.desde)
+  if (opcoes?.ate) query = query.lte('created_at', opcoes.ate)
+
   if (busca) {
     const seguro = busca.replace(/[%_,.()]/g, ' ').trim()
     if (seguro) {
@@ -146,6 +151,20 @@ export async function contarMontagensNovas(
   if (criadasApos) query = query.gt('created_at', criadasApos)
 
   const { count, error } = await query
+  if (error) throw error
+  return count ?? 0
+}
+
+export async function contarLeadsNovosParados(
+  clienteId: string,
+  criadosAntes: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from('montagens_enviadas')
+    .select('id', { count: 'exact', head: true })
+    .eq('cliente_id', clienteId)
+    .eq('lead_status', 'novo')
+    .lt('created_at', criadosAntes)
   if (error) throw error
   return count ?? 0
 }

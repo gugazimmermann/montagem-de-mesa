@@ -161,13 +161,7 @@ export async function obterClientePorId(id: string): Promise<Cliente | null> {
 
   if (!erroProprio && proprio) return mapCliente(proprio)
 
-  const { data, error } = await supabase
-    .from('clientes_publicos')
-    .select('id, slug, nome, logo, whatsapp, cor_marca, cor_fundo')
-    .eq('id', id)
-    .maybeSingle()
-
-  if (error) throw error
+  const data = await obterClientePublico({ id })
   if (!data) return null
   return mapCliente({
     ...data,
@@ -177,19 +171,38 @@ export async function obterClientePorId(id: string): Promise<Cliente | null> {
 }
 
 export async function obterClientePorSlug(slug: string): Promise<Cliente | null> {
-  const { data, error } = await supabase
-    .from('clientes_publicos')
-    .select('id, slug, nome, logo, whatsapp, cor_marca, cor_fundo')
-    .eq('slug', slug)
-    .maybeSingle()
-
-  if (error) throw error
+  const data = await obterClientePublico({ slug })
   if (!data) return null
   return mapCliente({
     ...data,
     email: '',
     subscription_status: 'active',
   })
+}
+
+type ClientePublicoRow = {
+  id: string
+  slug: string
+  nome: string
+  logo: string
+  whatsapp?: string | null
+  cor_marca?: string | null
+  cor_fundo?: string | null
+}
+
+async function obterClientePublico(chave: {
+  slug?: string
+  id?: string
+}): Promise<ClientePublicoRow | null> {
+  const { data, error } = await supabase.rpc('obter_cliente_publico', {
+    p_slug: chave.slug ?? null,
+    p_id: chave.id ?? null,
+  })
+
+  if (error) throw error
+  const linha = Array.isArray(data) ? data[0] : data
+  if (!linha || typeof linha !== 'object') return null
+  return linha as ClientePublicoRow
 }
 
 export type StatusClientePublico = {
@@ -288,7 +301,7 @@ export async function carregarDadosCliente(
   if (itensRes.error) throw itensRes.error
 
   const itens = (itensRes.data ?? []).map(mapItem)
-  const dados = await assinarMidiasDadosCliente({
+  const dados = await renovarUrlsAssinadas({
     nome: cliente.nome,
     logo: cliente.logo,
     corMarca: cliente.corMarca,
@@ -426,7 +439,7 @@ export async function carregarCatalogoPublico(
     }),
   )
 
-  const dados = await assinarMidiasDadosCliente({
+  const dados = await renovarUrlsAssinadas({
     nome: payload.cliente.nome ?? payload.nome ?? '',
     logo: payload.cliente.logo ?? '',
     corMarca: payload.cliente.cor_marca ?? '',
@@ -448,7 +461,7 @@ export async function carregarCatalogoPublico(
   }
 }
 
-async function assinarMidiasDadosCliente(
+export async function renovarUrlsAssinadas(
   dados: DadosCliente,
 ): Promise<DadosCliente> {
   const entradas: { valor: string; bucket: 'logos' | 'itens' }[] = []
@@ -461,6 +474,9 @@ async function assinarMidiasDadosCliente(
   }
 
   const mapa = await resolverUrlsAssinadasEmLote(entradas)
+  if (entradas.length > 0 && mapa.size === 0) {
+    return dados
+  }
   const logo = dados.logo ? mapa.get(dados.logo) ?? dados.logo : ''
   const itens = dados.itens.map((item) => {
     const proximo = { ...item }

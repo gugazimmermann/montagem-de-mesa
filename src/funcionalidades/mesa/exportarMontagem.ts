@@ -25,12 +25,12 @@ import {
 } from './layoutEtiqueta'
 import { chaveCamada, ordenarCategoriasPorCamada } from './ordemCamadas'
 
-const LARGURA = 800
-const ALTURA = 600
+const LARGURA = 1200
+const ALTURA = 900
 const TIMEOUT_IMAGEM_MS = 8000
 
 /** Caixa do lugar à mesa (espelha `.place-setting` no preview). */
-const PLACE_SIZE = Math.min(360, LARGURA * 0.45)
+const PLACE_SIZE = Math.min(540, LARGURA * 0.45)
 /** Viés à esquerda espelhando `margin-right` do preview (só sem lugar americano). */
 const PLACE_BIAS_X = PLACE_SIZE * 0.06
 
@@ -82,6 +82,14 @@ function carregarImagem(src: string): Promise<HTMLImageElement | null> {
     img.onerror = () => terminar(null)
     img.src = src
   })
+}
+
+/** Aviso quando uma foto da mesa não entra no PNG. */
+export function avisoFotosAusentes(nomes: string[]): string | null {
+  const unicos = [...new Set(nomes.map((nome) => nome.trim()).filter(Boolean))]
+  if (unicos.length === 0) return null
+  if (unicos.length === 1) return `Não foi possível incluir ${unicos[0]}.`
+  return `Não foi possível incluir: ${unicos.join(', ')}.`
 }
 
 function baixarBlob(blob: Blob, nomeArquivo: string): void {
@@ -335,7 +343,7 @@ export async function gerarBlobMontagemPng(
     }),
   )
 
-  let imagensFalharam = 0
+  let fotosAusentes: string[] = []
 
   for (let i = 0; i < camadas.length; i += 1) {
     const camada = camadas[i]!
@@ -373,7 +381,7 @@ export async function gerarBlobMontagemPng(
         )
         continue
       }
-      imagensFalharam += 1
+      fotosAusentes.push(item.nome)
     }
 
     const raio = Math.min(boxW, boxH) / 2
@@ -411,10 +419,7 @@ export async function gerarBlobMontagemPng(
 
   return {
     blob,
-    aviso:
-      imagensFalharam > 0
-        ? 'Algumas fotos não carregaram (CORS ou rede).'
-        : null,
+    aviso: avisoFotosAusentes(fotosAusentes),
   }
 }
 
@@ -434,9 +439,7 @@ export async function exportarMontagemPng(
     itens,
   )
   baixarBlob(blob, nomeArquivo)
-  if (aviso) {
-    return `Imagem baixada, mas ${aviso.toLowerCase()}`
-  }
+  if (aviso) return `Imagem baixada. ${aviso}`
   return null
 }
 

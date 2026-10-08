@@ -18,6 +18,8 @@ import {
 import { useMontagensVistoAte } from './montagensVistas'
 import { montagensQueryKey, useDadosCliente } from './useDadosCliente'
 import { useFlashLocation } from './useFlashLocation'
+import { ResumoFunilAdmin } from './ResumoFunilAdmin'
+import { podeMover, passosTroca } from './arrasteOrdem'
 import * as ui from './adminClasses'
 
 type Feedback = { tipo: 'success' | 'error'; texto: string }
@@ -90,6 +92,46 @@ export function PainelAdmin() {
   async function aoSair() {
     await sair()
     navegar('/admin', { replace: true })
+  }
+
+  async function moverCategoria(origemId: string, destinoId: string) {
+    if (!dados || !clienteId || reordenando || origemId === destinoId) return
+    const ids = dados.categorias.map((c) => c.id)
+    const from = ids.indexOf(origemId)
+    const to = ids.indexOf(destinoId)
+    const bloqueado = (indice: number) =>
+      ehCategoriaFixa(dados.categorias[indice]?.id ?? '')
+    if (!podeMover(from, to, bloqueado)) {
+      setFeedback({
+        tipo: 'error',
+        texto: 'Não dá para passar por uma categoria fixa.',
+      })
+      return
+    }
+    setReordenando(true)
+    try {
+      const ordem = [...ids]
+      const categorias = [...dados.categorias]
+      for (const [i, j] of passosTroca(from, to)) {
+        const idA = ordem[i]!
+        const idB = ordem[j]!
+        await trocarOrdemCategoria(clienteId, idA, idB)
+        ;[ordem[i], ordem[j]] = [idB, idA]
+        const posI = categorias.findIndex((c) => c.id === idA)
+        const posJ = categorias.findIndex((c) => c.id === idB)
+        if (posI >= 0 && posJ >= 0) {
+          ;[categorias[posI], categorias[posJ]] = [
+            categorias[posJ]!,
+            categorias[posI]!,
+          ]
+        }
+      }
+      setDados({ ...dados, categorias })
+    } catch {
+      setFeedback({ tipo: 'error', texto: 'Não foi possível reordenar.' })
+    } finally {
+      setReordenando(false)
+    }
   }
 
   if (!clienteId) return <AdminSessaoInvalida />
@@ -225,6 +267,8 @@ export function PainelAdmin() {
         </div>
       </header>
 
+      <ResumoFunilAdmin clienteId={clienteId} />
+
       {feedback && (
         <AdminAlerta
           tipo={feedback.tipo === 'error' ? 'error' : 'success'}
@@ -241,6 +285,9 @@ export function PainelAdmin() {
             Nova categoria
           </Link>
         </div>
+        <p className="m-0 mb-2 text-sm text-muted">
+          Arraste uma categoria para mudar a ordem. As setas continuam disponíveis.
+        </p>
 
         {dados.categorias.length === 0 ? (
           <AdminEstadoVazio
@@ -260,7 +307,24 @@ export function PainelAdmin() {
               const anterior = dados.categorias[indice - 1]
               const proxima = dados.categorias[indice + 1]
               return (
-                <li key={categoria.id} className={ui.listItem}>
+                <li
+                  key={categoria.id}
+                  className={ui.listItem}
+                  draggable={!fixa && !reordenando}
+                  onDragStart={(evento) => {
+                    evento.dataTransfer.setData('text/plain', categoria.id)
+                    evento.dataTransfer.effectAllowed = 'move'
+                  }}
+                  onDragOver={(evento) => {
+                    if (fixa || reordenando) return
+                    evento.preventDefault()
+                  }}
+                  onDrop={(evento) => {
+                    evento.preventDefault()
+                    const origem = evento.dataTransfer.getData('text/plain')
+                    if (origem) void moverCategoria(origem, categoria.id)
+                  }}
+                >
                   <div>
                     <strong className="block">
                       {categoria.rotulo}{' '}

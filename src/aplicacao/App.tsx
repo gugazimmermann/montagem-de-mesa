@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ImagemEstavel } from '../compartilhado/ImagemEstavel'
 import { PreVisualizacaoMesa, SeletorItensMemo } from '../funcionalidades/mesa'
 import { criarConfiguracaoVazia, obterItemPorId, aplicarSelecao, ehCategoriaMulti, idsSelecionados, temSelecaoNaCategoria } from '../funcionalidades/catalogo'
 import {
@@ -200,6 +201,27 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
     document.getElementById('selecao-itens')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  async function compartilharMontagem() {
+    const url = window.location.href
+    const titulo = `Montagem de ${nome}`
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: titulo, text: titulo, url })
+        setAnuncio('Link da montagem compartilhado')
+        return
+      } catch (erro) {
+        if (erro instanceof DOMException && erro.name === 'AbortError') return
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setFeedbackAcao('Link da montagem copiado.')
+      setAnuncio('Link da montagem copiado')
+    } catch {
+      setFeedbackAcao(url)
+    }
+  }
+
   async function baixarImagem() {
     if (!temSelecao(configuracao)) return
     setExportando(true)
@@ -265,7 +287,9 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
 
       <header className="app__header">
         <div className="app__brand">
-          {logo && <img className="app__logo" src={logo} alt={`Logo ${nome}`} />}
+          {logo && (
+            <ImagemEstavel className="app__logo" src={logo} alt={`Logo ${nome}`} />
+          )}
           <p className="app__product">Montagem de Mesa</p>
           <h1>{nome}</h1>
           <p className="app__subtitle">Escolha as peças — a mesa atualiza na hora.</p>
@@ -392,6 +416,13 @@ export default function App({ dados, slug, whatsappAdmin }: PropsApp) {
                 Desfazer limpar
               </button>
             )}
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => void compartilharMontagem()}
+            >
+              Compartilhar
+            </button>
             <button
               type="button"
               className="btn btn--ghost"
